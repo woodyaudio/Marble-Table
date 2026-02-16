@@ -27,7 +27,7 @@
             height: 100px;
             margin: 15px auto;
         }
-        /* 모바일에서는 상하단 광고 높이 조절 */
+
         @media (max-width: 768px) {
             .ad-top, .ad-bottom { height: 60px; margin: 10px auto; }
         }
@@ -37,7 +37,6 @@
             margin: 0 auto;
             padding: 20px;
         }
-        /* 모바일 패딩 조정 */
         @media (max-width: 768px) { .container { padding: 10px; } }
 
         header {
@@ -58,7 +57,7 @@
         }
 
         #map {
-            flex: 2; /* 지도 비중 확대 */
+            flex: 2;
             height: 600px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -77,19 +76,18 @@
             overflow-y: auto;
         }
 
-        /* 📱 모바일 핵심 레이아웃 수정 */
         @media (max-width: 1024px) {
             .main-content { flex-direction: column; }
             #map { 
-                height: 350px; /* 모바일에서 지도가 먼저 보이고 적당한 높이 유지 */
+                height: 350px;
                 flex: none;
                 width: 100%;
             }
             .sidebar { 
                 width: 100%; 
                 min-width: unset;
-                max-height: none; /* 모바일은 스크롤 없이 길게 표시 */
-                order: 2; /* 지도 다음에 정보가 오도록 */
+                max-height: none;
+                order: 2;
             }
         }
 
@@ -122,7 +120,6 @@
             text-align: center;
         }
 
-        /* 넷마블 마커 애니메이션 */
         @keyframes pulse-yellow-large {
             0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8); transform: scale(1); }
             70% { box-shadow: 0 0 0 25px rgba(255, 215, 0, 0); transform: scale(1.1); }
@@ -248,10 +245,7 @@
                     ${insta}
                 </div>
             `;
-            // 모바일 배려: 정보가 업데이트되면 사이드바 위치로 부드럽게 스크롤
-            if (window.innerWidth <= 1024) {
-                document.querySelector('.sidebar').scrollIntoView({ behavior: 'smooth' });
-            }
+            // 강제 스크롤 로직(scrollIntoView) 삭제됨
         }
 
         function renderRestaurantCards() {
@@ -270,7 +264,7 @@
             if (r) {
                 map.panTo([r.lat, r.lng]);
                 showRestaurantInfo(r);
-                if (window.innerWidth > 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
+                // 상단 이동 로직(window.scrollTo) 삭제됨
             }
         }
     </script>
