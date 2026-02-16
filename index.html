@@ -12,7 +12,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        /* 광고 스타일 */
+        
         .ad-container {
             background: white;
             display: flex;
@@ -27,101 +27,84 @@
             height: 100px;
             margin: 15px auto;
         }
-        .ad-sidebar {
-            width: 100%;
-            height: 250px;
-            margin-top: 20px;
-            border: 1px dashed #ddd;
+        /* 모바일에서는 상하단 광고 높이 조절 */
+        @media (max-width: 768px) {
+            .ad-top, .ad-bottom { height: 60px; margin: 10px auto; }
         }
-        .ad-placeholder {
-            color: #999;
-            font-size: 14px;
-            text-align: center;
-            padding: 20px;
-        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
+        /* 모바일 패딩 조정 */
+        @media (max-width: 768px) { .container { padding: 10px; } }
+
         header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding: 20px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             backdrop-filter: blur(10px);
         }
-        header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        header p {
-            font-size: 1.2em;
-            opacity: 0.95;
-        }
+        header h1 { font-size: 2.2em; margin-bottom: 5px; }
+        
         .main-content {
             display: flex;
             gap: 20px;
             margin-bottom: 30px;
         }
+
         #map {
-            flex: 1;
+            flex: 2; /* 지도 비중 확대 */
             height: 600px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 3px solid white;
             z-index: 1;
         }
+
         .sidebar {
-            width: 400px;
+            flex: 1;
+            min-width: 350px;
             background: white;
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             max-height: 600px;
             overflow-y: auto;
-            display: flex;
-            flex-direction: column;
         }
-        .sidebar-content {
-            flex: 1;
+
+        /* 📱 모바일 핵심 레이아웃 수정 */
+        @media (max-width: 1024px) {
+            .main-content { flex-direction: column; }
+            #map { 
+                height: 350px; /* 모바일에서 지도가 먼저 보이고 적당한 높이 유지 */
+                flex: none;
+                width: 100%;
+            }
+            .sidebar { 
+                width: 100%; 
+                min-width: unset;
+                max-height: none; /* 모바일은 스크롤 없이 길게 표시 */
+                order: 2; /* 지도 다음에 정보가 오도록 */
+            }
         }
-        .sidebar h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.8em;
-        }
-        .placeholder-text {
-            color: #999;
-            text-align: center;
-            padding: 50px 20px;
-            font-size: 1.1em;
-        }
-        .restaurant-info h3 {
-            color: #333;
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-        .info-item {
-            margin: 12px 0;
-            color: #555;
-            line-height: 1.6;
-        }
-        .info-item strong {
-            color: #333;
-        }
-        /* 가격 & 시간 배지 스타일 */
+
+        .sidebar h2 { color: #667eea; margin-bottom: 15px; font-size: 1.6em; }
+        .placeholder-text { color: #999; text-align: center; padding: 30px 10px; }
+        .restaurant-info h3 { color: #333; font-size: 1.4em; margin-bottom: 10px; }
+        .info-item { margin: 10px 0; color: #555; line-height: 1.5; font-size: 0.95em; }
+        
         .badge {
             display: inline-block;
-            padding: 2px 10px;
+            padding: 3px 10px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.85em;
-            margin-top: 5px;
-            margin-right: 5px;
+            font-size: 0.8em;
+            margin: 3px 3px 0 0;
         }
         .price-badge { background: #eef2ff; color: #4f46e5; }
         .time-badge { background: #fff7ed; color: #c2410c; }
@@ -131,82 +114,61 @@
             display: block;
             background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
             color: white;
-            padding: 12px 25px;
+            padding: 12px;
             border-radius: 25px;
             text-decoration: none;
             font-weight: bold;
             margin-top: 15px;
-            transition: all 0.3s ease;
             text-align: center;
         }
-        .instagram-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(188, 24, 136, 0.4);
-        }
 
-        /* 홈 아이콘 반짝임 애니메이션 */
+        /* 넷마블 마커 애니메이션 */
         @keyframes pulse-yellow-large {
             0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8); transform: scale(1); }
-            70% { box-shadow: 0 0 0 35px rgba(255, 215, 0, 0); transform: scale(1.1); }
+            70% { box-shadow: 0 0 0 25px rgba(255, 215, 0, 0); transform: scale(1.1); }
             100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); transform: scale(1); }
         }
         .home-marker-design {
-            font-size: 32px;
+            font-size: 28px;
             background: white;
             border-radius: 50%;
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 3px solid #FFD700;
             animation: pulse-yellow-large 2s infinite;
-            z-index: 1000;
         }
 
         .restaurant-list {
             background: white;
             border-radius: 15px;
-            padding: 30px;
+            padding: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        .restaurant-list h2 {
-            color: #667eea;
-            margin-bottom: 20px;
         }
         .cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px;
         }
         .restaurant-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 18px;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .restaurant-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-        @media (max-width: 1024px) {
-            .main-content { flex-direction: column; }
-            .sidebar { width: 100%; max-height: none; }
-            #map { height: 500px; }
+            transition: 0.3s;
         }
     </style>
 </head>
 <body>
-    <div class="ad-container ad-top">
-        <div class="ad-placeholder">상단 광고 (728x90)</div>
-    </div>
+    <div class="ad-container ad-top"><div class="ad-placeholder">상단 광고</div></div>
 
     <div class="container">
         <header>
             <h1>🍽️ Marble-Table</h1>
-            <p>친구들과 함께 만드는 우리 동네 맛집!</p>
+            <p>넷마블 주변 맛집 지도</p>
         </header>
 
         <div class="main-content">
@@ -214,148 +176,59 @@
             <aside class="sidebar">
                 <div class="sidebar-content">
                     <h2>맛집 정보</h2>
-                    <p class="placeholder-text">지도의 마커를 클릭하여 맛집 정보를 확인하세요!</p>
-                </div>
-                
-                <div class="ad-container ad-sidebar">
-                    <div class="ad-placeholder">사이드 광고 (300x250)</div>
+                    <p class="placeholder-text">지도의 마커나 아래 목록을 클릭하세요!</p>
                 </div>
             </aside>
         </div>
 
         <section class="restaurant-list">
-            <h2>📍 등록된 맛집 목록</h2>
+            <h2 style="color: #667eea; margin-bottom: 20px;">📍 맛집 목록</h2>
             <div id="restaurantCards" class="cards-container"></div>
         </section>
     </div>
 
-    <div class="ad-container ad-bottom">
-        <div class="ad-placeholder">하단 광고 (728x90)</div>
-    </div>
+    <div class="ad-container ad-bottom"><div class="ad-placeholder">하단 광고</div></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const restaurantsData = [
-            {
-                id: 1,
-                name: "굿푸드(구로점)",
-                address: "서울특별시 구로구 디지털로26길 5",
-                lat: 37.481558,
-                lng: 126.893418,
-                description: "매드푸드",
-                price: 7500,
-                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
-                instagram: "https://www.instagram.com/goodfood_highend/"
-            },
-            {
-                id: 2,
-                name: "KJ푸드",
-                address: "서울특별시 구로구 디지털로26길 43 지하 1층",
-                lat: 37.480895,
-                lng: 126.894658,
-                description: "라면 무제한",
-                price: 7500,
-                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
-                instagram: null
-            },
-            {
-                id: 3,
-                name: "제이오제이엠푸드",
-                address: "서울 구로구 디지털로26길 61",
-                lat: 37.481070,
-                lng: 126.895648,
-                description: "넷마블 사람들 오픈런함",
-                price: 7500,
-                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
-                instagram: "https://www.instagram.com/jojmfood/?hl=ko"
-            },
-            {
-                id: 4,
-                name: "푸드포커스",
-                address: "서울 구로구 디지털로30길 31",
-                lat: 37.482883,
-                lng: 126.896494,
-                description: "세훈님 추천",
-                price: 7500,
-                hours: "평일 11:30~13:30, 주말/공휴일 휴무",
-                instagram: "https://www.instagram.com/anadasia_yoo/"
-            },
-            {
-                id: 5,
-                name: "윤쉐프 코오롱",
-                address: "서울 구로구 디지털로34길 43 B102호",
-                lat: 37.485123,
-                lng: 126.898813,
-                description: "가보신분?",
-                price: 7500,
-                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
-                instagram: "https://www.instagram.com/yoon_chef_/"
-            },
-            {
-                id: 6,
-                name: "알찬푸드",
-                address: "서울 구로구 디지털로33길 48 대륭포스트7차 지하1층",
-                lat: 37.487241,
-                lng: 126.894491,
-                description: "솔직히 여기까진 안갈듯",
-                price: 7500,
-                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
-                instagram: "https://www.instagram.com/your_table__/"
-            },
-            {
-                id: 7,
-                name: "푸드라운지(구로삼성IT구내식당)",
-                address: "서울 구로구 디지털로33길 27 삼성IT밸리 지하1층 107호",
-                lat: 37.486064,
-                lng: 126.894641,
-                description: "바로 옆에 그 유명한 스튜디오 뿌리가 있다고 한다",
-                price: 8200,
-                hours: "중식 11:30 - 13:30 , 석식 17:30 - 19:00",
-                instagram: "https://www.instagram.com/samsungit_foodlounge"
-            }
+            { id: 1, name: "굿푸드(구로점)", address: "서울특별시 구로구 디지털로26길 5", lat: 37.481558, lng: 126.893418, description: "매드푸드", price: 7500, hours: "평일 11:00~14:00, 주말 휴무", instagram: "https://www.instagram.com/goodfood_highend/" },
+            { id: 2, name: "KJ푸드", address: "서울특별시 구로구 디지털로26길 43 지하 1층", lat: 37.480895, lng: 126.894658, description: "라면 무제한", price: 7500, hours: "평일 11:00~14:00, 주말 휴무", instagram: null },
+            { id: 3, name: "제이오제이엠푸드", address: "서울 구로구 디지털로26길 61", lat: 37.481070, lng: 126.895648, description: "넷마블 오픈런 맛집", price: 7500, hours: "평일 11:00~14:00, 주말 휴무", instagram: "https://www.instagram.com/jojmfood/" },
+            { id: 4, name: "푸드포커스", address: "서울 구로구 디지털로30길 31", lat: 37.482883, lng: 126.896494, description: "세훈님 추천", price: 7500, hours: "평일 11:30~13:30, 주말 휴무", instagram: "https://www.instagram.com/anadasia_yoo/" },
+            { id: 5, name: "윤쉐프 코오롱", address: "서울 구로구 디지털로34길 43 B102호", lat: 37.485123, lng: 126.898813, description: "가보신분?", price: 7500, hours: "평일 11:00~14:00, 주말 휴무", instagram: "https://www.instagram.com/yoon_chef_/" },
+            { id: 6, name: "알찬푸드", address: "서울 구로구 디지털로33길 48 대륭7차 지하1층", lat: 37.487241, lng: 126.894491, description: "조금 멀지만 알참", price: 7500, hours: "평일 11:00~14:00, 주말 휴무", instagram: "https://www.instagram.com/your_table__/" },
+            { id: 7, name: "푸드라운지", address: "서울 구로구 디지털로33길 27 지하1층", lat: 37.486064, lng: 126.894641, description: "석식 가능 식당", price: 8200, hours: "중식 11:30-13:30, 석식 17:30-19:00", instagram: "https://www.instagram.com/samsungit_foodlounge" }
         ];
 
-        const homeLocation = {
-            name: "커맨드 센터(넷마블 컴퍼니)",
-            address: "서울 구로구 디지털로26길 38",
-            lat: 37.479932,
-            lng: 126.895215
-        };
+        const homeLocation = { name: "넷마블 컴퍼니", address: "서울 구로구 디지털로26길 38", lat: 37.479932, lng: 126.895215 };
 
-        let map, markers = [];
+        let map;
 
-        window.addEventListener('load', function() {
+        window.addEventListener('load', () => {
             initMap();
             renderRestaurantCards();
         });
 
         function initMap() {
-            // 초기 줌 레벨 17
             map = L.map('map').setView([homeLocation.lat, homeLocation.lng], 17);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(map);
 
             const homeIcon = L.divIcon({
                 html: `<div class="home-marker-design">🏢</div>`,
                 className: 'custom-div-icon',
-                iconSize: [45, 45],
-                iconAnchor: [22, 22],
-                popupAnchor: [0, -22]
+                iconSize: [40, 40], iconAnchor: [20, 20]
             });
 
-            const homeMarker = L.marker([homeLocation.lat, homeLocation.lng], { icon: homeIcon }).addTo(map);
-            homeMarker.bindPopup(`<b>🏢 ${homeLocation.name}</b><br>${homeLocation.address}`).openPopup();
+            L.marker([homeLocation.lat, homeLocation.lng], { icon: homeIcon }).addTo(map)
+                .bindPopup(`<b>${homeLocation.name}</b>`).openPopup();
 
             restaurantsData.forEach(r => {
                 const marker = L.marker([r.lat, r.lng]).addTo(map);
                 marker.on('click', () => {
                     showRestaurantInfo(r);
-                    // 줌 레벨을 지정하지 않아 현재 확대 정도를 유지하며 이동합니다.
-                    map.panTo([r.lat, r.lng]); 
+                    map.panTo([r.lat, r.lng]);
                 });
-                markers.push(marker);
             });
         }
 
@@ -364,56 +237,40 @@
         }
 
         function showRestaurantInfo(restaurant) {
-            let instagramButton = '';
-            if (restaurant.instagram) {
-                instagramButton = `<a href="${restaurant.instagram}" target="_blank" class="instagram-btn">📸 인스타그램 보기</a>`;
-            }
-
+            const insta = restaurant.instagram ? `<a href="${restaurant.instagram}" target="_blank" class="instagram-btn">📸 인스타그램 보기</a>` : '';
             document.querySelector('.sidebar-content').innerHTML = `
                 <div class="restaurant-info">
                     <h3>${restaurant.name}</h3>
-                    <div class="info-item">
-                        <strong>💰 가격:</strong> ${restaurant.price.toLocaleString()}원
-                    </div>
-                    <div class="info-item">
-                        <strong>⏰ 영업시간:</strong><br>
-                        ${restaurant.hours}
-                    </div>
-                    <div class="info-item">
-                        <strong>📍 주소:</strong><br>
-                        ${restaurant.address}
-                    </div>
-                    <div class="info-item">
-                        <strong>ℹ️ 설명:</strong><br>
-                        ${restaurant.description}
-                    </div>
-                    ${instagramButton}
+                    <div class="info-item"><strong>💰 가격:</strong> ${restaurant.price.toLocaleString()}원</div>
+                    <div class="info-item"><strong>⏰ 시간:</strong> ${restaurant.hours}</div>
+                    <div class="info-item"><strong>📍 주소:</strong> ${restaurant.address}</div>
+                    <div class="info-item"><strong>ℹ️ 설명:</strong> ${restaurant.description}</div>
+                    ${insta}
                 </div>
             `;
+            // 모바일 배려: 정보가 업데이트되면 사이드바 위치로 부드럽게 스크롤
+            if (window.innerWidth <= 1024) {
+                document.querySelector('.sidebar').scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         function renderRestaurantCards() {
-            document.getElementById('restaurantCards').innerHTML = restaurantsData.map(r => {
-                const dinnerTag = hasDinner(r.hours) ? `<span class="badge dinner-badge">🌙 저녁영업</span>` : '';
-                return `
-                    <div class="restaurant-card" onclick="selectCard(${r.id})">
-                        <h3>${r.name}</h3>
-                        <span class="badge price-badge">💳 ${r.price.toLocaleString()}원</span>
-                        <span class="badge time-badge">☀️ 점심영업</span>
-                        ${dinnerTag}
-                        <div class="address" style="font-size: 0.85em; opacity: 0.9; margin-top: 8px;">📍 ${r.address}</div>
-                    </div>
-                `;
-            }).join('');
+            document.getElementById('restaurantCards').innerHTML = restaurantsData.map(r => `
+                <div class="restaurant-card" onclick="selectCard(${r.id})">
+                    <h3 style="font-size: 1.1em; margin-bottom: 8px;">${r.name}</h3>
+                    <span class="badge price-badge">💳 ${r.price.toLocaleString()}원</span>
+                    <span class="badge time-badge">☀️ 점심</span>
+                    ${hasDinner(r.hours) ? '<span class="badge dinner-badge">🌙 저녁</span>' : ''}
+                </div>
+            `).join('');
         }
 
         function selectCard(id) {
             const r = restaurantsData.find(x => x.id === id);
             if (r) {
-                // 줌 레벨을 지정하지 않아 현재 확대 정도를 유지하며 이동합니다.
                 map.panTo([r.lat, r.lng]);
                 showRestaurantInfo(r);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (window.innerWidth > 1024) window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
     </script>
