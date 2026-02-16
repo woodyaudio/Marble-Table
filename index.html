@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marble-Table</title> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+    <title>Marble-Table</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -12,6 +12,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
+        /* 광고 스타일 */
         .ad-container {
             background: white;
             display: flex;
@@ -28,8 +29,9 @@
         }
         .ad-sidebar {
             width: 100%;
-            height: 260px;
+            height: 250px;
             margin-top: 20px;
+            border: 1px dashed #ddd;
         }
         .ad-placeholder {
             color: #999;
@@ -71,7 +73,7 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 3px solid white;
-            z-index: 1; /* 지도 레이어 우선순위 설정 */
+            z-index: 1;
         }
         .sidebar {
             width: 400px;
@@ -79,8 +81,13 @@
             border-radius: 15px;
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            max-height: 900px;
+            max-height: 600px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-content {
+            flex: 1;
         }
         .sidebar h2 {
             color: #667eea;
@@ -99,15 +106,29 @@
             margin-bottom: 10px;
         }
         .info-item {
-            margin: 15px 0;
+            margin: 12px 0;
             color: #555;
             line-height: 1.6;
         }
         .info-item strong {
             color: #333;
         }
-        .instagram-btn {
+        /* 가격 & 시간 배지 스타일 */
+        .badge {
             display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+        .price-badge { background: #eef2ff; color: #4f46e5; }
+        .time-badge { background: #fff7ed; color: #c2410c; }
+        .dinner-badge { background: #fdf2f8; color: #db2777; }
+
+        .instagram-btn {
+            display: block;
             background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
             color: white;
             padding: 12px 25px;
@@ -117,12 +138,32 @@
             margin-top: 15px;
             transition: all 0.3s ease;
             text-align: center;
-            display: block;
         }
         .instagram-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(188, 24, 136, 0.4);
         }
+
+        /* 홈 아이콘 반짝임 애니메이션 */
+        @keyframes pulse-yellow-large {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8); transform: scale(1); }
+            70% { box-shadow: 0 0 0 35px rgba(255, 215, 0, 0); transform: scale(1.1); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); transform: scale(1); }
+        }
+        .home-marker-design {
+            font-size: 32px;
+            background: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #FFD700;
+            animation: pulse-yellow-large 2s infinite;
+            z-index: 1000;
+        }
+
         .restaurant-list {
             background: white;
             border-radius: 15px;
@@ -150,15 +191,6 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
-        .restaurant-card h3 {
-            font-size: 1.3em;
-            margin-bottom: 10px;
-        }
-        .restaurant-card .address {
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-top: 10px;
-        }
         @media (max-width: 1024px) {
             .main-content { flex-direction: column; }
             .sidebar { width: 100%; max-height: none; }
@@ -168,12 +200,13 @@
 </head>
 <body>
     <div class="ad-container ad-top">
-        <div class="ad-placeholder">광고 영역 (728x90)</div>
+        <div class="ad-placeholder">상단 광고 (728x90)</div>
     </div>
 
     <div class="container">
         <header>
-            <h1>🍽️ Marble-Table</h1> <p>친구들과 함께 만드는 우리 동네 맛집!</p>
+            <h1>🍽️ Marble-Table</h1>
+            <p>친구들과 함께 만드는 우리 동네 맛집!</p>
         </header>
 
         <div class="main-content">
@@ -183,8 +216,9 @@
                     <h2>맛집 정보</h2>
                     <p class="placeholder-text">지도의 마커를 클릭하여 맛집 정보를 확인하세요!</p>
                 </div>
+                
                 <div class="ad-container ad-sidebar">
-                    <div class="ad-placeholder">광고 (300x250)</div>
+                    <div class="ad-placeholder">사이드 광고 (300x250)</div>
                 </div>
             </aside>
         </div>
@@ -196,47 +230,91 @@
     </div>
 
     <div class="ad-container ad-bottom">
-        <div class="ad-placeholder">광고 영역 (728x90)</div>
+        <div class="ad-placeholder">하단 광고 (728x90)</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // ========================================
-        // 📍 맛집 데이터 (좌표 보정됨: 가산디지털단지 위주)
-        // ========================================
         const restaurantsData = [
             {
                 id: 1,
                 name: "굿푸드(구로점)",
                 address: "서울특별시 구로구 디지털로26길 5",
-                lat: 37.481558, // 좌표 보정
-                lng: 126.893418, // 좌표 보정
+                lat: 37.481558,
+                lng: 126.893418,
                 description: "매드푸드",
+                price: 7500,
+                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
                 instagram: "https://www.instagram.com/goodfood_highend/"
             },
             {
                 id: 2,
                 name: "KJ푸드",
                 address: "서울특별시 구로구 디지털로26길 43 지하 1층",
-                lat: 37.480895, // 좌표 보정
-                lng: 126.894658, // 좌표 보정
+                lat: 37.480895,
+                lng: 126.894658,
                 description: "라면 무제한",
+                price: 7500,
+                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
                 instagram: null
             },
             {
                 id: 3,
                 name: "제이오제이엠푸드",
                 address: "서울 구로구 디지털로26길 61",
-                lat: 37.481070, // 좌표 보정
-                lng: 126.895648, // 좌표 보정
+                lat: 37.481070,
+                lng: 126.895648,
                 description: "넷마블 사람들 오픈런함",
+                price: 7500,
+                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
                 instagram: "https://www.instagram.com/jojmfood/?hl=ko"
+            },
+            {
+                id: 4,
+                name: "푸드포커스",
+                address: "서울 구로구 디지털로30길 31",
+                lat: 37.482883,
+                lng: 126.896494,
+                description: "세훈님 추천",
+                price: 7500,
+                hours: "평일 11:30~13:30, 주말/공휴일 휴무",
+                instagram: "https://www.instagram.com/anadasia_yoo/"
+            },
+            {
+                id: 5,
+                name: "윤쉐프 코오롱",
+                address: "서울 구로구 디지털로34길 43 B102호",
+                lat: 37.485123,
+                lng: 126.898813,
+                description: "가보신분?",
+                price: 7500,
+                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
+                instagram: "https://www.instagram.com/yoon_chef_/"
+            },
+            {
+                id: 6,
+                name: "알찬푸드",
+                address: "서울 구로구 디지털로33길 48 대륭포스트7차 지하1층",
+                lat: 37.487241,
+                lng: 126.894491,
+                description: "솔직히 여기까진 안갈듯",
+                price: 7500,
+                hours: "평일 11:00~14:00, 주말/공휴일 휴무",
+                instagram: "https://www.instagram.com/your_table__/"
+            },
+            {
+                id: 7,
+                name: "푸드라운지(구로삼성IT구내식당)",
+                address: "서울 구로구 디지털로33길 27 삼성IT밸리 지하1층 107호",
+                lat: 37.486064,
+                lng: 126.894641,
+                description: "바로 옆에 그 유명한 스튜디오 뿌리가 있다고 한다",
+                price: 8200,
+                hours: "중식 11:30 - 13:30 , 석식 17:30 - 19:00",
+                instagram: "https://www.instagram.com/samsungit_foodlounge"
             }
         ];
 
-        // ========================================
-        // 🏠 홈(중심) 위치 - 가산 에이스하이엔드타워 인근
-        // ========================================
         const homeLocation = {
             name: "커맨드 센터(넷마블 컴퍼니)",
             address: "서울 구로구 디지털로26길 38",
@@ -252,36 +330,37 @@
         });
 
         function initMap() {
-            // 지도 초기화
-            map = L.map('map').setView([homeLocation.lat, homeLocation.lng], 16);
+            // 초기 줌 레벨 17
+            map = L.map('map').setView([homeLocation.lat, homeLocation.lng], 17);
             
-            // OSM 타일 추가
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(map);
 
-            // 🏠 홈 마커 (초록색)
-            const homeIcon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
+            const homeIcon = L.divIcon({
+                html: `<div class="home-marker-design">🏢</div>`,
+                className: 'custom-div-icon',
+                iconSize: [45, 45],
+                iconAnchor: [22, 22],
+                popupAnchor: [0, -22]
             });
 
             const homeMarker = L.marker([homeLocation.lat, homeLocation.lng], { icon: homeIcon }).addTo(map);
-            homeMarker.bindPopup(`<b>🏠 ${homeLocation.name}</b><br>${homeLocation.address}`).openPopup();
+            homeMarker.bindPopup(`<b>🏢 ${homeLocation.name}</b><br>${homeLocation.address}`).openPopup();
 
-            // 🍽️ 맛집 마커 추가
             restaurantsData.forEach(r => {
                 const marker = L.marker([r.lat, r.lng]).addTo(map);
                 marker.on('click', () => {
                     showRestaurantInfo(r);
-                    map.setView([r.lat, r.lng], 17);
+                    // 줌 레벨을 지정하지 않아 현재 확대 정도를 유지하며 이동합니다.
+                    map.panTo([r.lat, r.lng]); 
                 });
                 markers.push(marker);
             });
+        }
+
+        function hasDinner(hours) {
+            return hours.includes('석식') || /17:|18:|19:|20:/.test(hours);
         }
 
         function showRestaurantInfo(restaurant) {
@@ -293,6 +372,13 @@
             document.querySelector('.sidebar-content').innerHTML = `
                 <div class="restaurant-info">
                     <h3>${restaurant.name}</h3>
+                    <div class="info-item">
+                        <strong>💰 가격:</strong> ${restaurant.price.toLocaleString()}원
+                    </div>
+                    <div class="info-item">
+                        <strong>⏰ 영업시간:</strong><br>
+                        ${restaurant.hours}
+                    </div>
                     <div class="info-item">
                         <strong>📍 주소:</strong><br>
                         ${restaurant.address}
@@ -307,18 +393,25 @@
         }
 
         function renderRestaurantCards() {
-            document.getElementById('restaurantCards').innerHTML = restaurantsData.map(r => `
-                <div class="restaurant-card" onclick="selectCard(${r.id})">
-                    <h3>${r.name}</h3>
-                    <div class="address">📍 ${r.address}</div>
-                </div>
-            `).join('');
+            document.getElementById('restaurantCards').innerHTML = restaurantsData.map(r => {
+                const dinnerTag = hasDinner(r.hours) ? `<span class="badge dinner-badge">🌙 저녁영업</span>` : '';
+                return `
+                    <div class="restaurant-card" onclick="selectCard(${r.id})">
+                        <h3>${r.name}</h3>
+                        <span class="badge price-badge">💳 ${r.price.toLocaleString()}원</span>
+                        <span class="badge time-badge">☀️ 점심영업</span>
+                        ${dinnerTag}
+                        <div class="address" style="font-size: 0.85em; opacity: 0.9; margin-top: 8px;">📍 ${r.address}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function selectCard(id) {
             const r = restaurantsData.find(x => x.id === id);
             if (r) {
-                map.setView([r.lat, r.lng], 17);
+                // 줌 레벨을 지정하지 않아 현재 확대 정도를 유지하며 이동합니다.
+                map.panTo([r.lat, r.lng]);
                 showRestaurantInfo(r);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
