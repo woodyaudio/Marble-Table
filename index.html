@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marble-Table</title> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .ad-container {
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .ad-top, .ad-bottom {
+            max-width: 1400px;
+            height: 100px;
+            margin: 15px auto;
+        }
+        .ad-sidebar {
+            width: 100%;
+            height: 260px;
+            margin-top: 20px;
+        }
+        .ad-placeholder {
+            color: #999;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        .main-content {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        #map {
+            flex: 1;
+            height: 600px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 3px solid white;
+            z-index: 1; /* 지도 레이어 우선순위 설정 */
+        }
+        .sidebar {
+            width: 400px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-height: 900px;
+            overflow-y: auto;
+        }
+        .sidebar h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+        .placeholder-text {
+            color: #999;
+            text-align: center;
+            padding: 50px 20px;
+            font-size: 1.1em;
+        }
+        .restaurant-info h3 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            margin: 15px 0;
+            color: #555;
+            line-height: 1.6;
+        }
+        .info-item strong {
+            color: #333;
+        }
+        .instagram-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: block;
+        }
+        .instagram-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(188, 24, 136, 0.4);
+        }
+        .restaurant-list {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .restaurant-list h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .restaurant-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .restaurant-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        .restaurant-card .address {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        @media (max-width: 1024px) {
+            .main-content { flex-direction: column; }
+            .sidebar { width: 100%; max-height: none; }
+            #map { height: 500px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ad-container ad-top">
+        <div class="ad-placeholder">광고 영역 (728x90)</div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>🍽️ Marble-Table</h1> <p>친구들과 함께 만드는 우리 동네 맛집!</p>
+        </header>
+
+        <div class="main-content">
+            <div id="map"></div>
+            <aside class="sidebar">
+                <div class="sidebar-content">
+                    <h2>맛집 정보</h2>
+                    <p class="placeholder-text">지도의 마커를 클릭하여 맛집 정보를 확인하세요!</p>
+                </div>
+                <div class="ad-container ad-sidebar">
+                    <div class="ad-placeholder">광고 (300x250)</div>
+                </div>
+            </aside>
+        </div>
+
+        <section class="restaurant-list">
+            <h2>📍 등록된 맛집 목록</h2>
+            <div id="restaurantCards" class="cards-container"></div>
+        </section>
+    </div>
+
+    <div class="ad-container ad-bottom">
+        <div class="ad-placeholder">광고 영역 (728x90)</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ========================================
+        // 📍 맛집 데이터 (좌표 보정됨: 가산디지털단지 위주)
+        // ========================================
+        const restaurantsData = [
+            {
+                id: 1,
+                name: "굿푸드(구로점)",
+                address: "서울특별시 구로구 디지털로26길 5",
+                lat: 37.481558, // 좌표 보정
+                lng: 126.893418, // 좌표 보정
+                description: "매드푸드",
+                instagram: "https://www.instagram.com/goodfood_highend/"
+            },
+            {
+                id: 2,
+                name: "KJ푸드",
+                address: "서울특별시 구로구 디지털로26길 43 지하 1층",
+                lat: 37.480895, // 좌표 보정
+                lng: 126.894658, // 좌표 보정
+                description: "라면 무제한",
+                instagram: null
+            },
+            {
+                id: 3,
+                name: "제이오제이엠푸드",
+                address: "서울 구로구 디지털로26길 61",
+                lat: 37.481070, // 좌표 보정
+                lng: 126.895648, // 좌표 보정
+                description: "넷마블 사람들 오픈런함",
+                instagram: "https://www.instagram.com/jojmfood/?hl=ko"
+            }
+        ];
+
+        // ========================================
+        // 🏠 홈(중심) 위치 - 가산 에이스하이엔드타워 인근
+        // ========================================
+        const homeLocation = {
+            name: "커맨드 센터(넷마블 컴퍼니)",
+            address: "서울 구로구 디지털로26길 38",
+            lat: 37.479932,
+            lng: 126.895215
+        };
+
+        let map, markers = [];
+
+        window.addEventListener('load', function() {
+            initMap();
+            renderRestaurantCards();
+        });
+
+        function initMap() {
+            // 지도 초기화
+            map = L.map('map').setView([homeLocation.lat, homeLocation.lng], 16);
+            
+            // OSM 타일 추가
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            // 🏠 홈 마커 (초록색)
+            const homeIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            const homeMarker = L.marker([homeLocation.lat, homeLocation.lng], { icon: homeIcon }).addTo(map);
+            homeMarker.bindPopup(`<b>🏠 ${homeLocation.name}</b><br>${homeLocation.address}`).openPopup();
+
+            // 🍽️ 맛집 마커 추가
+            restaurantsData.forEach(r => {
+                const marker = L.marker([r.lat, r.lng]).addTo(map);
+                marker.on('click', () => {
+                    showRestaurantInfo(r);
+                    map.setView([r.lat, r.lng], 17);
+                });
+                markers.push(marker);
+            });
+        }
+
+        function showRestaurantInfo(restaurant) {
+            let instagramButton = '';
+            if (restaurant.instagram) {
+                instagramButton = `<a href="${restaurant.instagram}" target="_blank" class="instagram-btn">📸 인스타그램 보기</a>`;
+            }
+
+            document.querySelector('.sidebar-content').innerHTML = `
+                <div class="restaurant-info">
+                    <h3>${restaurant.name}</h3>
+                    <div class="info-item">
+                        <strong>📍 주소:</strong><br>
+                        ${restaurant.address}
+                    </div>
+                    <div class="info-item">
+                        <strong>ℹ️ 설명:</strong><br>
+                        ${restaurant.description}
+                    </div>
+                    ${instagramButton}
+                </div>
+            `;
+        }
+
+        function renderRestaurantCards() {
+            document.getElementById('restaurantCards').innerHTML = restaurantsData.map(r => `
+                <div class="restaurant-card" onclick="selectCard(${r.id})">
+                    <h3>${r.name}</h3>
+                    <div class="address">📍 ${r.address}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectCard(id) {
+            const r = restaurantsData.find(x => x.id === id);
+            if (r) {
+                map.setView([r.lat, r.lng], 17);
+                showRestaurantInfo(r);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    </script>
+</body>
+</html>
