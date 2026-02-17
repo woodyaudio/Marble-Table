@@ -2,379 +2,285 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Marble-Table</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- ✅ 헤더 폰트: Nunito (둥글고 친근한 느낌) -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --panel-w: 340px;
+            --detail-w: 290px;
+            --main-blue: #0c3060;
+            --insta-grad: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            /* ✅ 밝은 베이지 배경 */
-            background-color: #EDEAE3;
-            min-height: 100vh;
+            background: linear-gradient(135deg, #38bdf8 0%, #7dd3fc 50%, #bae6fd 100%);
+            height: 100dvh; overflow: hidden;
         }
 
-        /* 광고 */
-        .ad-container { background: white; display: flex; justify-content: center; align-items: center; margin: 10px auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); color: #aaa; font-size: 0.85em; }
-        .ad-top, .ad-bottom { max-width: 1400px; height: 100px; margin: 15px auto; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        #app { width: 100%; height: 100dvh; display: flex; position: relative; }
 
-        /* ✅ 헤더: pill 스타일 (참고 사진과 유사) */
-        header {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 28px;
-            padding: 0;
-            background: none;
+        /* ═══ 지도 영역 ═══ */
+        #map-area { flex: 1; position: relative; z-index: 0; order: 2; }
+        #map { width: 100%; height: 100%; }
+
+        /* 🏠 홈 버튼 (줌 버튼 하단 정렬) */
+        .home-btn {
+            position: absolute; top: 100px; right: 10px; z-index: 1000;
+            width: 34px; height: 34px; background: #fff;
+            border: 1px solid #ccc; border-radius: 4px; font-size: 16px; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
         }
-        .header-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: #fff;
-            padding: 14px 34px;
-            border-radius: 999px;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.09);
-        }
-        .header-pill h1 {
-            font-family: 'Nunito', sans-serif;
-            font-weight: 900;
-            font-size: 1.65em;
-            color: #2E2A24;
-            letter-spacing: -0.3px;
+        .leaflet-bar a { width: 34px !important; height: 34px !important; line-height: 34px !important; font-size: 18px !important; }
+
+        /* ═══ 마커 디자인 ═══ */
+        .marker-container { display: flex; flex-direction: column; align-items: center; text-align: center; pointer-events: none; }
+        .marker-label {
+            margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--main-blue);
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+            white-space: nowrap;
         }
 
-        /* 지도 */
-        .main-content { display: flex; gap: 20px; margin-bottom: 24px; }
-        #map-wrapper { flex: 2; position: relative; border-radius: 18px; box-shadow: 0 6px 24px rgba(0,0,0,0.10); border: 3px solid white; overflow: hidden; }
-        #map { width: 100%; height: 600px; z-index: 1; }
-        .home-btn { position: absolute; top: 15px; right: 15px; z-index: 1000; background: white; border: 2px solid #FFAB2E; border-radius: 10px; width: 45px; height: 45px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-        .home-btn:hover { background: #FFF8EE; transform: scale(1.05); }
-
-        /* 사이드바 */
-        .sidebar { flex: 1; min-width: 350px; background: white; border-radius: 18px; padding: 25px; box-shadow: 0 6px 24px rgba(0,0,0,0.09); max-height: 600px; overflow-y: auto; border: 1.5px solid #E0DAD0; }
-        .sidebar h2 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.25em; color: #2E2A24; margin-bottom: 16px; }
-        .placeholder-text { color: #AAA49A; text-align: center; padding: 40px 16px; font-size: 0.95em; line-height: 1.7; }
-        .restaurant-info h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.25em; color: #2E2A24; margin-bottom: 14px; }
-        .info-item { margin: 10px 0; color: #555; line-height: 1.6; font-size: 0.93em; }
-        .info-item strong { color: #333; }
-
-        @media (max-width: 1024px) {
-            .main-content { flex-direction: column; }
-            #map-wrapper, #map { height: 350px; width: 100%; }
-            .sidebar { width: 100%; min-width: unset; max-height: none; order: 2; }
+        /* 🔵 [요청반영] 클릭 전 기본 파란색 핀 */
+        .default-marker-pin {
+            width: 30px; height: 30px;
+            /* 명확한 파란색 아이콘으로 변경 */
+            background: url('https://cdn-icons-png.flaticon.com/512/5693/5693831.png') no-repeat center/contain;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
         }
 
-        /* 목록 섹션 */
-        .restaurant-list { background: white; border-radius: 18px; padding: 28px; box-shadow: 0 6px 24px rgba(0,0,0,0.09); border: 1.5px solid #E0DAD0; }
-        .restaurant-list h2 { font-family: 'Nunito', sans-serif; font-weight: 800; color: #2E2A24; margin-bottom: 18px; }
-
-        /* ✅ 필터 UI 디자인 변경 */
-        .filter-section {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            padding: 14px 18px;
-            background: #F5F2EC;
-            border-radius: 999px;
-            border: 1.5px solid #E0DAD0;
+        /* 클릭 후 글래스 모피즘 마커 (모양 유지) */
+        .selected-marker-effect { animation: marker-focus 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; z-index: 999 !important; }
+        .sky-marker-body {
+            width: 30px; height: 30px; background: rgba(56, 189, 248, 0.9);
+            border: 2px solid #fff; border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg); display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .filter-group { display: flex; align-items: center; gap: 8px; }
-        .filter-group label { font-size: 0.85em; font-weight: 700; color: #888; white-space: nowrap; }
+        .sky-marker-icon { width: 10px; height: 10px; background: #fff; border-radius: 50%; transform: rotate(45deg); }
 
-        /* 셀렉트박스 스타일 */
-        .filter-group select {
-            appearance: none;
-            -webkit-appearance: none;
-            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23aaa'/%3E%3C/svg%3E") no-repeat right 12px center;
-            border: 1.5px solid #E0DAD0;
-            border-radius: 999px;
-            padding: 7px 32px 7px 16px;
-            font-size: 0.87em;
-            font-weight: 600;
-            color: #3A3530;
-            cursor: pointer;
-            outline: none;
-            font-family: 'Noto Sans KR', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .filter-group select:focus { border-color: #FFAB2E; box-shadow: 0 0 0 3px rgba(255,171,46,0.15); }
+        @keyframes marker-focus { 100% { transform: scale(1.3) translateY(-8px); } }
 
-        /* 체크박스 pill 스타일 */
-        .dinner-toggle {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: white;
-            border: 1.5px solid #E0DAD0;
-            border-radius: 999px;
-            padding: 7px 16px;
-            font-size: 0.87em;
-            font-weight: 600;
-            color: #3A3530;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-        .dinner-toggle input { display: none; }
-        .dinner-toggle.active {
-            background: linear-gradient(135deg, #FFD966, #FFAB2E);
-            border-color: #FFAB2E;
-            color: #2E2A24;
-            box-shadow: 0 3px 10px rgba(255,171,46,0.3);
+        /* 🏢 넷마블 홈 마커 */
+        .home-marker-design {
+            font-size: 20px; background: #fff; border-radius: 50%; width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center; border: 3px solid #ffcf00;
         }
 
-        #resultCount { font-size: 0.82em; color: #AAA; font-weight: 600; margin-left: auto; }
-
-        /* ✅ 음식점 카드: 노란 그라데이션 */
-        .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-        .restaurant-card {
-            background: linear-gradient(135deg, #FFE566 0%, #FFB727 55%, #FF9500 100%);
-            color: #2E2A24;
-            padding: 18px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 16px rgba(255,171,46,0.22);
-            position: relative;
-            overflow: hidden;
+        /* ═══ 패널 레이아웃 ═══ */
+        #left-panel { position: relative; z-index: 10; display: flex; height: 100dvh; order: 1; }
+        #list-panel {
+            width: var(--panel-w); background: rgba(235, 248, 255, 0.85);
+            backdrop-filter: blur(30px); border-right: 1px solid rgba(255,255,255,0.5);
+            display: flex; flex-direction: column;
         }
-        /* 카드 상단 광택 */
-        .restaurant-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 42%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.28), transparent);
-            border-radius: 14px 14px 0 0;
-            pointer-events: none;
+        #detail-panel { 
+            width: 0; overflow: hidden; height: 100%; transition: width 0.3s ease; 
+            background: rgba(240, 250, 255, 0.95); backdrop-filter: blur(30px); 
         }
-        .restaurant-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(255,171,46,0.38); }
-        .restaurant-card h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.05em; margin-bottom: 9px; color: #2A2218; }
+        #detail-panel.open { width: var(--detail-w); border-right: 1px solid #fff; }
+        #detail-inner { width: var(--detail-w); padding: 25px 20px; position: relative; }
 
-        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-weight: bold; font-size: 0.78em; margin: 3px 3px 0 0; }
-        .price-badge { background: rgba(255,255,255,0.55); color: #2A2218; }
-        .time-badge { background: rgba(255,255,255,0.4); color: #2A2218; }
-        .dinner-badge { background: rgba(180,60,0,0.15); color: #7A2800; }
+        .insta-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 20px; padding: 12px; border-radius: 12px;
+            background: var(--insta-grad); color: white; text-decoration: none; font-weight: 700;
+        }
 
-        /* 마커 */
-        .home-marker-design { font-size: 28px; background: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 3px solid #FFD700; animation: pulse-yellow-large 2s infinite; }
-        @keyframes pulse-yellow-large { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8); transform: scale(1); } 70% { box-shadow: 0 0 0 25px rgba(255, 215, 0, 0); transform: scale(1.1); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); transform: scale(1); } }
-        .selected-marker-wrapper { position: relative; display: flex; align-items: center; justify-content: center; }
-        .selected-pulse { position: absolute; width: 42px; height: 42px; border-radius: 50%; background: rgba(118, 75, 162, 0.35); animation: purple-pulse 1.5s infinite; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-        @keyframes purple-pulse { 0% { box-shadow: 0 0 0 0 rgba(118, 75, 162, 0.6); transform: translate(-50%, -50%) scale(1); } 70% { box-shadow: 0 0 0 18px rgba(118, 75, 162, 0); transform: translate(-50%, -50%) scale(1.15); } 100% { box-shadow: 0 0 0 0 rgba(118, 75, 162, 0); transform: translate(-50%, -50%) scale(1); } }
-
-        .instagram-btn { display: block; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; padding: 12px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.95em; margin-top: 18px; text-align: center; transition: all 0.3s ease; }
-        .instagram-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(188,24,136,0.35); }
+        /* 📱 모바일 UI 및 애니메이션 */
+        @media (max-width: 768px) {
+            #app { flex-direction: column; }
+            #map-area { height: 50dvh; width: 100%; flex: none; order: 1; }
+            #left-panel { height: 50dvh; width: 100%; flex-direction: column; order: 2; overflow: hidden; }
+            #list-panel { width: 100%; height: 100%; }
+            
+            #detail-panel { 
+                position: absolute; bottom: 0; left: 0; width: 100% !important; 
+                height: 100%; z-index: 2000; border-radius: 20px 20px 0 0;
+                transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                display: block;
+            }
+            #detail-panel.open { transform: translateY(0); }
+            #detail-inner { width: 100%; }
+            .home-btn { top: 92px; right: 10px; }
+        }
     </style>
 </head>
 <body>
-    <div class="ad-container ad-top"><div class="ad-placeholder">상단 광고</div></div>
-
-    <div class="container">
-        <!-- ✅ 헤더: pill 스타일 -->
-        <header>
-            <div class="header-pill">
-                <span style="font-size:1.3em;">🍴</span>
-                <h1>⭐ Marble-Table</h1>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <div id="map-wrapper">
-                <button class="home-btn" onclick="goHome()" title="홈으로 이동">🏠</button>
-                <div id="map"></div>
-            </div>
-            <aside class="sidebar">
-                <div class="sidebar-content">
-                    <h2>맛집 정보</h2>
-                    <p class="placeholder-text">지도의 마커나 아래 목록을 클릭하세요!</p>
-                </div>
-            </aside>
-        </div>
-
-        <section class="restaurant-list">
-            <h2 style="font-family:'Nunito',sans-serif; font-weight:800; color:#2E2A24; margin-bottom:18px;">📍 목록</h2>
-            <div class="filter-section">
-                <div class="filter-group">
-                    <label for="priceFilter">💰 가격</label>
-                    <select id="priceFilter" onchange="filterData()">
-                        <option value="all">전체</option>
-                        <option value="7000">7,000원대</option>
-                        <option value="8000">8,000원대</option>
-                    </select>
-                </div>
-                <!-- ✅ 저녁 필터: pill 토글 스타일 -->
-                <label class="dinner-toggle" id="dinnerToggle" onclick="toggleDinner()">
-                    <input type="checkbox" id="dinnerFilter">
-                    🌙 저녁 가능
-                </label>
-                <span id="resultCount"></span>
-            </div>
-            <div id="restaurantCards" class="cards-container"></div>
-        </section>
+<div id="app">
+    <div id="map-area">
+        <div id="map"></div>
+        <button class="home-btn" onclick="goHome()">🏠</button>
     </div>
 
-    <div class="ad-container ad-bottom"><div class="ad-placeholder">하단 광고</div></div>
+    <div id="left-panel">
+        <div id="list-panel">
+            <div id="logo-area" style="padding: 20px 16px 14px;">
+                <h1 style="font-family:'Nunito'; font-size:1.3em; color:var(--main-blue);">🍴 Marble-Table</h1>
+            </div>
+            <div id="list-header" style="padding: 0 16px 15px;">
+                <input type="text" id="searchInput" style="width:100%; padding:10px 15px; border-radius:999px; border:1px solid #fff; outline:none; margin-bottom:10px;" placeholder="식당 검색..." oninput="filterData()">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="priceFilter" onchange="filterData()" style="padding:6px 12px; border-radius:999px; border:1px solid #fff; background:rgba(255,255,255,0.5); font-size:0.8em;">
+                        <option value="all">가격 전체</option>
+                        <option value="7000">7,000원대</option>
+                        <option value="8000">8,000원대+</option>
+                    </select>
+                    <div id="dinnerToggle" onclick="toggleDinner()" style="padding:6px 12px; border-radius:999px; border:1px solid #fff; background:rgba(255,255,255,0.5); font-size:0.8em; cursor:pointer;">🌙 저녁</div>
+                    <span id="resultCount" style="margin-left:auto; font-size:0.8em; font-weight:700; color:var(--main-blue);"></span>
+                </div>
+            </div>
+            <div id="list-scroll" style="flex:1; overflow-y:auto; padding: 10px 12px;">
+                <div id="restaurantCards"></div>
+            </div>
+        </div>
+        <div id="detail-panel">
+            <div id="detail-inner">
+                <button onclick="closeDetail()" style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5em; cursor:pointer;">&times;</button>
+                <div id="detail-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        let restaurantsData = []; // ✅ 데이터를 담을 빈 배열
-        const homeLocation = { name: "넷마블 컴퍼니", lat: 37.479932, lng: 126.895215 };
-        let map;
-        let markerLayer = L.layerGroup();
-        let selectedMarkerId = null;
-        let markerMap = {};
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let restaurantsData = [];
+    const homeLoc = { lat: 37.479932, lng: 126.895215 };
+    let map, markerLayer = L.layerGroup(), selectedMarkerId = null, markerMap = {};
 
-        // ✅ 수정 핵심: 데이터 불러오기 함수
-        async function loadData() {
-            try {
-                // data.json 파일을 불러옵니다
-                const response = await fetch('data.json');
-                restaurantsData = await response.json();
-                
-                // 데이터 로드 후 화면 초기화
-                initMap();
-                filterData();
-                
-                // 모바일 지도 크기 보정
-                setTimeout(() => { map.invalidateSize(); }, 300);
-            } catch (error) {
-                console.error("데이터를 불러오는데 실패했습니다:", error);
-                alert("맛집 데이터를 불러올 수 없습니다. 서버 설정을 확인하세요.");
-            }
-        }
-
-        window.addEventListener('load', loadData); // 로드 시 실행
-
-        // ✅ 저녁 토글 pill 함수
-        function toggleDinner() {
-            const cb = document.getElementById('dinnerFilter');
-            const toggle = document.getElementById('dinnerToggle');
-            cb.checked = !cb.checked;
-            toggle.classList.toggle('active', cb.checked);
+    async function loadData() {
+        try {
+            const res = await fetch('data.json');
+            restaurantsData = await res.json();
+            // [지침] Dev_Test 제외
+            restaurantsData = restaurantsData.filter(r => r.name !== 'Dev_Test');
+            initMap();
             filterData();
+        } catch(e) { console.error("데이터 로드 실패"); }
+    }
+
+    function initMap() {
+        map = L.map('map', { zoomControl: false }).setView([homeLoc.lat, homeLoc.lng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+        markerLayer.addTo(map);
+
+        L.marker([homeLoc.lat, homeLoc.lng], {
+            icon: L.divIcon({
+                html: `<div class="marker-container"><div class="home-marker-design">🏢</div><div class="marker-label" style="color:#d97706">넷마블 컴퍼니</div></div>`,
+                className: '', iconSize: [100, 60], iconAnchor: [50, 30]
+            })
+        }).addTo(map);
+    }
+
+    // 마커 아이콘 생성 (클릭 전 파란색 적용)
+    function createIcon(name, isSelected = false) {
+        const html = isSelected ? 
+            `<div class="marker-container selected-marker-effect"><div class="sky-marker-body"><div class="sky-marker-icon"></div></div><div class="marker-label">${name}</div></div>` :
+            `<div class="marker-container"><div class="default-marker-pin"></div><div class="marker-label">${name}</div></div>`;
+        
+        return L.divIcon({ html, className: '', iconSize: [100, 60], iconAnchor: [50, 30] });
+    }
+
+    function filterData() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const p = document.getElementById('priceFilter').value;
+        const isD = document.getElementById('dinnerToggle').classList.contains('active');
+
+        const filtered = restaurantsData.filter(r => {
+            const mQ = r.name.toLowerCase().includes(q);
+            const mP = p === 'all' || (p === '7000' ? r.price < 8000 : r.price >= 8000);
+            const mD = !isD || (r.hours.includes('석식') || /17:|18:|19:/.test(r.hours));
+            return mQ && mP && mD;
+        });
+
+        renderCards(filtered);
+        updateMarkers(filtered);
+        document.getElementById('resultCount').innerText = `${filtered.length}곳`;
+    }
+
+    function updateMarkers(data) {
+        markerLayer.clearLayers();
+        markerMap = {};
+        data.forEach(r => {
+            const isSel = r.id === selectedMarkerId;
+            const m = L.marker([r.lat, r.lng], { icon: createIcon(r.name, isSel) }).addTo(markerLayer);
+            if(isSel) m.setZIndexOffset(1000);
+            markerMap[r.id] = m;
+            m.on('click', () => selectRestaurant(r.id));
+        });
+    }
+
+    function selectRestaurant(id) {
+        const r = restaurantsData.find(x => x.id === id);
+        if(!r) return;
+
+        if(selectedMarkerId && markerMap[selectedMarkerId]) {
+            const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
+            markerMap[selectedMarkerId].setIcon(createIcon(prevR.name, false)).setZIndexOffset(0);
+        }
+        
+        selectedMarkerId = id;
+        if(markerMap[id]) {
+            markerMap[id].setIcon(createIcon(r.name, true)).setZIndexOffset(1000);
         }
 
-        function initMap() {
-            map = L.map('map').setView([homeLocation.lat, homeLocation.lng], 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(map);
-            markerLayer.addTo(map);
+        map.panTo([r.lat, r.lng]);
+        
+        let html = `<h2 style="color:var(--main-blue); margin-bottom:15px;">${r.name}</h2>
+                    <div style="font-size:0.95em; line-height:1.7; color:#444;">
+                        <p>💰 <b>가격:</b> ${r.price.toLocaleString()}원</p>
+                        <p>⏰ <b>시간:</b> ${r.hours}</p>
+                        <p style="margin-top:10px; padding-top:10px; border-top:1px solid #eee;">${r.description || '상세 설명이 없습니다.'}</p>
+                    </div>`;
+        if(r.instagram) html += `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램 보기</a>`;
 
-            const homeIcon = L.divIcon({
-                html: `<div class="home-marker-design">🏢</div>`,
-                className: 'custom-div-icon',
-                iconSize: [40, 40], iconAnchor: [20, 20]
-            });
-
-            L.marker([homeLocation.lat, homeLocation.lng], { icon: homeIcon }).addTo(map)
-                .bindPopup(`<b>${homeLocation.name}</b>`).openPopup();
+        document.getElementById('detail-content').innerHTML = html;
+        document.getElementById('detail-panel').classList.add('open');
+        
+        document.querySelectorAll('.restaurant-card').forEach(c => c.style.background = 'rgba(255,255,255,0.5)');
+        const target = document.getElementById(`card-${id}`);
+        if(target) {
+            target.style.background = '#fff';
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
+    }
 
-        function goHome() {
-            map.setView([homeLocation.lat, homeLocation.lng], 17);
+    function renderCards(data) {
+        const container = document.getElementById('restaurantCards');
+        container.innerHTML = data.map(r => `
+            <div class="restaurant-card" id="card-${r.id}" onclick="selectRestaurant(${r.id})" 
+                 style="background:rgba(255,255,255,0.5); border:1.5px solid rgba(255,255,255,0.7); border-radius:16px; padding:13px 15px; margin-bottom:8px; cursor:pointer;">
+                <div style="font-weight:800; color:var(--main-blue);">${r.name}</div>
+                <div style="font-size:0.85em; color:#0369a1; margin-top:4px;">💳 ${r.price.toLocaleString()}원</div>
+            </div>
+        `).join('');
+    }
+
+    function closeDetail() {
+        document.getElementById('detail-panel').classList.remove('open');
+        if(selectedMarkerId && markerMap[selectedMarkerId]) {
+            const r = restaurantsData.find(x => x.id === selectedMarkerId);
+            markerMap[selectedMarkerId].setIcon(createIcon(r.name, false));
         }
+        selectedMarkerId = null;
+    }
 
-        function hasDinner(hours) {
-            return hours.includes('석식') || /17:|18:|19:|20:/.test(hours);
-        }
+    function goHome() { map.setView([homeLoc.lat, homeLoc.lng], 17); }
+    function toggleDinner() { 
+        const b = document.getElementById('dinnerToggle');
+        b.classList.toggle('active');
+        b.style.background = b.classList.contains('active') ? '#0c3060' : 'rgba(255,255,255,0.5)';
+        b.style.color = b.classList.contains('active') ? '#fff' : '#000';
+        filterData(); 
+    }
 
-        function filterData() {
-            const priceFilter = document.getElementById('priceFilter').value;
-            const dinnerFilter = document.getElementById('dinnerFilter').checked;
-
-            const filtered = restaurantsData.filter(r => {
-                let priceMatch = true;
-                if (priceFilter === '7000') priceMatch = (r.price >= 7000 && r.price < 8000);
-                if (priceFilter === '8000') priceMatch = (r.price >= 8000);
-                const dinnerMatch = !dinnerFilter || hasDinner(r.hours);
-                return priceMatch && dinnerMatch;
-            });
-
-            updateDisplay(filtered);
-        }
-
-        function createNormalIcon() {
-            return L.icon({
-                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-            });
-        }
-
-        function createSelectedIcon() {
-            return L.divIcon({
-                html: `<div class="selected-marker-wrapper"><div class="selected-pulse"></div><img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png" style="width:30px; height:49px; filter: hue-rotate(270deg) saturate(2);"></div>`,
-                className: '', iconSize: [30, 49], iconAnchor: [15, 49], popupAnchor: [0, -49]
-            });
-        }
-
-        function updateDisplay(data) {
-            markerLayer.clearLayers();
-            markerMap = {};
-            selectedMarkerId = null;
-
-            data.forEach(r => {
-                const marker = L.marker([r.lat, r.lng], { icon: createNormalIcon() }).addTo(markerLayer);
-                markerMap[r.id] = marker;
-                marker.on('click', () => {
-                    selectMarker(r.id);
-                    showRestaurantInfo(r);
-                    map.panTo([r.lat, r.lng]);
-                });
-            });
-
-            document.getElementById('restaurantCards').innerHTML = data.map(r => `
-                <div class="restaurant-card" onclick="selectCard(${r.id})">
-                    <h3 style="font-size: 1.1em; margin-bottom: 8px;">${r.name}</h3>
-                    <span class="badge price-badge">💳 ${r.price.toLocaleString()}원</span>
-                    <span class="badge time-badge">☀️ 점심</span>
-                    ${hasDinner(r.hours) ? '<span class="badge dinner-badge">🌙 저녁</span>' : ''}
-                </div>
-            `).join('');
-
-            document.getElementById('resultCount').innerText = `${data.length}곳`;
-        }
-
-        function selectMarker(id) {
-            if (selectedMarkerId !== null && markerMap[selectedMarkerId]) {
-                markerMap[selectedMarkerId].setIcon(createNormalIcon());
-            }
-            if (markerMap[id]) {
-                markerMap[id].setIcon(createSelectedIcon());
-            }
-            selectedMarkerId = id;
-        }
-
-        function showRestaurantInfo(restaurant) {
-            const instagramBtn = restaurant.instagram ? `<a href="${restaurant.instagram}" target="_blank" class="instagram-btn">📸 인스타그램 보기</a>` : '';
-            document.querySelector('.sidebar-content').innerHTML = `
-                <div class="restaurant-info">
-                    <h3>${restaurant.name}</h3>
-                    <div class="info-item"><strong>💰 가격:</strong> ${restaurant.price.toLocaleString()}원</div>
-                    <div class="info-item"><strong>⏰ 시간:</strong> ${restaurant.hours}</div>
-                    <div class="info-item"><strong>📍 주소:</strong> ${restaurant.address}</div>
-                    <div class="info-item"><strong>ℹ️ 설명:</strong> ${restaurant.description}</div>
-                    ${instagramBtn}
-                </div>
-            `;
-        }
-
-        function selectCard(id) {
-            const r = restaurantsData.find(x => x.id === id);
-            if (r) {
-                selectMarker(r.id);
-                map.panTo([r.lat, r.lng]);
-                showRestaurantInfo(r);
-                if (window.innerWidth <= 1024) {
-                    const offsetTop = document.getElementById('map-wrapper').getBoundingClientRect().top + window.pageYOffset - 15;
-                    window.scrollTo({ top: offsetTop, behavior: 'smooth' });
-                }
-            }
-        }
-    </script>
+    window.addEventListener('load', loadData);
+</script>
 </body>
 </html>
