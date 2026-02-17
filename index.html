@@ -147,15 +147,29 @@
         }
 
         /* 사이드바 정보 스타일 */
-        .restaurant-info h3 {
-            color: #333; font-size: 1.4em; margin-bottom: 12px;
-        }
-        .info-item {
-            margin: 10px 0; color: #555; line-height: 1.6;
-        }
+        .restaurant-info h3 { color: #333; font-size: 1.4em; margin-bottom: 12px; }
+        .info-item { margin: 10px 0; color: #555; line-height: 1.6; }
         .info-item strong { color: #333; }
-        .placeholder-text {
-            color: #999; text-align: center; padding: 40px 20px; font-size: 1em;
+        .placeholder-text { color: #999; text-align: center; padding: 40px 20px; font-size: 1em; }
+
+        /* ✅ 인스타그램 버튼 */
+        .instagram-btn {
+            display: block;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-top: 18px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .instagram-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(188, 24, 136, 0.45);
+            opacity: 0.92;
         }
     </style>
 </head>
@@ -210,17 +224,17 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const restaurantsData = [
-            { id: 1,  name: "굿푸드(구로점)",    address: "서울특별시 구로구 디지털로26길 5",              lat: 37.481558, lng: 126.893418, description: "매드푸드",                      price: 7500, hours: "중식 11:00~14:00, 주말/공휴일 휴무" },
-            { id: 2,  name: "KJ푸드",            address: "서울특별시 구로구 디지털로26길 43 지하 1층",    lat: 37.480895, lng: 126.894658, description: "제발 인스타 좀 만들어주세요",   price: 7500, hours: "중식 11:00~14:00, 주말/공휴일 휴무" },
-            { id: 3,  name: "제이오제이엠푸드",   address: "서울 구로구 디지털로26길 61",                  lat: 37.481070, lng: 126.895648, description: "넷마블 오픈런 맛집",             price: 7500, hours: "중식 11:00~14:00, 주말/공휴일 휴무" },
-            { id: 4,  name: "푸드포커스",         address: "서울 구로구 디지털로30길 31",                  lat: 37.482883, lng: 126.896494, description: "세훈님 추천",                   price: 7500, hours: "중식 11:30~13:30, 주말/공휴일 휴무" },
-            { id: 5,  name: "갓한밥",             address: "서울 구로구 디지털로 243 지하이시티 B114호",   lat: 37.481914, lng: 126.892477, description: "가보신분?",                     price: 7500, hours: "중식 11:30~14:00, 석식 17:00-19:00, 주말/공휴일 휴무" },
-            { id: 6,  name: "윤쉐프 코오롱",      address: "서울 구로구 디지털로34길 43 B102호",           lat: 37.485123, lng: 126.898813, description: "가보신분?",                     price: 7500, hours: "중식 11:00~14:00, 주말/공휴일 휴무" },
-            { id: 7,  name: "얌얌 한식 뷔페",     address: "서울 금천구 디지털로10길 37 아스크타워",       lat: 37.476706, lng: 126.889701, description: "근처 사시는 분들이 가기 좋을듯", price: 7500, hours: "중식 11:30~14:00, 석식 17:30-20:00, 주말/공휴일 휴무" },
-            { id: 8,  name: "더이츠푸드",         address: "서울 구로구 디지털로 288 지하1층 B108호",      lat: 37.483621, lng: 126.895451, description: "여기 인스타 발견하시면 제보좀",  price: 7000, hours: "중식 11:00~13:40, 주말/공휴일 휴무" },
-            { id: 9,  name: "알찬푸드",           address: "서울 구로구 디지털로33길 48 대륭7차 지하1층",  lat: 37.487241, lng: 126.894491, description: "솔직히 여기까진 안갈듯",       price: 7500, hours: "중식 11:00~14:00, 주말/공휴일 휴무" },
-            { id: 10, name: "푸드라운지",         address: "서울 구로구 디지털로33길 27 지하1층",          lat: 37.486064, lng: 126.894641, description: "석식 가능 식당",                price: 8200, hours: "중식 11:30-13:30, 석식 17:30-19:00, 주말/공휴일 휴무" },
-            { id: 11, name: "그린푸드 가산",      address: "서울특별시 금천구 가마산로 96 대륭테크노타운8차 B111호", lat: 37.485254, lng: 126.877451, description: "여긴 어디?",          price: 8000, hours: "중식 11:00-14:00, 주말/공휴일 휴무" }
+          { id: 1, name: "굿푸드(구로점)", address: "서울특별시 구로구 디지털로26길 5", lat: 37.481558, lng: 126.893418, description: "매드푸드", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/goodfood_highend/" },
+            { id: 2, name: "KJ푸드", address: "서울특별시 구로구 디지털로26길 43 지하 1층", lat: 37.480895, lng: 126.894658, description: "제발 인스타 좀 만들어주세요", price: 7500, hours: "중식 11:00~14:00", instagram: null },
+            { id: 3, name: "제이오제이엠푸드", address: "서울 구로구 디지털로26길 61", lat: 37.481070, lng: 126.895648, description: "넷마블 오픈런 맛집", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/jojmfood/" },
+            { id: 4, name: "푸드포커스", address: "서울 구로구 디지털로30길 31", lat: 37.482883, lng: 126.896494, description: "세훈님 추천", price: 7500, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/anadasia_yoo/" },
+            { id: 5, name: "갓한밥", address: "서울 구로구 디지털로 243 지하이시티 B114, B115호", lat: 37.481914, lng: 126.892477, description: "가보신분?", price: 7500, hours: "중식 11:30~14:00, 석식 17:00-19:00", instagram: "https://www.instagram.com/god1bab" },
+            { id: 6, name: "윤쉐프 코오롱", address: "서울 구로구 디지털로34길 43 B102호", lat: 37.485123, lng: 126.898813, description: "가보신분?", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/yoon_chef_/" },
+            { id: 7, name: "얌얌 한식 뷔페", address: "서울 금천구 디지털로10길 37 아스크타워 232~237호", lat: 37.476706, lng: 126.889701, description: "근처 사시는 분들께 추천", price: 7500, hours: "중식 11:30~14:00, 석식 17:30-20:00", instagram: "https://www.instagram.com/yamyam_ask" },
+            { id: 8, name: "더이츠푸드", address: "서울 구로구 디지털로 288 지하1층 B108호", lat: 37.483621, lng: 126.895451, description: "여기 인스타 발견하시면 제보좀", price: 7000, hours: "중식 11:00~13:40", instagram: null },
+            { id: 9, name: "알찬푸드", address: "서울 구로구 디지털로33길 48 대륭7차 지하1층", lat: 37.487241, lng: 126.894491, description: "조금 멀지만 알찬 구성", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/your_table__/" },
+            { id: 10, name: "푸드라운지", address: "서울 구로구 디지털로33길 27 지하1층", lat: 37.486064, lng: 126.894641, description: "석식 가능 식당", price: 8200, hours: "중식 11:30-13:30, 석식 17:30-19:00", instagram: "https://www.instagram.com/samsungit_foodlounge" },
+            { id: 11, name: "그린푸드 가산", address: "서울특별시 금천구 가마산로 96 B111호", lat: 37.485254, lng: 126.877451, description: "가산디지털단지 방면", price: 8000, hours: "중식 11:00-14:00", instagram: "https://www.instagram.com/greenfood_gasan/" }
         ];
 
         const homeLocation = { name: "넷마블 컴퍼니", lat: 37.479932, lng: 126.895215 };
@@ -349,7 +363,12 @@
             selectedMarkerId = id;
         }
 
+        // ✅ 인스타그램 버튼 포함
         function showRestaurantInfo(restaurant) {
+            const instagramBtn = restaurant.instagram
+                ? `<a href="${restaurant.instagram}" target="_blank" class="instagram-btn">📸 인스타그램 보기</a>`
+                : '';
+
             document.querySelector('.sidebar-content').innerHTML = `
                 <div class="restaurant-info">
                     <h3>${restaurant.name}</h3>
@@ -357,6 +376,7 @@
                     <div class="info-item"><strong>⏰ 시간:</strong> ${restaurant.hours}</div>
                     <div class="info-item"><strong>📍 주소:</strong> ${restaurant.address}</div>
                     <div class="info-item"><strong>ℹ️ 설명:</strong> ${restaurant.description}</div>
+                    ${instagramBtn}
                 </div>
             `;
         }
