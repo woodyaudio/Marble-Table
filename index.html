@@ -11,6 +11,7 @@
             --panel-w: 340px;
             --detail-w: 290px;
             --main-blue: #0c3060;
+            --tab-width: 70px;
             --insta-grad: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
         }
 
@@ -18,10 +19,80 @@
         body { font-family: 'Noto Sans KR', sans-serif; background: #f0f9ff; height: 100dvh; overflow: hidden; }
         #app { width: 100%; height: 100dvh; display: flex; position: relative; }
 
+        /* ═══════════════════════════════════
+           탭 네비게이션 (PC: 왼쪽 세로)
+        ═══════════════════════════════════ */
+        #tab-nav {
+            width: var(--tab-width);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            order: 0;
+        }
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f3f4f6;
+            padding: 20px 0;
+            color: #6b7280;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .tab-item:hover {
+            background: #f9fafb;
+            color: var(--main-blue);
+        }
+        .tab-item.active {
+            background: #eff6ff;
+            color: var(--main-blue);
+            border-left: 3px solid var(--main-blue);
+        }
+        .tab-icon {
+            font-size: 1.8em;
+        }
+
         /* ═══ 지도 영역 ═══ */
         #map-area { flex: 1; position: relative; z-index: 0; order: 2; }
         #map { width: 100%; height: 100%; }
         .leaflet-control-zoom { display: none !important; }
+
+        /* ═══ 컨텐츠 영역 (지도/게임/문의) ═══ */
+        .content-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        .content-view.active {
+            display: flex;
+        }
+        #map-view {
+            flex-direction: row;
+        }
+        #game-view, #contact-view {
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .placeholder-content {
+            text-align: center;
+            color: #6b7280;
+        }
+        .placeholder-content h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
 
         /* ═══ 타이틀 및 패널 ═══ */
         .drag-handle { display: none; }
@@ -70,8 +141,35 @@
 
         /* 📱 모바일 설정 */
         @media (max-width: 768px) {
-            /* ✅ 지도가 상단 꽉 차게 (safe-area 고려) */
             #app { flex-direction: column; }
+
+            /* 탭 네비게이션: 하단 가로 */
+            #tab-nav {
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                width: 100%;
+                height: 65px;
+                flex-direction: row;
+                border-right: none;
+                border-top: 1px solid #e5e7eb;
+                z-index: 1002;
+                padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+            .tab-item {
+                flex: 1;
+                border-bottom: none;
+                border-right: 1px solid #f3f4f6;
+                padding: 8px 0;
+            }
+            .tab-item:last-child {
+                border-right: none;
+            }
+            .tab-item.active {
+                border-left: none;
+                border-top: 3px solid var(--main-blue);
+            }
+
+            /* 지도 영역 */
             #map-area { 
                 position: fixed !important;
                 top: 0; 
@@ -79,27 +177,21 @@
                 right: env(safe-area-inset-right, 0);
                 height: 100vh !important;
                 width: 100vw !important;
-                order: 0;
                 z-index: 0;
                 padding-top: env(safe-area-inset-top, 0);
             }
-            #map { 
-                width: 100%; 
-                height: 100%; 
-            }
 
-            /* ✅ 타이틀 박스 숨김 */
+            /* 타이틀 박스 숨김 */
             .main-title-box { display: none !important; }
 
             /* 패널 */
             #left-panel { 
                 position: fixed;
-                bottom: env(safe-area-inset-bottom, 0);
+                bottom: 65px;
                 left: env(safe-area-inset-left, 0);
                 right: env(safe-area-inset-right, 0);
                 width: 100%;
                 height: 42dvh;
-                flex-direction: column;
                 z-index: 1001;
                 box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
                 border-radius: 24px 24px 0 0;
@@ -111,7 +203,6 @@
                 border-radius: 24px 24px 0 0;
             }
 
-            /* ✅ collapsed 상태: 위로 당겨서 접힘 */
             #left-panel.collapsed { 
                 transform: translateY(calc(100% - 50px));
             }
@@ -135,9 +226,9 @@
             /* 상세 패널 전체 화면 */
             #detail-panel { 
                 position: fixed;
-                top: 0; left: 0; right: 0; bottom: 0;
+                top: 0; left: 0; right: 0; bottom: 65px;
                 width: 100% !important;
-                height: 100dvh !important;
+                height: calc(100dvh - 65px) !important;
                 z-index: 2000;
                 border-radius: 0;
                 transform: translateY(100%);
@@ -148,53 +239,93 @@
                 transform: translateY(0);
                 visibility: visible;
             }
+
+            /* 게임/문의 뷰도 탭 위까지만 */
+            #game-view, #contact-view {
+                padding-bottom: 65px;
+            }
         }
     </style>
 </head>
 <body>
 <div id="app">
-    <div id="map-area"><div id="map"></div></div>
+    <!-- 📍 탭 네비게이션 -->
+    <nav id="tab-nav">
+        <div class="tab-item active" onclick="switchTab('map')">
+            <div class="tab-icon">🗺️</div>
+            <div>지도 홈</div>
+        </div>
+        <div class="tab-item" onclick="switchTab('game')">
+            <div class="tab-icon">🎮</div>
+            <div>게임</div>
+        </div>
+        <div class="tab-item" onclick="switchTab('contact')">
+            <div class="tab-icon">✉️</div>
+            <div>문의</div>
+        </div>
+    </nav>
 
-    <div id="left-panel">
-        <div id="list-panel">
-            <div class="drag-handle" onclick="toggleCollapse()">
-                <div class="drag-text-btn">접기 / 펼치기</div>
-            </div>
-            
-            <div class="main-title-box">
-                <h1><span>🍴⭐</span> Woody-Table</h1>
-            </div>
-            
-            <div id="list-header" style="padding: 0 16px 15px;">
-                <input type="text" id="searchInput" 
-                       style="width:100%; padding:10px 15px; border-radius:999px; border:1px solid #fff; outline:none; margin-bottom:12px;" 
-                       placeholder="식당 검색..." 
-                       oninput="filterData()">
+    <!-- 📍 지도 홈 뷰 -->
+    <div id="map-view" class="content-view active">
+        <div id="map-area"><div id="map"></div></div>
+
+        <div id="left-panel">
+            <div id="list-panel">
+                <div class="drag-handle" onclick="toggleCollapse()">
+                    <div class="drag-text-btn">접기 / 펼치기</div>
+                </div>
                 
-                <div class="filter-row">
-                    <select id="priceFilter" class="filter-item" onchange="filterData()">
-                        <option value="all">가격 전체</option>
-                        <option value="7000">7,000원대</option>
-                        <option value="8000">8,000원대</option>
-                    </select>
-                    <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식 가능</div>
-                    <div class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
+                <div class="main-title-box">
+                    <h1><span>🍴⭐</span> Woody-Table</h1>
+                </div>
+                
+                <div id="list-header" style="padding: 0 16px 15px;">
+                    <input type="text" id="searchInput" 
+                           style="width:100%; padding:10px 15px; border-radius:999px; border:1px solid #fff; outline:none; margin-bottom:12px;" 
+                           placeholder="식당 검색..." 
+                           oninput="filterData()">
+                    
+                    <div class="filter-row">
+                        <select id="priceFilter" class="filter-item" onchange="filterData()">
+                            <option value="all">가격 전체</option>
+                            <option value="7000">7,000원대</option>
+                            <option value="8000">8,000원대</option>
+                        </select>
+                        <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식 가능</div>
+                        <div class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
+                    </div>
+                </div>
+
+                <div id="list-scroll">
+                    <div id="restaurantCards"></div>
                 </div>
             </div>
-
-            <div id="list-scroll">
-                <div id="restaurantCards"></div>
+            
+            <div id="detail-panel">
+                <div id="detail-inner">
+                    <button onclick="closeDetail()" 
+                            style="position:absolute; top:15px; right:20px; border:none; background:none; font-size:1.8em; cursor:pointer; color:#888;">
+                        &times;
+                    </button>
+                    <div id="detail-content"></div>
+                </div>
             </div>
         </div>
-        
-        <div id="detail-panel">
-            <div id="detail-inner">
-                <button onclick="closeDetail()" 
-                        style="position:absolute; top:15px; right:20px; border:none; background:none; font-size:1.8em; cursor:pointer; color:#888;">
-                    &times;
-                </button>
-                <div id="detail-content"></div>
-            </div>
+    </div>
+
+    <!-- 📍 게임 뷰 -->
+    <div id="game-view" class="content-view">
+        <div class="placeholder-content">
+            <h2>🎮 게임</h2>
+            <p>게임 기능은 준비 중입니다.</p>
+        </div>
+    </div>
+
+    <!-- 📍 문의 뷰 -->
+    <div id="contact-view" class="content-view">
+        <div class="placeholder-content">
+            <h2>✉️ 개발자에게 문의</h2>
+            <p>문의 기능은 준비 중입니다.</p>
         </div>
     </div>
 </div>
@@ -205,6 +336,27 @@
     const homeLoc = { lat: 37.479932, lng: 126.895215 };
     let map, markerLayer = L.layerGroup(), selectedMarkerId = null, markerMap = {};
 
+    /* ═══════════════════════════════════
+       탭 전환
+    ═══════════════════════════════════ */
+    function switchTab(tabName) {
+        // 탭 활성화 상태 변경
+        document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        // 뷰 전환
+        document.querySelectorAll('.content-view').forEach(view => view.classList.remove('active'));
+        document.getElementById(`${tabName}-view`).classList.add('active');
+
+        // 지도 탭으로 돌아올 때 지도 크기 갱신
+        if (tabName === 'map' && map) {
+            setTimeout(() => map.invalidateSize(), 100);
+        }
+    }
+
+    /* ═══════════════════════════════════
+       데이터 로드 & 지도 초기화
+    ═══════════════════════════════════ */
     async function loadData() {
         try {
             const res = await fetch('data.json');
@@ -219,7 +371,10 @@
 
     function initMap() {
         map = L.map('map', { zoomControl: false }).setView([homeLoc.lat, homeLoc.lng], 17);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
         markerLayer.addTo(map);
         
         L.marker([homeLoc.lat, homeLoc.lng], { 
@@ -234,9 +389,7 @@
             }) 
         }).addTo(map);
 
-        // ✅ PC/모바일 모두 지도 클릭 시 마커 선택 해제 + 패널 접기
         map.on('click', () => {
-            // 선택된 마커 해제
             if (selectedMarkerId !== null) {
                 const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
                 if (prevR && markerMap[selectedMarkerId]) {
@@ -245,8 +398,6 @@
                 selectedMarkerId = null;
                 closeDetail();
             }
-
-            // 모바일에서만 패널 접기
             if (window.innerWidth <= 768) {
                 document.getElementById('left-panel').classList.add('collapsed');
             }
@@ -295,7 +446,7 @@
             markerMap[r.id] = m;
             
             m.on('click', (e) => {
-                L.DomEvent.stopPropagation(e); // 지도 클릭 이벤트 전파 방지
+                L.DomEvent.stopPropagation(e);
                 if (window.innerWidth <= 768) {
                     document.getElementById('left-panel').classList.remove('collapsed');
                 }
@@ -308,20 +459,17 @@
         const r = restaurantsData.find(x => x.id === id);
         if (!r) return;
         
-        // 이전 선택 마커 해제
         if (selectedMarkerId && markerMap[selectedMarkerId]) {
             const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
             markerMap[selectedMarkerId].setIcon(createIcon(prevR.name, false)).setZIndexOffset(0);
         }
         
-        // 새 마커 선택
         selectedMarkerId = id;
         if (markerMap[id]) {
             markerMap[id].setIcon(createIcon(r.name, true)).setZIndexOffset(1000);
         }
         map.panTo([r.lat, r.lng]);
         
-        // 상세 정보 표시
         let html = `<h2 style="color:var(--main-blue); margin-bottom:18px; padding-right:30px;">${r.name}</h2>
                     <div style="font-size:1em; line-height:1.8; color:#444;">
                         <p>💰 <b>가격:</b> ${r.price.toLocaleString()}원</p>
@@ -363,7 +511,13 @@
     }
 
     function goHome() { 
-        map.setView([homeLoc.lat, homeLoc.lng], 17); 
+        // 모바일에서는 중심점을 약간 위로 올려서 넷마블 컴퍼니가 목록창 위에 보이도록
+        if (window.innerWidth <= 768) {
+            // 위도를 약간 증가시켜서 지도 중심을 위로 이동 (약 150m 위)
+            map.setView([homeLoc.lat - 0.0005, homeLoc.lng], 17);
+        } else {
+            map.setView([homeLoc.lat, homeLoc.lng], 17);
+        }
     }
 
     function toggleDinner() { 
