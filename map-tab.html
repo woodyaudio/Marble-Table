@@ -163,7 +163,7 @@
     // ✅ 마커 아이콘 생성 함수 (선택 여부에 따라 다른 디자인)
     function createIcon(name, isSelected = false) {
         if (isSelected) {
-            // 선택된 마커: 물방울 스타일
+            // 선택된 마커: 물방울 스타일 + 굵은 글씨
             return L.divIcon({
                 html: `<div style="display:flex; flex-direction:column; align-items:center;">
                     <div style="width:30px;height:30px;background:rgba(56,189,248,0.9);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;animation:marker-focus 0.4s forwards;">
@@ -177,11 +177,11 @@
                 iconAnchor: [50, 30]
             });
         } else {
-            // 기본 마커: 포크 이모지
+            // 기본 마커: 포크 이모지 + 작고 얇은 글씨
             return L.divIcon({
                 html: `<div style="display:flex; flex-direction:column; align-items:center;">
                     <div style="width:30px; height:30px; background:#fff; border:2.5px solid #3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px;">🍴</div>
-                    <div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${name}</div>
+                    <div style="margin-top:3px; font-size:9px; font-weight:500; color:#334155; text-shadow:-0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff, 0.5px 0.5px 0 #fff; white-space:nowrap;">${name}</div>
                 </div>`,
                 className: '',
                 iconSize: [100, 60],
@@ -250,7 +250,10 @@
             markerMap[id].setIcon(createIcon(r.name, true));
         }
         
-        map.panTo([r.lat, r.lng]);
+        // ✅ 모바일에서는 마커를 위쪽에 표시
+        const isMobile = window.innerWidth <= 768;
+        map.panTo([isMobile ? r.lat - 0.0006 : r.lat, r.lng]);
+        
         document.getElementById('detailName').innerText = r.name;
         document.getElementById('detailDesc').innerText = r.description || "상세 설명이 등록되지 않은 식당입니다.";
         document.getElementById('detailHours').innerText = r.hours || "정보 없음";
