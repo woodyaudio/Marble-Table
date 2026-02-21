@@ -13,7 +13,7 @@
         width: var(--panel-w); height: 100%; background: var(--bg-sky);
         backdrop-filter: blur(20px); border-right: 1px solid rgba(0,0,0,0.1);
         display: flex; flex-direction: column; z-index: 110; position: relative;
-        transition: transform 0.3s ease-out; /* 접기 애니메이션 */
+        transition: transform 0.3s ease-out;
     }
 
     /* 상세 패널 */
@@ -43,7 +43,6 @@
 
     #list-scroll { flex: 1; overflow-y: auto; padding: 0 16px 20px; }
 
-    /* 석식 마크 디자인 */
     .dinner-badge { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-left: 6px; }
 
     .insta-btn { 
@@ -52,18 +51,22 @@
         color: #fff; text-decoration: none; font-weight: 700; font-size: 0.85em;
     }
 
+    /* ✅ PC에서 접기/펼치기 숨김 */
+    .drag-handle { display: none; }
+
     /* 모바일 대응 */
     @media (max-width: 768px) {
-        /* ✅ 1. 모바일 타이틀 안 나오게 수정 */
         .main-title-box { display: none !important; }
+        
+        /* ✅ 모바일에서만 접기/펼치기 표시 */
+        .drag-handle { display: flex !important; justify-content: center; padding: 12px 0 8px; cursor: pointer; }
 
         #left-panel { 
             position: fixed; bottom: 55px; left: 0; right: 0; width: 100%; height: 44dvh; 
             border-radius: 24px 24px 0 0; z-index: 1001; 
-            transform: translateY(0); /* 기본 상태 */
+            transform: translateY(0);
         }
         
-        /* ✅ 2. 접기/펼치기 애니메이션 수정 */
         #left-panel.collapsed { transform: translateY(calc(44dvh - 45px)); }
         
         #detail-panel { 
@@ -72,7 +75,6 @@
         }
         #detail-panel.open { transform: translateY(0); }
         
-        .drag-handle { display: flex; justify-content: center; padding: 12px 0 8px; cursor: pointer; }
         .toggle-btn-text { background: #e2efff; padding: 5px 20px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #5a88c0; border: 1px solid #d0e3ff; }
         
         .filter-item { min-height: 30px; }
@@ -125,7 +127,7 @@
 (function() {
     let restaurantsData = [];
     const homeLoc = { lat: 37.479932, lng: 126.895215 };
-    let map, markerLayer;
+    let map, markerLayer, selectedMarkerId = null, markerMap = {};
 
     async function init() {
         if (typeof L === 'undefined') { setTimeout(init, 100); return; }
@@ -138,12 +140,54 @@
             icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ffcf00;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#d97706; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">넷마블 컴퍼니</div></div>`, className: '', iconSize: [100, 60] }) 
         }).addTo(map);
 
+        // ✅ 지도 빈 공간 클릭 시 선택 해제
+        map.on('click', function() {
+            if (selectedMarkerId !== null) {
+                const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
+                if (prevR && markerMap[selectedMarkerId]) {
+                    markerMap[selectedMarkerId].setIcon(createIcon(prevR.name, false));
+                }
+                selectedMarkerId = null;
+                closeDetail();
+            }
+        });
+
         try {
             const res = await fetch('data/restaurants.json');
             restaurantsData = await res.json();
             restaurantsData = restaurantsData.filter(r => r.name !== 'Dev_Test');
             filterData();
         } catch(e) { console.error(e); }
+    }
+
+    // ✅ 마커 아이콘 생성 함수 (선택 여부에 따라 다른 디자인)
+    function createIcon(name, isSelected = false) {
+        if (isSelected) {
+            // 선택된 마커: 물방울 스타일
+            return L.divIcon({
+                html: `<div style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="width:30px;height:30px;background:rgba(56,189,248,0.9);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;animation:marker-focus 0.4s forwards;">
+                        <div style="width:10px;height:10px;background:#fff;border-radius:50%;transform:rotate(45deg);"></div>
+                    </div>
+                    <div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${name}</div>
+                </div>
+                <style>@keyframes marker-focus { 100% { transform: scale(1.3) translateY(-8px) rotate(-45deg); } }</style>`,
+                className: '',
+                iconSize: [100, 60],
+                iconAnchor: [50, 30]
+            });
+        } else {
+            // 기본 마커: 포크 이모지
+            return L.divIcon({
+                html: `<div style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="width:30px; height:30px; background:#fff; border:2.5px solid #3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px;">🍴</div>
+                    <div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${name}</div>
+                </div>`,
+                className: '',
+                iconSize: [100, 60],
+                iconAnchor: [50, 30]
+            });
+        }
     }
 
     window.filterData = function() {
@@ -159,7 +203,6 @@
         });
 
         document.getElementById('restaurantCards').innerHTML = filtered.map(r => {
-            // ✅ 3. 목록창 석식 가능 마크 표시 복구
             const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
             return `
             <div class="restaurant-card" onclick="selectRestaurant(${r.id})">
@@ -171,15 +214,42 @@
             </div>`;
         }).join('');
 
+        // ✅ 마커 다시 그리기 (선택 상태 유지)
         markerLayer.clearLayers();
+        markerMap = {};
         filtered.forEach(r => {
-            L.marker([r.lat, r.lng], { icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="width:30px; height:30px; background:#fff; border:2.5px solid #3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px;">🍴</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${r.name}</div></div>`, className: '', iconSize: [100, 60] }) }).addTo(markerLayer).on('click', () => selectRestaurant(r.id));
+            const isSelected = r.id === selectedMarkerId;
+            const marker = L.marker([r.lat, r.lng], { 
+                icon: createIcon(r.name, isSelected) 
+            }).addTo(markerLayer);
+            
+            markerMap[r.id] = marker;
+            
+            marker.on('click', function(e) {
+                L.DomEvent.stopPropagation(e); // 지도 클릭 이벤트 전파 방지
+                selectRestaurant(r.id);
+            });
         });
     }
 
     window.selectRestaurant = function(id) {
         const r = restaurantsData.find(x => x.id === id);
         if (!r) return;
+        
+        // ✅ 이전 선택 마커 복구
+        if (selectedMarkerId !== null && markerMap[selectedMarkerId]) {
+            const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
+            if (prevR) {
+                markerMap[selectedMarkerId].setIcon(createIcon(prevR.name, false));
+            }
+        }
+        
+        // ✅ 새 마커 선택
+        selectedMarkerId = id;
+        if (markerMap[id]) {
+            markerMap[id].setIcon(createIcon(r.name, true));
+        }
+        
         map.panTo([r.lat, r.lng]);
         document.getElementById('detailName').innerText = r.name;
         document.getElementById('detailDesc').innerText = r.description || "상세 설명이 등록되지 않은 식당입니다.";
@@ -189,9 +259,10 @@
         document.getElementById('detail-panel').classList.add('open');
     }
 
-    window.closeDetail = function() { document.getElementById('detail-panel').classList.remove('open'); }
+    window.closeDetail = function() { 
+        document.getElementById('detail-panel').classList.remove('open'); 
+    }
     
-    // ✅ 접기/펼치기 함수 수정
     window.toggleCollapse = function() { 
         document.getElementById('left-panel').classList.toggle('collapsed'); 
         closeDetail(); 
@@ -204,7 +275,11 @@
         b.style.color = b.classList.contains('active') ? '#fff' : '#000';
         filterData();
     }
-    window.goHome = function() { map.setView([window.innerWidth <= 768 ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17); closeDetail(); }
+    
+    window.goHome = function() { 
+        map.setView([window.innerWidth <= 768 ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17); 
+        closeDetail(); 
+    }
 
     init();
 })();
