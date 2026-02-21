@@ -4,209 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Woody-Table</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
-        :root {
-            --main-blue: #0c3060;
-            --tab-width: 70px;
-        }
-
-        /* 기본 초기화 */
+        :root { --main-blue: #0c3060; --tab-width: 70px; --m-tab-height: 55px; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: 'Noto Sans KR', sans-serif; 
-            background: #f0f9ff; 
-            height: 100vh; 
-            overflow: hidden; 
-        }
-
+        
+        /* 전체 화면 고정 */
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #f0f9ff; }
+        
         #app { 
-            width: 100%; 
-            height: 100vh; 
             display: flex; 
-            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            flex-direction: row; /* PC 기본: 가로 배치 */
         }
 
-        /* [PC] 왼쪽 세로 탭 네비게이션 */
+        /* [PC] 왼쪽 탭 네비게이션 */
         #tab-nav {
             width: var(--tab-width);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            height: 100%;
+            background: #fff;
             border-right: 1px solid #e5e7eb;
             display: flex;
             flex-direction: column;
-            z-index: 1002; /* 지도보다 위 */
-            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            z-index: 2000;
         }
 
         .tab-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-bottom: 1px solid #f3f4f6;
-            color: #6b7280;
-            font-weight: 600;
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; color: #6b7280; border-bottom: 1px solid #f3f4f6; transition: 0.2s;
         }
+        .tab-item.active { background: #eff6ff; color: var(--main-blue); border-left: 4px solid var(--main-blue); }
+        .tab-icon { font-size: 1.8em; margin-bottom: 5px; }
+        .tab-text { font-size: 11px; font-weight: 700; }
 
-        .tab-item.active {
-            background: #eff6ff;
-            color: var(--main-blue);
-            border-left: 4px solid var(--main-blue);
-        }
-
-        .tab-icon { font-size: 1.8em; }
-        .tab-text { font-size: 0.75em; }
-
-        /* 메인 컨텐츠 영역 */
+        /* 컨텐츠 영역 */
         #content-area {
-            flex: 1;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
+            flex: 1; /* 남은 공간 모두 차지 */
+            height: 100%;
             position: relative;
+            overflow: hidden;
         }
 
-        /* [모바일] 하단 탭 바 최적화 */
+        /* [모바일] UI 대응 */
         @media (max-width: 768px) {
-            #app { flex-direction: column; }
+            #app { flex-direction: column; } /* 모바일: 세로 배치 */
 
             #tab-nav {
                 position: fixed;
                 bottom: 0; left: 0; right: 0;
                 width: 100%;
-                height: 45px; /* 요청하신 대로 기존보다 절반 가까이 축소 */
+                height: var(--m-tab-height);
                 flex-direction: row;
                 border-right: none;
                 border-top: 1px solid #e5e7eb;
-                padding-bottom: env(safe-area-inset-bottom, 0);
-                background: #fff;
+                padding-bottom: env(safe-area-inset-bottom);
             }
 
-            .tab-item {
-                flex: 1;
-                border-bottom: none;
-                border-right: 1px solid #f3f4f6;
-                padding: 5px 0;
-                gap: 2px;
-            }
-
-            .tab-item:last-child { border-right: none; }
-
-            .tab-item.active {
-                border-left: none;
-                border-top: 3px solid var(--main-blue);
-                background: #fff;
-            }
-
-            .tab-icon { font-size: 1.2em; } /* 모바일 아이콘 축소 */
-            .tab-text { font-size: 10px; } /* 모바일 텍스트 축소 */
+            .tab-item { border-bottom: none; border-right: 1px solid #f3f4f6; padding: 5px 0; }
+            .tab-item.active { border-left: none; border-top: 3.5px solid var(--main-blue); }
+            .tab-icon { font-size: 1.3em; }
+            .tab-text { font-size: 10px; }
 
             #content-area {
-                height: calc(100vh - 45px); /* 하단 바 높이만큼 제외 */
+                height: calc(100vh - var(--m-tab-height));
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-
 <div id="app">
     <nav id="tab-nav">
-        <div class="tab-item active" data-tab="map">
-            <div class="tab-icon">🗺️</div>
-            <div class="tab-text">지도 홈</div>
-        </div>
-        <div class="tab-item" data-tab="game">
-            <div class="tab-icon">🎮</div>
-            <div class="tab-text">게임</div>
-        </div>
-        <div class="tab-item" data-tab="contact">
-            <div class="tab-icon">✉️</div>
-            <div class="tab-text">문의</div>
-        </div>
+        <div class="tab-item active" data-tab="map"><div class="tab-icon">🗺️</div><div class="tab-text">지도 홈</div></div>
+        <div class="tab-item" data-tab="game"><div class="tab-icon">🎮</div><div class="tab-text">게임</div></div>
+        <div class="tab-item" data-tab="contact"><div class="tab-icon">✉️</div><div class="tab-text">문의</div></div>
     </nav>
-
     <main id="content-area"></main>
 </div>
 
 <script>
     let currentTab = '';
-
-    /**
-     * 탭을 로드하는 메인 함수
-     */
     function loadTab(tabName) {
-        // 이미 선택된 탭이면 중단
         if (currentTab === tabName) return;
         currentTab = tabName;
         
-        // 탭 UI 활성화 상태 변경
         document.querySelectorAll('.tab-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.dataset.tab === tabName) {
-                item.classList.add('active');
-            }
+            item.classList.toggle('active', item.dataset.tab === tabName);
         });
 
-        // 외부 HTML 파일 가져오기
         fetch(`${tabName}-tab.html`)
-            .then(res => {
-                if (!res.ok) throw new Error('파일을 찾을 수 없습니다.');
-                return res.text();
-            })
+            .then(res => res.text())
             .then(html => {
                 const area = document.getElementById('content-area');
                 area.innerHTML = html;
                 
-                // 삽입된 HTML 내의 script 태그를 찾아 수동으로 실행
-                // (innerHTML로 넣은 스크립트는 보안상 자동 실행되지 않기 때문)
+                // 스크립트 강제 실행 로직
                 const scripts = area.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
-                    
-                    // 기존 스크립트의 속성 복사 (src 등)
-                    Array.from(oldScript.attributes).forEach(attr => {
-                        newScript.setAttribute(attr.name, attr.value);
-                    });
-                    
-                    // 인라인 스크립트 내용 복사
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
                     newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                    
-                    // DOM에 삽입하여 실행 후 즉시 제거 (메모리 관리)
                     document.body.appendChild(newScript);
                     newScript.remove();
                 });
-            })
-            .catch(err => {
-                console.error('탭 로딩 에러:', err);
-                document.getElementById('content-area').innerHTML = 
-                    `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#94a3b8;">
-                        <p style="font-size:3em;">⚠️</p>
-                        <p style="margin-top:10px;">${tabName} 페이지를 불러오지 못했습니다.</p>
-                    </div>`;
             });
     }
 
-    // 모든 탭 아이템에 클릭 이벤트 바인딩
     document.querySelectorAll('.tab-item').forEach(item => {
-        item.addEventListener('click', () => {
-            loadTab(item.dataset.tab);
-        });
+        item.addEventListener('click', () => loadTab(item.dataset.tab));
     });
-
-    // 앱 실행 시 첫 화면으로 'map' 탭 로드
-    window.addEventListener('load', () => {
-        loadTab('map');
-    });
+    window.addEventListener('load', () => loadTab('map'));
 </script>
-
 </body>
 </html>

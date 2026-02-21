@@ -1,117 +1,124 @@
 <style>
     :root { 
         --panel-w: 340px; 
-        --detail-w: 290px; 
+        --detail-w: 300px; 
         --main-blue: #0c3060; 
+        --bg-sky: rgba(235, 248, 255, 0.98); 
     }
 
     #map-container { display: flex; width: 100%; height: 100%; position: relative; overflow: hidden; }
     
-    /* [PC] 레이아웃 */
-    #map-area { flex: 1; height: 100%; position: relative; order: 2; }
-    #map { width: 100%; height: 100%; z-index: 1; }
-
+    /* 목록 패널 */
     #left-panel { 
-        width: var(--panel-w); 
-        height: 100%; 
-        background: rgba(235, 248, 255, 0.85); /* PC 색감과 동일하게 고정 */
-        backdrop-filter: blur(30px); 
-        border-right: 1px solid rgba(255,255,255,0.5); 
-        display: flex; 
-        flex-direction: column; 
-        order: 1; 
-        z-index: 10; 
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: var(--panel-w); height: 100%; background: var(--bg-sky);
+        backdrop-filter: blur(20px); border-right: 1px solid rgba(0,0,0,0.1);
+        display: flex; flex-direction: column; z-index: 110; position: relative;
+        transition: transform 0.3s ease-out; /* 접기 애니메이션 */
     }
 
-    /* 타이틀 디자인 */
-    .main-title-box { margin: 15px 16px 15px; padding: 12px 20px; border: 2px solid var(--main-blue); border-radius: 12px; background: rgba(255,255,255,0.5); }
-    .main-title-box h1 { font-family: 'Nunito', sans-serif; font-size: 1.3em; color: var(--main-blue); display: flex; align-items: center; gap: 8px; }
+    /* 상세 패널 */
+    #detail-panel {
+        position: absolute; left: var(--panel-w); top: 0; width: var(--detail-w); height: 100%;
+        background: var(--bg-sky); border-right: 1px solid rgba(0,0,0,0.1); z-index: 100;
+        transform: translateX(-100%); transition: transform 0.3s ease;
+        display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.05);
+    }
+    #detail-panel.open { transform: translateX(0); }
 
-    /* 모바일 접기/펼치기 버튼 디자인 */
-    .drag-handle { display: none; } 
+    #map-area { flex: 1; height: 100%; position: relative; z-index: 1; }
+    #map { width: 100%; height: 100%; }
 
-    /* [모바일] UI 대응 */
+    /* 헤더 및 필터 */
+    .main-title-box { margin: 15px 16px; padding: 12px 20px; border: 2px solid var(--main-blue); border-radius: 12px; background: #fff; }
+    .main-title-box h1 { font-size: 1.25em; color: var(--main-blue); display: flex; align-items: center; gap: 8px; margin:0; }
+    
+    #list-header { padding: 0 16px 15px; flex-shrink: 0; }
+    .filter-row { display: flex; gap: 6px; margin-top: 10px; }
+    .filter-item { 
+        flex: 1.5; padding: 6px 8px; border-radius: 10px; border: 1px solid #fff; 
+        background: rgba(255,255,255,0.7); font-size: 0.75em; cursor: pointer; 
+        text-align: center; display: flex; align-items: center; justify-content: center; min-height: 32px;
+    }
+    .home-inline-btn { flex: 0.5; font-size: 1.2em; background: #fff; }
+
+    #list-scroll { flex: 1; overflow-y: auto; padding: 0 16px 20px; }
+
+    /* 석식 마크 디자인 */
+    .dinner-badge { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-left: 6px; }
+
+    .insta-btn { 
+        display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px;
+        padding: 10px; border-radius: 10px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        color: #fff; text-decoration: none; font-weight: 700; font-size: 0.85em;
+    }
+
+    /* 모바일 대응 */
     @media (max-width: 768px) {
-        #map-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        /* ✅ 1. 모바일 타이틀 안 나오게 수정 */
+        .main-title-box { display: none !important; }
+
         #left-panel { 
-            position: fixed; 
-            bottom: 45px; 
-            left: 0; right: 0; 
-            width: 100%; 
-            height: 44dvh; /* 2.5칸이 보이도록 조정 */
-            border-radius: 24px 24px 0 0; 
-            background: rgba(235, 248, 255, 0.95); /* 모바일도 투명 하늘색 유지 */
-            border-right: none;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.08);
+            position: fixed; bottom: 55px; left: 0; right: 0; width: 100%; height: 44dvh; 
+            border-radius: 24px 24px 0 0; z-index: 1001; 
+            transform: translateY(0); /* 기본 상태 */
         }
-        #left-panel.collapsed { transform: translateY(calc(100% - 45px)); }
         
-        /* 세번째 사진 참고: 접기/펼치기 버튼 스타일 */
-        .drag-handle { 
-            display: flex; 
-            justify-content: center; 
-            padding: 10px 0; 
-            cursor: pointer; 
+        /* ✅ 2. 접기/펼치기 애니메이션 수정 */
+        #left-panel.collapsed { transform: translateY(calc(44dvh - 45px)); }
+        
+        #detail-panel { 
+            left: 0; width: 100%; height: 44dvh; bottom: 55px; top: auto; 
+            border-radius: 24px 24px 0 0; z-index: 1010; transform: translateY(100%); 
         }
-        .toggle-btn-text { 
-            background: #e2e8f0; 
-            padding: 4px 16px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: 800; 
-            color: #64748b; 
-        }
-        .main-title-box { display: none; }
+        #detail-panel.open { transform: translateY(0); }
+        
+        .drag-handle { display: flex; justify-content: center; padding: 12px 0 8px; cursor: pointer; }
+        .toggle-btn-text { background: #e2efff; padding: 5px 20px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #5a88c0; border: 1px solid #d0e3ff; }
+        
+        .filter-item { min-height: 30px; }
     }
 
-    /* 식당 카드 스타일 */
-    .restaurant-card {
-        padding: 15px; 
-        background: rgba(255, 255, 255, 0.7); 
-        border-radius: 12px; 
-        margin-bottom: 10px; 
-        border: 1px solid #fff; 
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    .restaurant-card { 
+        padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; 
+        margin-bottom: 10px; border: 1px solid #fff; cursor: pointer;
     }
-    .dinner-badge { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-left: 6px; border: 1px solid #c7d2fe; }
 </style>
 
 <div id="map-container">
-    <div id="map-area"><div id="map"></div></div>
-    
     <div id="left-panel">
-        <div class="drag-handle" onclick="toggleCollapse()">
-            <div class="toggle-btn-text">접기 / 펼치기</div>
+        <div class="drag-handle" onclick="toggleCollapse()"><div class="toggle-btn-text">접기 / 펼치기</div></div>
+        <div class="main-title-box"><h1>🍴 ⭐ Woody-Table</h1></div>
+        <div id="list-header">
+            <input type="text" id="searchInput" style="width:100%; padding:10px 15px; border-radius:12px; border:1px solid #fff; background:rgba(255,255,255,0.8);" placeholder="식당 검색..." oninput="filterData()">
+            <div class="filter-row">
+                <select id="priceFilter" class="filter-item" onchange="filterData()">
+                    <option value="all">가격 전체</option>
+                    <option value="7000">7,000원대</option>
+                    <option value="8000">8,000원대</option>
+                </select>
+                <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식 가능</div>
+                <div class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
+            </div>
         </div>
-        
-        <div id="list-panel">
-            <div class="main-title-box">
-                <h1>🍴 ⭐ Woody-Table</h1>
-            </div>
+        <div id="list-scroll"><div id="restaurantCards"></div></div>
+    </div>
 
-            <div id="list-header" style="padding-bottom: 10px;">
-                <input type="text" id="searchInput" 
-                    style="width:calc(100% - 32px); margin: 0 16px 12px; padding:12px 15px; border-radius:12px; border:1px solid #eee; background:rgba(255,255,255,0.8);" 
-                    placeholder="식당 검색..." oninput="filterData()">
-                
-                <div class="filter-row" style="display: flex; gap: 6px; padding: 0 16px;">
-                    <select id="priceFilter" onchange="filterData()" style="flex:1.5; padding:8px; border-radius:12px; border:1px solid #fff; background:rgba(255,255,255,0.6); font-size:0.75em;">
-                        <option value="all">가격 전체</option>
-                        <option value="7000">7,000원대</option>
-                        <option value="8000">8,000원대</option>
-                    </select>
-                    <div id="dinnerToggle" onclick="toggleDinner()" style="flex:1.5; padding:8px; border-radius:12px; background:rgba(255,255,255,0.6); font-size:0.75em; text-align:center; cursor:pointer; display:flex; align-items:center; justify-content:center; border:1px solid #fff;">🌙 석식 가능</div>
-                    <div onclick="goHome()" style="flex:0.7; padding:8px; border-radius:12px; background:#fff; text-align:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.1);">🏠</div>
-                </div>
+    <div id="detail-panel">
+        <div style="padding: 20px 20px 10px; position: relative;">
+            <span style="position: absolute; top: 20px; right: 20px; cursor: pointer; color: #64748b;" onclick="closeDetail()">✕</span>
+            <div id="detailName" style="font-size: 1.3em; font-weight: 800; color: var(--main-blue);"></div>
+        </div>
+        <div style="padding: 0 20px 20px; overflow-y: auto; flex: 1;">
+            <div id="detailDesc" style="font-size: 0.9em; color:#475569; line-height:1.6; margin-bottom:15px; word-break: keep-all;"></div>
+            <div style="font-size: 0.85em; color:#64748b; background: rgba(255,255,255,0.5); padding: 12px; border-radius: 10px;">
+                <p style="margin-bottom:5px;"><strong>🕒 영업 시간:</strong> <span id="detailHours"></span></p>
+                <p><strong>💰 가격:</strong> <span id="detailPrice"></span></p>
             </div>
-
-            <div id="list-scroll" style="flex:1; overflow-y:auto; padding: 10px 16px;">
-                <div id="restaurantCards"></div>
-            </div>
+            <div id="instaArea"></div>
         </div>
     </div>
+
+    <div id="map-area"><div id="map"></div></div>
 </div>
 
 <script>
@@ -121,35 +128,21 @@
     let map, markerLayer;
 
     async function init() {
-        let retry = 0;
-        while (typeof L === 'undefined' && retry < 20) {
-            await new Promise(r => setTimeout(r, 100));
-            retry++;
-        }
+        if (typeof L === 'undefined') { setTimeout(init, 100); return; }
+        const isMobile = window.innerWidth <= 768;
+        map = L.map('map', { zoomControl: false }).setView([isMobile ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        markerLayer = L.layerGroup().addTo(map);
 
-        if (!map && document.getElementById('map')) {
-            const isMobile = window.innerWidth <= 768;
-            map = L.map('map', { zoomControl: false }).setView([isMobile ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            markerLayer = L.layerGroup().addTo(map);
-
-            L.marker([homeLoc.lat, homeLoc.lng], { 
-                icon: L.divIcon({ 
-                    html: `<div style="display:flex; flex-direction:column; align-items:center;">
-                            <div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ffcf00; box-shadow:0 2px 8px rgba(0,0,0,0.2);">🏢</div>
-                            <div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap; color:#d97706;">넷마블 컴퍼니</div>
-                           </div>`, 
-                    className: '', iconSize: [100, 60] 
-                }) 
-            }).addTo(map);
-        }
+        L.marker([homeLoc.lat, homeLoc.lng], { 
+            icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ffcf00;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#d97706; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">넷마블 컴퍼니</div></div>`, className: '', iconSize: [100, 60] }) 
+        }).addTo(map);
 
         try {
             const res = await fetch('data/restaurants.json');
-            const data = await res.json();
-            restaurantsData = data.filter(r => r.name !== 'Dev_Test'); // [개인설정] Dev_Test 필터링
+            restaurantsData = await res.json();
+            restaurantsData = restaurantsData.filter(r => r.name !== 'Dev_Test');
             filterData();
-            setTimeout(() => map.invalidateSize(), 300);
         } catch(e) { console.error(e); }
     }
 
@@ -166,48 +159,52 @@
         });
 
         document.getElementById('restaurantCards').innerHTML = filtered.map(r => {
+            // ✅ 3. 목록창 석식 가능 마크 표시 복구
             const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
             return `
             <div class="restaurant-card" onclick="selectRestaurant(${r.id})">
                 <div style="font-weight:700; color:var(--main-blue);">${r.name}</div>
-                <div style="font-size:0.85em; color:#64748b; margin-top:5px; display:flex; align-items:center;">
-                    💳 ${r.price.toLocaleString()}원
+                <div style="font-size:0.85em; color:#64748b; margin-top:5px;">
+                    💳 ${r.price.toLocaleString()}원 
                     ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
                 </div>
             </div>`;
         }).join('');
 
-        if (markerLayer) {
-            markerLayer.clearLayers();
-            filtered.forEach(r => {
-                L.marker([r.lat, r.lng], { 
-                    icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="width:30px; height:30px; background:#fff; border:2.5px solid #3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px;">🍴</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${r.name}</div></div>`, className: '', iconSize: [100, 60] }) 
-                }).addTo(markerLayer).on('click', () => selectRestaurant(r.id));
-            });
-        }
+        markerLayer.clearLayers();
+        filtered.forEach(r => {
+            L.marker([r.lat, r.lng], { icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="width:30px; height:30px; background:#fff; border:2.5px solid #3b82f6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px;">🍴</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#0c3060; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${r.name}</div></div>`, className: '', iconSize: [100, 60] }) }).addTo(markerLayer).on('click', () => selectRestaurant(r.id));
+        });
     }
 
-    window.toggleCollapse = function() {
-        document.getElementById('left-panel').classList.toggle('collapsed');
+    window.selectRestaurant = function(id) {
+        const r = restaurantsData.find(x => x.id === id);
+        if (!r) return;
+        map.panTo([r.lat, r.lng]);
+        document.getElementById('detailName').innerText = r.name;
+        document.getElementById('detailDesc').innerText = r.description || "상세 설명이 등록되지 않은 식당입니다.";
+        document.getElementById('detailHours').innerText = r.hours || "정보 없음";
+        document.getElementById('detailPrice').innerText = `${r.price.toLocaleString()}원`;
+        document.getElementById('instaArea').innerHTML = r.instagram ? `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램 보기</a>` : '';
+        document.getElementById('detail-panel').classList.add('open');
+    }
+
+    window.closeDetail = function() { document.getElementById('detail-panel').classList.remove('open'); }
+    
+    // ✅ 접기/펼치기 함수 수정
+    window.toggleCollapse = function() { 
+        document.getElementById('left-panel').classList.toggle('collapsed'); 
+        closeDetail(); 
     }
 
     window.toggleDinner = function() {
         const b = document.getElementById('dinnerToggle');
         b.classList.toggle('active');
-        b.style.background = b.classList.contains('active') ? '#0c3060' : 'rgba(255,255,255,0.6)';
+        b.style.background = b.classList.contains('active') ? '#0c3060' : 'rgba(255,255,255,0.7)';
         b.style.color = b.classList.contains('active') ? '#fff' : '#000';
         filterData();
     }
-
-    window.goHome = function() {
-        const isMobile = window.innerWidth <= 768;
-        map.setView([isMobile ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17);
-    }
-
-    window.selectRestaurant = function(id) {
-        const r = restaurantsData.find(x => x.id === id);
-        if (r && map) map.panTo([r.lat, r.lng]);
-    }
+    window.goHome = function() { map.setView([window.innerWidth <= 768 ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17); closeDetail(); }
 
     init();
 })();
