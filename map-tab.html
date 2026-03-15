@@ -29,8 +29,8 @@
     #map { width: 100%; height: 100%; }
 
     /* 헤더 및 필터 */
-    .main-title-box { margin: 15px 16px; padding: 12px 20px; border: 2px solid var(--main-blue); border-radius: 12px; background: #fff; }
-    .main-title-box h1 { font-size: 1.25em; color: var(--main-blue); display: flex; align-items: center; gap: 8px; margin:0; }
+    .main-title-box { margin: 15px 16px; padding: 0; background: transparent; border: none; }
+    .main-title-box h1 { margin: 0; display: flex; align-items: center; justify-content: center; }
     
     #list-header { padding: 0 16px 15px; flex-shrink: 0; }
     .filter-row { display: flex; gap: 6px; margin-top: 10px; }
@@ -45,11 +45,29 @@
 
     .dinner-badge { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-left: 6px; }
 
-    .insta-btn { 
-        display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px;
-        padding: 10px; border-radius: 10px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-        color: #fff; text-decoration: none; font-weight: 700; font-size: 0.85em;
+    /* SNS 버튼 영역 */
+    .sns-buttons { display: flex; gap: 8px; margin-top: 15px; }
+    .insta-btn, .kakao-btn { 
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+        padding: 10px 8px; border-radius: 10px; color: #fff; text-decoration: none; font-weight: 700; font-size: 0.8em;
     }
+    .insta-btn { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .kakao-btn { background: #FEE500; color: #3C1E1E; }
+
+    /* 한줄평 섹션 */
+    .review-section { margin-top: 18px; border-top: 1px solid #e5e7eb; padding-top: 14px; }
+    .review-section-title { font-size: 0.9em; font-weight: 800; color: var(--main-blue); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .review-input-row { display: flex; gap: 4px; margin-bottom: 12px; align-items: stretch; width: 100%; box-sizing: border-box; }
+    .review-input-row input { padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.85em; font-family: 'Noto Sans KR', sans-serif; outline: none; box-sizing: border-box; }
+    .review-input-row input:focus { border-color: var(--main-blue); box-shadow: 0 0 0 2px rgba(12,48,96,0.1); }
+    .review-input-row button { padding: 0 12px; border-radius: 8px; border: none; background: var(--main-blue); color: #fff; font-weight: 700; font-size: 0.8em; cursor: pointer; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; flex-shrink: 0; }
+    .review-input-row button:active { transform: scale(0.96); }
+    .review-list { display: flex; flex-direction: column; gap: 6px; }
+    .review-item { padding: 8px 12px; background: #f8fafc; border-radius: 8px; font-size: 0.82em; color: #475569; line-height: 1.5; display: flex; justify-content: space-between; align-items: flex-start; }
+    .review-item-text { flex: 1; word-break: break-all; }
+    .review-item-date { font-size: 0.75em; color: #94a3b8; white-space: nowrap; margin-left: 8px; }
+    .review-empty { font-size: 0.82em; color: #94a3b8; text-align: center; padding: 12px 0; }
+    .review-cooldown-msg { font-size: 0.78em; color: #ef4444; margin-top: 4px; }
 
     /* ✅ PC에서 접기/펼치기 숨김 */
     .drag-handle { display: none; }
@@ -62,15 +80,15 @@
         .drag-handle { display: flex !important; justify-content: center; padding: 12px 0 8px; cursor: pointer; }
 
         #left-panel { 
-            position: fixed; bottom: 55px; left: 0; right: 0; width: 100%; height: 44dvh; 
+            position: fixed; bottom: 55px; left: 0; right: 0; width: 100%; height: 38dvh; 
             border-radius: 24px 24px 0 0; z-index: 1001; 
             transform: translateY(0);
         }
         
-        #left-panel.collapsed { transform: translateY(calc(44dvh - 45px)); }
+        #left-panel.collapsed { transform: translateY(calc(38dvh - 45px)); }
         
         #detail-panel { 
-            left: 0; width: 100%; height: 44dvh; bottom: 55px; top: auto; 
+            left: 0; width: 100%; height: 38dvh; bottom: 55px; top: auto; 
             border-radius: 24px 24px 0 0; z-index: 1010; transform: translateY(100%); 
         }
         #detail-panel.open { transform: translateY(0); }
@@ -81,15 +99,19 @@
     }
 
     .restaurant-card { 
-        padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; 
-        margin-bottom: 10px; border: 1px solid #fff; cursor: pointer;
+        padding: 12px 14px; background: rgba(255,255,255,0.8); border-radius: 12px; 
+        margin-bottom: 8px; border: 1px solid #fff; cursor: pointer;
     }
 </style>
 
 <div id="map-container">
     <div id="left-panel">
         <div class="drag-handle" onclick="toggleCollapse()"><div class="toggle-btn-text">접기 / 펼치기</div></div>
-        <div class="main-title-box"><h1>🍴 ⭐ Woody-Table</h1></div>
+        <div class="main-title-box">
+            <h1>
+                <img src="Woody-Table_Logo_02_cropped.png" alt="Woody-Table Logo" style="width: 100%; height: auto; max-height: 54px; object-fit: contain;">
+            </h1>
+        </div>
         <div id="list-header">
             <input type="text" id="searchInput" style="width:100%; padding:10px 15px; border-radius:12px; border:1px solid #fff; background:rgba(255,255,255,0.8);" placeholder="식당 검색..." oninput="filterData()">
             <div class="filter-row">
@@ -116,7 +138,19 @@
                 <p style="margin-bottom:5px;"><strong>🕒 영업 시간:</strong> <span id="detailHours"></span></p>
                 <p><strong>💰 가격:</strong> <span id="detailPrice"></span></p>
             </div>
-            <div id="instaArea"></div>
+            <!-- SNS 버튼 영역 -->
+            <div id="snsArea" class="sns-buttons"></div>
+            <!-- 한줄평 섹션 -->
+            <div class="review-section">
+                <div class="review-section-title">💬 한줄평</div>
+                <div class="review-input-row">
+                    <input type="text" id="reviewNickname" placeholder="닉네임" maxlength="10" style="flex: 0 0 65px; min-width: 0;">
+                    <input type="text" id="reviewInput" placeholder="한줄평..." maxlength="50" style="flex: 1; min-width: 0;">
+                    <button onclick="submitReview()">등록</button>
+                </div>
+                <div id="reviewCooldownMsg"></div>
+                <div id="reviewList" class="review-list"></div>
+            </div>
         </div>
     </div>
 
@@ -128,6 +162,36 @@
     let restaurantsData = [];
     const homeLoc = { lat: 37.479932, lng: 126.895215 };
     let map, markerLayer, selectedMarkerId = null, markerMap = {};
+    
+    // 파이어베이스 관련 변수
+    let db;
+    let unsubscribeReviews = null;
+
+    async function initFirebase() {
+        try {
+            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js');
+            const { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyAaMivo3ZBcwS5OjDjXmCo9kZo47t0rZBc",
+                authDomain: "woody-table.firebaseapp.com",
+                projectId: "woody-table",
+                storageBucket: "woody-table.firebasestorage.app",
+                messagingSenderId: "640333501525",
+                appId: "1:640333501525:web:db00602be7d7e8742c30dc"
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            
+            window.fsCollection = collection;
+            window.fsAddDoc = addDoc;
+            window.fsQuery = query;
+            window.fsOrderBy = orderBy;
+            window.fsLimit = limit;
+            window.fsOnSnapshot = onSnapshot;
+            window.fsServerTimestamp = serverTimestamp;
+        } catch(e) { console.error("Firebase init err:", e); }
+    }
 
     async function init() {
         if (typeof L === 'undefined') { setTimeout(init, 100); return; }
@@ -153,7 +217,8 @@
         });
 
         try {
-            const res = await fetch('data/restaurants.json');
+            await initFirebase();
+            const res = await fetch(`data/restaurants.json?v=${Date.now()}`);
             restaurantsData = await res.json();
             restaurantsData = restaurantsData.filter(r => r.name !== 'Dev_Test');
             filterData();
@@ -206,8 +271,8 @@
             const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
             return `
             <div class="restaurant-card" onclick="selectRestaurant(${r.id})">
-                <div style="font-weight:700; color:var(--main-blue);">${r.name}</div>
-                <div style="font-size:0.85em; color:#64748b; margin-top:5px;">
+                <div style="font-weight:700; font-size:0.95em; color:var(--main-blue);">${r.name}</div>
+                <div style="font-size:0.8em; color:#64748b; margin-top:3px;">
                     💳 ${r.price.toLocaleString()}원 
                     ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
                 </div>
@@ -258,7 +323,17 @@
         document.getElementById('detailDesc').innerText = r.description || "상세 설명이 등록되지 않은 식당입니다.";
         document.getElementById('detailHours').innerText = r.hours || "정보 없음";
         document.getElementById('detailPrice').innerText = `${r.price.toLocaleString()}원`;
-        document.getElementById('instaArea').innerHTML = r.instagram ? `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램 보기</a>` : '';
+
+        // SNS 버튼 렌더링 (인스타 + 카카오톡 채널)
+        let snsHtml = '';
+        if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램</a>`;
+        if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/></svg> 카톡 채널</a>`;
+        document.getElementById('snsArea').innerHTML = snsHtml;
+
+        // 한줄평 로드
+        loadReviews(id);
+        document.getElementById('reviewInput').value = '';
+        document.getElementById('reviewCooldownMsg').innerHTML = '';
         document.getElementById('detail-panel').classList.add('open');
     }
 
@@ -283,6 +358,114 @@
         map.setView([window.innerWidth <= 768 ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17); 
         closeDetail(); 
     }
+
+    // ========== 한줄평 시스템 (파이어베이스 연동) ==========
+    const COOLDOWN_KEY = 'woody_review_cooldown';
+    const COOLDOWN_MS = 60000; // 1분 쿨타임
+    let currentDetailId = null;
+
+    window.loadReviews = function(restaurantId) {
+        currentDetailId = restaurantId;
+        const listEl = document.getElementById('reviewList');
+        listEl.innerHTML = '<div class="review-empty">리뷰를 불러오는 중... ⏳</div>';
+        
+        if (unsubscribeReviews) { unsubscribeReviews(); }
+        if (!db) { listEl.innerHTML = '<div class="review-empty">DB 연결 지연 중...</div>'; return; }
+
+        const q = window.fsQuery(
+            window.fsCollection(db, `restaurants/${restaurantId}/reviews`), 
+            window.fsOrderBy('createdAt', 'desc'), 
+            window.fsLimit(20)
+        );
+        
+        unsubscribeReviews = window.fsOnSnapshot(q, (snapshot) => {
+            if (currentDetailId !== restaurantId) return; // 뒤늦게 온 응답 무시
+            
+            if (snapshot.empty) {
+                listEl.innerHTML = '<div class="review-empty">아직 한줄평이 없어요. 첫 번째 평가를 남겨 주세요! ✍️</div>';
+                return;
+            }
+            
+            let html = '';
+            snapshot.forEach((doc) => {
+                const rv = doc.data();
+                const text = escapeHtml(rv.text || '');
+                const nickname = escapeHtml(rv.nickname || '익명');
+                
+                let dateStr = '';
+                if (rv.createdAt) {
+                    const date = rv.createdAt.toDate();
+                    dateStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                }
+                
+                html += `
+                    <div class="review-item" style="flex-direction: column; gap: 4px;">
+                        <div style="font-weight: 800; font-size: 0.8em; color: var(--main-blue);">${nickname}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+                            <div class="review-item-text" style="flex:1;">${text}</div>
+                            <div class="review-item-date">${dateStr}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        }, (error) => {
+            console.error("Firebase fetch error:", error);
+            listEl.innerHTML = '<div class="review-empty">리뷰를 불러오는 데 실패했습니다. 😢</div>';
+        });
+    }
+
+    window.submitReview = async function() {
+        if (currentDetailId === null || !db) return;
+        const input = document.getElementById('reviewInput');
+        const nickInput = document.getElementById('reviewNickname');
+        const text = input.value.trim();
+        const nickname = nickInput.value.trim() || '익명';
+        
+        if (!text) return;
+        if (text.length > 50) { alert('한줄평은 50자 이내로 작성해 주세요.'); return; }
+        if (nickname.length > 10) { alert('닉네임은 10자 이내로 작성해 주세요.'); return; }
+
+        const lastTime = parseInt(localStorage.getItem(COOLDOWN_KEY) || '0');
+        const now = Date.now();
+        if (now - lastTime < COOLDOWN_MS) {
+            const remaining = Math.ceil((COOLDOWN_MS - (now - lastTime)) / 1000);
+            document.getElementById('reviewCooldownMsg').innerHTML = `<div class="review-cooldown-msg">⏳ ${remaining}초 후에 다시 작성할 수 있어요.</div>`;
+            return;
+        }
+
+        document.getElementById('reviewCooldownMsg').innerHTML = '<div style="font-size: 0.78em; color: var(--main-blue); margin-top: 4px;">등록 중... ✍️</div>';
+        
+        try {
+            await window.fsAddDoc(window.fsCollection(db, `restaurants/${currentDetailId}/reviews`), {
+                text: text,
+                nickname: nickname,
+                createdAt: window.fsServerTimestamp()
+            });
+            
+            localStorage.setItem(COOLDOWN_KEY, String(now));
+            input.value = '';
+            // 닉네임은 다음 작성 편의를 위해 초기화하지 않습니다
+            document.getElementById('reviewCooldownMsg').innerHTML = '';
+        } catch (e) {
+            console.error("Firebase addDoc error: ", e);
+            document.getElementById('reviewCooldownMsg').innerHTML = `<div class="review-cooldown-msg">오류가 발생했습니다. 다시 시도해 주세요.</div>`;
+        }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Enter 키로 한줄평 등록
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'reviewInput') {
+            e.preventDefault();
+            submitReview();
+        }
+    });
 
     init();
 })();

@@ -34,11 +34,13 @@
 
         .tab-item {
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; color: #6b7280; border-bottom: 1px solid #f3f4f6; transition: 0.2s;
+            cursor: pointer; color: #9ca3af; border-bottom: 1px solid #f3f4f6; transition: all 0.2s ease-in-out;
         }
         .tab-item.active { background: #eff6ff; color: var(--main-blue); border-left: 4px solid var(--main-blue); }
-        .tab-icon { font-size: 1.8em; margin-bottom: 5px; }
-        .tab-text { font-size: 11px; font-weight: 700; }
+        .tab-icon { width: 24px; height: 24px; margin-bottom: 6px; transition: all 0.2s; }
+        .tab-text { font-size: 11px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; }
+        .tab-item:hover { color: #6b7280; }
+        .tab-item.active .tab-icon { transform: scale(1.1); stroke-width: 2.5; }
 
         /* 컨텐츠 영역 */
         #content-area {
@@ -61,15 +63,19 @@
                 border-right: none;
                 border-top: 1px solid #e5e7eb;
                 padding-bottom: env(safe-area-inset-bottom);
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                z-index: 3000;
             }
 
-            .tab-item { border-bottom: none; border-right: 1px solid #f3f4f6; padding: 5px 0; }
-            .tab-item.active { border-left: none; border-top: 3.5px solid var(--main-blue); }
-            .tab-icon { font-size: 1.3em; }
+            .tab-item { border-bottom: none; border-right: 1px solid transparent; padding: 4px 0; }
+            .tab-item.active { border-left: none; border-top: 3px solid var(--main-blue); background: transparent; }
+            .tab-icon { width: 20px; height: 20px; margin-bottom: 3px; }
             .tab-text { font-size: 10px; }
+            .tab-item.active .tab-icon { stroke-width: 2.2; }
 
             #content-area {
-                height: calc(100vh - var(--m-tab-height));
+                height: calc(100vh - var(--m-tab-height) - env(safe-area-inset-bottom));
                 width: 100%;
             }
         }
@@ -78,9 +84,39 @@
 <body>
 <div id="app">
     <nav id="tab-nav">
-        <div class="tab-item active" data-tab="map"><div class="tab-icon">🗺️</div><div class="tab-text">지도 홈</div></div>
-        <div class="tab-item" data-tab="game"><div class="tab-icon">🎮</div><div class="tab-text">게임</div></div>
-        <div class="tab-item" data-tab="contact"><div class="tab-icon">✉️</div><div class="tab-text">문의</div></div>
+        <!-- 지도 홈 -->
+        <div class="tab-item active" data-tab="map">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <div class="tab-text">지도 홈</div>
+        </div>
+        <!-- AI 칼로리 (렌즈) -->
+        <div class="tab-item" data-tab="calorie">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"></path>
+                <path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1z"></path>
+            </svg>
+            <div class="tab-text">AI 렌즈</div>
+        </div>
+        <!-- 점심 룰렛 -->
+        <div class="tab-item" data-tab="game">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2v10l5 5"></path>
+                <path d="M12 12 2 12"></path>
+            </svg>
+            <div class="tab-text">룰렛</div>
+        </div>
+        <!-- 문의 -->
+        <div class="tab-item" data-tab="contact">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <div class="tab-text">문의</div>
+        </div>
     </nav>
     <main id="content-area"></main>
 </div>
@@ -95,7 +131,7 @@
             item.classList.toggle('active', item.dataset.tab === tabName);
         });
 
-        fetch(`${tabName}-tab.html`)
+        fetch(`${tabName}-tab.html?v=${Date.now()}`)
             .then(res => res.text())
             .then(html => {
                 const area = document.getElementById('content-area');
