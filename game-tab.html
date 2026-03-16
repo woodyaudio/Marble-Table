@@ -1,32 +1,469 @@
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
     #game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(145deg, #0c3060 0%, #1a5fa8 50%, #0c3060 100%);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px 16px 10px;
+        box-sizing: border-box;
+        font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    /* --- Header --- */
+    .roulette-header {
+        text-align: center;
+        margin-bottom: 8px;
+        color: white;
+    }
+    .roulette-header h1 {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 900;
+        letter-spacing: -1px;
+        line-height: 1.1;
+        text-shadow: 0 2px 15px rgba(0,0,0,0.3);
+    }
+    .roulette-header p {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-top: 4px;
+    }
+
+    /* --- Mode Toggle --- */
+    .mode-toggle {
+        display: flex;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 50px;
+        padding: 4px;
+        margin-bottom: 10px;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+    }
+    .mode-btn {
+        padding: 7px 22px;
+        border: none;
+        background: transparent;
+        color: rgba(255,255,255,0.6);
+        font-family: 'Noto Sans KR', sans-serif;
+        font-weight: 700;
+        font-size: 0.82rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+        /* 크기가 변해서 내부 요소가 요동치지 않도록 고정 */
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+    .mode-btn.active {
+        background: white;
+        color: #0c3060;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+
+    /* --- Wheel Area ---
+       PC: 뷰포트 높이의 55% 정사각형 (최대 500px)
+       모바일: 뷰포트 너비 - 패딩 (최대 360px)
+    */
+    .wheel-area {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        flex-shrink: 0;
+
+        /* PC 기본 크기 */
+        width: min(55vh, 500px, calc(100vw - 100px));
+        height: min(55vh, 500px, calc(100vw - 100px));
+
+        margin-bottom: 10px;
     }
-    .game-placeholder {
+
+    @media (max-width: 768px) {
+        .wheel-area {
+            width: min(calc(100vw - 32px), 360px);
+            height: min(calc(100vw - 32px), 360px);
+        }
+    }
+
+    .wheel-pointer {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-top: 28px solid #FFD700;
+        filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+        z-index: 10;
+    }
+    canvas#rouletteCanvas {
+        border-radius: 50%;
+        box-shadow: 0 0 0 6px rgba(255,255,255,0.2), 0 0 40px rgba(0,0,0,0.4);
+        display: block;
+        /* canvas 자체가 wheel-area 크기를 꽉 채우도록 */
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* --- Spin Button --- */
+    .spin-btn {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #0c3060;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 44px;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 900;
+        font-size: 1rem;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 20px rgba(255, 165, 0, 0.5);
+        transition: all 0.2s ease;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+    }
+    .spin-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 6px 28px rgba(255, 165, 0, 0.65); }
+    .spin-btn:active:not(:disabled) { transform: scale(0.97); }
+    .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* --- Result Card (절반 크기) --- */
+    .result-card {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.22);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 14px;
+        padding: 10px 18px;
         text-align: center;
         color: white;
-        padding: 40px;
+        width: 100%;
+        max-width: 320px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(10px);
+        flex-shrink: 0;
     }
-    .game-placeholder h2 {
-        font-size: 3em;
-        margin-bottom: 20px;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    .result-card.visible {
+        opacity: 1;
+        transform: translateY(0);
     }
-    .game-placeholder p {
-        font-size: 1.2em;
-        opacity: 0.9;
+    .result-label {
+        font-size: 0.68rem;
+        opacity: 0.65;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
     }
+    .result-name {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 900;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+    .result-meta {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-bottom: 8px;
+    }
+    .result-links {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .result-link-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        font-family: 'Noto Sans KR', sans-serif;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        background: rgba(255,255,255,0.12);
+        cursor: pointer;
+    }
+    .result-link-btn:hover {
+        background: rgba(255,255,255,0.25);
+        transform: scale(1.04);
+    }
+    .result-link-btn.instagram { background: linear-gradient(135deg, rgba(193,53,132,0.5), rgba(253,81,29,0.5)); border-color: rgba(253,81,29,0.4); }
+    .result-link-btn.kakao { background: rgba(254,229,0,0.25); border-color: rgba(254,229,0,0.4); color: #fff; }
 </style>
 
 <div id="game-container">
-    <div class="game-placeholder">
-        <h2>🎮 게임</h2>
-        <p>게임 기능은 준비 중입니다.</p>
-        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">Coming Soon...</p>
+    <div class="roulette-header">
+        <h1>🍽️ 점심 룰렛</h1>
+        <p>오늘 뭐 먹을지 결정 못 하겠다면?</p>
+    </div>
+
+    <div class="mode-toggle">
+        <button class="mode-btn active" id="btnMini" onclick="roulette.setMode('mini')">⚡ 미니</button>
+        <button class="mode-btn" id="btnFull" onclick="roulette.setMode('full')">🌐 일반</button>
+    </div>
+
+    <div class="wheel-area" id="wheelArea">
+        <div class="wheel-pointer"></div>
+        <canvas id="rouletteCanvas"></canvas>
+    </div>
+
+    <button class="spin-btn" id="spinBtn" onclick="roulette.spin()">🎰 돌려돌려!</button>
+
+    <div class="result-card" id="resultCard">
+        <div class="result-label">오늘의 점심은</div>
+        <div class="result-name" id="resultName">-</div>
+        <div class="result-meta" id="resultMeta">-</div>
+        <div class="result-links" id="resultLinks"></div>
     </div>
 </div>
+
+<script>
+window.roulette = (function() {
+    // --- 데이터 (인라인 - CORS 우회) ---
+    const ALL_RESTAURANTS = [
+        { id: 1,  name: "굿푸드(구로점)",   price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/goodfood_highend/", kakao: "https://pf.kakao.com/_CuTbn" },
+        { id: 2,  name: "KJ푸드",          price: 7500, hours: "중식 11:00~14:00", instagram: null, kakao: null },
+        { id: 3,  name: "제이오제이엠푸드", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/jojmfood/", kakao: null },
+        { id: 4,  name: "밥쥴랭",           price: 8500, hours: "중식 11:00~13:40", instagram: "https://www.instagram.com/babjulrang_guro/", kakao: null },
+        { id: 5,  name: "푸드포커스",        price: 7500, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/anadasia_yoo/", kakao: null },
+        { id: 6,  name: "갓한밥",           price: 7500, hours: "중식 11:30~14:00", instagram: "https://www.instagram.com/god1bab", kakao: null },
+        { id: 7,  name: "벽산더이룸",        price: 8000, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/byeoksan_theirum/", kakao: null },
+        { id: 8,  name: "더드림푸드",        price: 7000, hours: "미확인", instagram: null, kakao: null },
+        { id: 9,  name: "윤쉐프 코오롱",     price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/yoon_chef_/", kakao: null },
+        { id: 10, name: "얌얌 한식 뷔페",    price: 8000, hours: "중식 11:30~14:00", instagram: "https://www.instagram.com/yamyam_ask", kakao: null },
+        { id: 11, name: "더이츠푸드",        price: 7000, hours: "중식 11:00~13:40", instagram: null, kakao: null },
+        { id: 12, name: "알찬푸드",          price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/your_table__/", kakao: null },
+        { id: 13, name: "푸드라운지",        price: 8200, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/samsungit_foodlounge", kakao: null },
+        { id: 14, name: "그린푸드 가산",     price: 8000, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/greenfood_gasan/", kakao: null }
+    ];
+
+    const MINI_IDS = [1, 2, 3, 4];
+    const COLORS = [
+        '#3B82F6','#6366F1','#8B5CF6','#EC4899','#EF4444',
+        '#F97316','#EAB308','#22C55E','#14B8A6','#06B6D4',
+        '#0EA5E9','#84CC16','#A855F7','#F43F5E'
+    ];
+
+    let restaurants = [];
+    let isSpinning = false;
+    let currentAngle = 0;
+
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 버그 수정: canvas의 내부 해상도는 wheelArea의 실제 렌더 크기에 맞게 한 번만 설정
+    // CSS width/height: 100%로 표시 크기는 CSS가 제어하므로, canvas 내부 픽셀 해상도만 맞춤
+    function syncCanvasResolution() {
+        const area = document.getElementById('wheelArea');
+        const size = area.getBoundingClientRect().width;
+        // 디바이스 픽셀 비율 고려 (레티나 선명도)
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(size * dpr);
+        canvas.height = Math.round(size * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function setMode(mode) {
+        document.getElementById('btnMini').classList.toggle('active', mode === 'mini');
+        document.getElementById('btnFull').classList.toggle('active', mode === 'full');
+        restaurants = mode === 'mini'
+            ? ALL_RESTAURANTS.filter(r => MINI_IDS.includes(r.id))
+            : [...ALL_RESTAURANTS];
+        currentAngle = 0;
+        hideResult();
+        // 모드 전환 시 캔버스 해상도 재동기화 (CSS 크기는 변하지 않으므로 크기 변화 없음)
+        syncCanvasResolution();
+        drawWheel(currentAngle);
+    }
+
+    function drawWheel(angle) {
+        if (!restaurants.length) return;
+        const n = restaurants.length;
+        const area = document.getElementById('wheelArea');
+        const displaySize = area.getBoundingClientRect().width;
+        const cx = displaySize / 2, cy = displaySize / 2;
+        const radius = cx - 5;
+        const slice = (2 * Math.PI) / n;
+
+        ctx.clearRect(0, 0, displaySize, displaySize);
+
+        for (let i = 0; i < n; i++) {
+            const s = angle + i * slice;
+            const e = s + slice;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, radius, s, e);
+            ctx.closePath();
+            ctx.fillStyle = COLORS[i % COLORS.length];
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 텍스트 렌더링
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(s + slice / 2);
+
+            const isMini = n <= 4;
+            ctx.textAlign = isMini ? 'center' : 'right';
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'rgba(0,0,0,0.45)';
+            ctx.shadowBlur = 4;
+
+            const name = restaurants[i].name;
+            const label = isMini ? name : (name.length > 7 ? name.slice(0, 7) + '…' : name);
+
+            // PC는 크게, 조각이 많을수록 작게. 
+            // 미니 모드(n=4)일 때 PC 버전(width > 768)에서만 글자 크기 1.5배 적용
+            let fontSize = Math.max(10, Math.min(16, radius / n * 1.8));
+            const isPC = window.innerWidth > 768;
+            if (isMini && isPC) fontSize *= 1.5;
+
+            ctx.font = `bold ${fontSize}px 'Noto Sans KR', sans-serif`;
+
+            if (isMini) {
+                // 가운데 정렬을 위해 반지름의 중간 지점쯤에 위치 시킴
+                ctx.fillText(label, radius * 0.55, fontSize * 0.35);
+            } else {
+                ctx.fillText(label, radius - 12, fontSize * 0.35);
+            }
+            ctx.restore();
+        }
+
+        // 중앙 원 장식
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.13);
+        grad.addColorStop(0, '#fff');
+        grad.addColorStop(1, '#c7d2fe');
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.11, 0, 2 * Math.PI);
+        ctx.fillStyle = grad;
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function spin() {
+        if (isSpinning || !restaurants.length) return;
+        isSpinning = true;
+        hideResult();
+        document.getElementById('spinBtn').disabled = true;
+
+        const n = restaurants.length;
+        const slice = (2 * Math.PI) / n;
+        const targetIndex = Math.floor(Math.random() * n);
+
+        // 포인터(상단 −π/2)가 targetIndex 슬라이스 중앙 부분에 오도록 (약간의 랜덤 추가)
+        const targetCenter = targetIndex * slice + slice / 2;
+        const randomOffset = (Math.random() * 0.6 - 0.3) * slice;
+        const targetAngle = -Math.PI / 2 - targetCenter + randomOffset;
+
+        // 현재 각도를 0 ~ 2π 사이 양수로 정규화
+        const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const normalizedTarget = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+        // 시계 방향 최소 회전 거리 (양수) 계산
+        let delta = normalizedTarget - normalizedCurrent;
+        if (delta < 0) delta += 2 * Math.PI;
+
+        // 회전 바퀴 수 (반드시 정수배로 회전, 5~10회전)
+        const extraRot = Math.floor(5 + Math.random() * 6) * 2 * Math.PI;
+
+        const finalAngle = currentAngle + extraRot + delta;
+
+        const duration = 4200 + Math.random() * 1400;
+        const startAngle = currentAngle;
+        const startTime = performance.now();
+
+        function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+            drawWheel(currentAngle);
+            if (t < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                currentAngle = finalAngle;
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+                showResult(restaurants[targetIndex]);
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+
+    function showResult(r) {
+        document.getElementById('resultName').textContent = r.name;
+
+        // 가격 / 영업시간
+        const meta = [];
+        if (r.price) meta.push(`💰 ${r.price.toLocaleString()}원`);
+        if (r.hours && r.hours !== '미확인') meta.push(`🕐 ${r.hours}`);
+        document.getElementById('resultMeta').textContent = meta.join('  ·  ');
+
+        // 인스타 / 카카오 링크 버튼
+        const linksEl = document.getElementById('resultLinks');
+        linksEl.innerHTML = '';
+        if (r.instagram) {
+            const a = document.createElement('a');
+            a.href = r.instagram;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.className = 'result-link-btn instagram';
+            a.innerHTML = '📸 인스타그램';
+            linksEl.appendChild(a);
+        }
+        if (r.kakao) {
+            const a = document.createElement('a');
+            a.href = r.kakao;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.className = 'result-link-btn kakao';
+            a.innerHTML = '💬 카카오채널';
+            linksEl.appendChild(a);
+        }
+
+        const card = document.getElementById('resultCard');
+        card.classList.add('visible');
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    }
+
+    function hideResult() {
+        document.getElementById('resultCard').classList.remove('visible');
+    }
+
+    // 리사이즈 시 해상도 재동기화 후 재렌더
+    window.addEventListener('resize', () => {
+        syncCanvasResolution();
+        drawWheel(currentAngle);
+    });
+
+    // 최초 초기화 — DOM이 레이아웃된 후 실행
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setMode('mini');
+        });
+    });
+
+    return { setMode, spin };
+})();
+</script>
