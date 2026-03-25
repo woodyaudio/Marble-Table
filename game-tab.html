@@ -9,10 +9,10 @@
         background: linear-gradient(145deg, #0c3060 0%, #1a5fa8 50%, #0c3060 100%);
         overflow-y: auto;
         overflow-x: hidden;
-        padding: clamp(15px, 3vh, 30px) 16px;
+        padding: clamp(10px, 2vh, 25px) 16px; /* 모바일 대응 패딩 축소 */
         box-sizing: border-box;
         font-family: 'Noto Sans KR', sans-serif;
-        gap: clamp(8px, 2vh, 20px);
+        gap: clamp(6px, 1.5vh, 16px); /* 모바일 대응 간격 축소 */
     }
 
     /* --- Header --- */
@@ -29,6 +29,10 @@
         line-height: 1.1;
         text-shadow: 0 2px 15px rgba(0,0,0,0.3);
         transition: all 0.3s ease;
+    }
+    @media (max-width: 768px) {
+        .roulette-header h1 { font-size: 1.4rem; } /* 모바일에서 제목 축소 */
+        .roulette-header p { font-size: 0.75rem; }
     }
     .roulette-header p {
         font-size: 0.8rem;
@@ -79,6 +83,10 @@
         backdrop-filter: blur(10px);
         flex-shrink: 0;
     }
+    @media (max-width: 768px) {
+        .mode-toggle { max-width: 280px; }
+        .mode-btn { padding: 6px 0; font-size: 0.78rem; }
+    }
     .mode-btn {
         flex: 1;
         padding: 8px 0;
@@ -115,8 +123,9 @@
 
     @media (max-width: 768px) {
         .wheel-area {
-            width: min(calc(100vw - 32px), 360px);
-            height: min(calc(100vw - 32px), 360px);
+            /* 90px 광고 대응을 위해 휠 사이즈 대폭 축소 */
+            width: min(35vh, 290px);
+            height: min(35vh, 290px);
         }
     }
 
@@ -132,6 +141,14 @@
         border-top: 28px solid #FFD700;
         filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
         z-index: 10;
+    }
+    @media (max-width: 768px) {
+        .wheel-pointer {
+            border-top-width: 22px;
+            border-left-width: 11px;
+            border-right-width: 11px;
+            top: -8px;
+        }
     }
     canvas {
         border-radius: 50%;
@@ -156,6 +173,9 @@
         box-shadow: 0 4px 20px rgba(255, 165, 0, 0.5);
         transition: all 0.2s ease;
         flex-shrink: 0;
+    }
+    @media (max-width: 768px) {
+        .spin-btn { padding: 10px 36px; font-size: 0.9rem; }
     }
     .spin-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 6px 28px rgba(255, 165, 0, 0.65); }
     .spin-btn:active:not(:disabled) { transform: scale(0.97); }
@@ -191,6 +211,9 @@
         justify-content: center;
         align-items: center;
         margin-bottom: auto; /* 하단 여백을 자동으로 밀어내어 중앙 정렬 유도 */
+    }
+    @media (max-width: 768px) {
+        .result-card { min-height: 120px; padding: 8px 14px; margin-bottom: 5px; }
     }
     .result-card.visible {
         opacity: 1;
