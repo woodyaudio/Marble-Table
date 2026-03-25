@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        :root { --main-blue: #0c3060; --tab-width: 70px; --m-tab-height: 55px; }
+        :root { --main-blue: #0c3060; --tab-width: 70px; --m-tab-height: 55px; --ad-banner-h: 50px; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         /* 전체 화면 고정 */
@@ -42,17 +42,107 @@
         .tab-item:hover { color: #6b7280; }
         .tab-item.active .tab-icon { transform: scale(1.1); stroke-width: 2.5; }
 
+        /* [PC] 오른쪽 컬럼 (콘텐츠 + 광고) */
+        #right-column {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
         /* 컨텐츠 영역 */
         #content-area {
-            flex: 1; /* 남은 공간 모두 차지 */
-            height: 100%;
+            flex: 1;
+            height: 100%; /* Leaflet 등 height:100% 자식을 위해 반드시 필요 */
+            min-height: 0;
             position: relative;
             overflow: hidden;
+        }
+
+        /* [PC] 하단 광고 배너 (728x90) */
+        #pc-ad-banner {
+            width: 100%;
+            height: 90px;
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: width 0.3s ease;
+            flex-shrink: 0;
+        }
+        body[data-tab="map"] #pc-ad-banner {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: calc(100% - 340px); /* 340px = panel-w */
+        }
+        #pc-ad-banner .ad-placeholder {
+            width: 728px;
+            max-width: 100%;
+            height: 90px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #94a3b8;
+            font-family: 'Noto Sans KR', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        /* [모바일] 광고 배너 (최상단 고정) */
+        #mobile-ad-banner {
+            display: none; /* PC에서는 숨김 */
+        }
+
+        /* [모바일] PC 광고 숨김 */
+        @media (max-width: 768px) {
+            #pc-ad-banner { display: none; }
         }
 
         /* [모바일] UI 대응 */
         @media (max-width: 768px) {
             #app { flex-direction: column; } /* 모바일: 세로 배치 */
+
+            #right-column {
+                flex: 1;
+                height: auto;
+                display: block; /* 모바일에서는 flex 해제 */
+            }
+
+            /* 모바일 최상단 광고 배너 */
+            #mobile-ad-banner {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                width: 100%;
+                height: var(--ad-banner-h);
+                background: #f1f5f9;
+                border-bottom: 1px solid #e2e8f0;
+                z-index: 4000;
+                flex-shrink: 0;
+            }
+            #mobile-ad-banner .ad-placeholder {
+                width: 320px;
+                max-width: 100%;
+                height: 50px;
+                background: #e2e8f0;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                color: #94a3b8;
+                font-family: 'Noto Sans KR', sans-serif;
+                letter-spacing: 0.5px;
+            }
 
             #tab-nav {
                 position: fixed;
@@ -74,14 +164,22 @@
             .tab-text { font-size: 10px; }
             .tab-item.active .tab-icon { stroke-width: 2.2; }
 
+            /* 콘텐츠 영역: 상단 광고 + 하단 탭 높이 제외 */
             #content-area {
-                height: calc(100vh - var(--m-tab-height) - env(safe-area-inset-bottom));
+                height: calc(100vh - var(--m-tab-height) - var(--ad-banner-h) - env(safe-area-inset-bottom));
                 width: 100%;
+                margin-top: var(--ad-banner-h);
             }
         }
     </style>
 </head>
 <body>
+<!-- 모바일 전용 최상단 광고 배너 -->
+<div id="mobile-ad-banner">
+    <!-- 실제 광고 코드로 교체하세요 (예: Google AdSense / Kakao AdFit) -->
+    <div class="ad-placeholder">광고 (320 × 50)</div>
+</div>
+
 <div id="app">
     <nav id="tab-nav">
         <!-- 지도 홈 -->
@@ -118,7 +216,14 @@
             <div class="tab-text">문의</div>
         </div>
     </nav>
-    <main id="content-area"></main>
+    <div id="right-column">
+        <main id="content-area"></main>
+        <!-- PC 전용 하단 광고 배너 (모든 탭에서 표시) -->
+        <div id="pc-ad-banner">
+            <!-- 실제 광고 코드로 교체하세요 (예: Google AdSense / Kakao AdFit) -->
+            <div class="ad-placeholder">광고 (728 × 90)</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -126,6 +231,7 @@
     function loadTab(tabName) {
         if (currentTab === tabName) return;
         currentTab = tabName;
+        document.body.setAttribute('data-tab', tabName);
         
         document.querySelectorAll('.tab-item').forEach(item => {
             item.classList.toggle('active', item.dataset.tab === tabName);
@@ -137,12 +243,12 @@
                 const area = document.getElementById('content-area');
                 area.innerHTML = html;
                 
-                // 스크립트 강제 실행 로직
+                // 스크립트 강제 실행 로직 (안전한 생성 방식)
                 const scripts = area.querySelectorAll('script');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
                     Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    newScript.textContent = oldScript.textContent;
                     document.body.appendChild(newScript);
                     newScript.remove();
                 });

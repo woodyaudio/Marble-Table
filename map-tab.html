@@ -25,8 +25,23 @@
     }
     #detail-panel.open { transform: translateX(0); }
 
-    #map-area { flex: 1; height: 100%; position: relative; z-index: 1; }
-    #map { width: 100%; height: 100%; }
+    #map-area { 
+        flex: 1; height: 100%; position: relative; z-index: 1; 
+        display: flex; flex-direction: column; 
+    }
+    #map { width: 100%; flex: 1; min-height: 0; }
+
+    /* PC 728x90 하단 광고 배너만큼 빈 공간 확보 (flex-shrink 0) */
+    @media (min-width: 769px) {
+        #map-area::after {
+            content: '';
+            display: block;
+            height: 90px;
+            width: 100%;
+            flex-shrink: 0;
+            background: transparent;
+        }
+    }
 
     /* 헤더 및 필터 */
     .main-title-box { margin: 15px 16px; padding: 0; background: transparent; border: none; }
@@ -36,10 +51,12 @@
     .filter-row { display: flex; gap: 6px; margin-top: 10px; }
     .filter-item { 
         flex: 1.5; padding: 6px 8px; border-radius: 10px; border: 1px solid #fff; 
-        background: rgba(255,255,255,0.7); font-size: 0.75em; cursor: pointer; 
+        background: rgba(255,255,255,0.7); font-size: 0.72em; cursor: pointer; 
         text-align: center; display: flex; align-items: center; justify-content: center; min-height: 32px;
+        white-space: nowrap; font-weight: 700; color: #333; transition: all 0.2s;
     }
-    .home-inline-btn { flex: 0.5; font-size: 1.2em; background: #fff; }
+    .filter-item:hover { background: rgba(255,255,255,0.9); }
+    .home-inline-btn { flex: 0.5; font-size: 1.1em; background: #fff; }
 
     #list-scroll { flex: 1; overflow-y: auto; padding: 0 16px 20px; }
 
@@ -89,7 +106,7 @@
         
         #detail-panel { 
             left: 0; width: 100%; height: 38dvh; bottom: 55px; top: auto; 
-            border-radius: 24px 24px 0 0; z-index: 1010; transform: translateY(100%); 
+            border-radius: 24px 24px 0 0; z-index: 1010; transform: translateY(calc(100% + 60px)); 
         }
         #detail-panel.open { transform: translateY(0); }
         
@@ -120,7 +137,8 @@
                     <option value="7000">7,000원대</option>
                     <option value="8000">8,000원대</option>
                 </select>
-                <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식 가능</div>
+                <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식</div>
+                <div id="themeToggle" class="filter-item" onclick="toggleMapTheme()">🌎 기본맵</div>
                 <div class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
             </div>
         </div>
@@ -162,6 +180,15 @@
     let restaurantsData = [];
     const homeLoc = { lat: 37.479932, lng: 126.895215 };
     let map, markerLayer, selectedMarkerId = null, markerMap = {};
+    let currentTileLayer;
+    
+    // 테마 전환 (0: Voyager, 1: Positron, 2: Dark Matter)
+    const THEMES = [
+        { name: '🌎 기본맵', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', bg: 'rgba(255,255,255,0.7)', color: '#333' },
+        { name: '☀️ 라이트', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', bg: '#f1f5f9', color: '#1e293b' },
+        { name: '🌃 다크맵', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', bg: '#1e293b', color: '#fff' }
+    ];
+    let currentThemeIndex = parseInt(localStorage.getItem('woody_map_theme')) || 0;
     
     // 파이어베이스 관련 변수
     let db;
@@ -197,7 +224,21 @@
         if (typeof L === 'undefined') { setTimeout(init, 100); return; }
         const isMobile = window.innerWidth <= 768;
         map = L.map('map', { zoomControl: false }).setView([isMobile ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        // 사용자가 마지막으로 선택한 테마 또는 기본 테마 로드
+        const t = THEMES[currentThemeIndex];
+        currentTileLayer = L.tileLayer(t.url, {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // 초기 버튼 스타일 동기화
+        const tb = document.getElementById('themeToggle');
+        tb.innerHTML = t.name;
+        tb.style.background = t.bg;
+        tb.style.color = t.color;
+
         markerLayer = L.layerGroup().addTo(map);
 
         L.marker([homeLoc.lat, homeLoc.lng], { 
@@ -207,11 +248,6 @@
         // ✅ 지도 빈 공간 클릭 시 선택 해제
         map.on('click', function() {
             if (selectedMarkerId !== null) {
-                const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
-                if (prevR && markerMap[selectedMarkerId]) {
-                    markerMap[selectedMarkerId].setIcon(createIcon(prevR.name, false));
-                }
-                selectedMarkerId = null;
                 closeDetail();
             }
         });
@@ -339,6 +375,15 @@
 
     window.closeDetail = function() { 
         document.getElementById('detail-panel').classList.remove('open'); 
+        
+        // 패널을 닫을 때 선택된 마커 스타일도 초기화
+        if (selectedMarkerId !== null) {
+            const prevR = restaurantsData.find(x => x.id === selectedMarkerId);
+            if (prevR && markerMap[selectedMarkerId]) {
+                markerMap[selectedMarkerId].setIcon(createIcon(prevR.name, false));
+            }
+            selectedMarkerId = null;
+        }
     }
     
     window.toggleCollapse = function() { 
@@ -350,8 +395,35 @@
         const b = document.getElementById('dinnerToggle');
         b.classList.toggle('active');
         b.style.background = b.classList.contains('active') ? '#0c3060' : 'rgba(255,255,255,0.7)';
-        b.style.color = b.classList.contains('active') ? '#fff' : '#000';
+        b.style.color = b.classList.contains('active') ? '#fff' : '#333';
         filterData();
+    }
+    
+    // ✅ 지도 테마(기본/라이트/다크) 3단 토글 함수
+    window.toggleMapTheme = function() {
+        currentThemeIndex = (currentThemeIndex + 1) % 3; // 0 -> 1 -> 2 -> 0 순환
+        localStorage.setItem('woody_map_theme', currentThemeIndex); // 로컬 스토리지에 저장
+        
+        const t = THEMES[currentThemeIndex];
+        const b = document.getElementById('themeToggle');
+        
+        // 기존 타일 레이어 제거
+        if (currentTileLayer) {
+            map.removeLayer(currentTileLayer);
+        }
+        
+        // 새 타일 레이어 적용
+        currentTileLayer = L.tileLayer(t.url, {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+        
+        // 버튼 스타일 및 텍스트 변경
+        b.innerHTML = t.name;
+        b.style.background = t.bg;
+        b.style.color = t.color;
+        b.style.borderColor = (currentThemeIndex === 2) ? '#0f172a' : '#fff';
     }
     
     window.goHome = function() { 
