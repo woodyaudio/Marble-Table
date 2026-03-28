@@ -1,8 +1,666 @@
 <style>
-    .calorie-container { padding: 20px; font-family: 'Noto Sans KR', sans-serif; text-align: center; }
-    .calorie-container h2 { color: var(--main-blue); margin-bottom: 20px; }
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+    #calorie-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100%;
+        background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: clamp(15px, 3vh, 30px) 20px;
+        box-sizing: border-box;
+        font-family: 'Noto Sans KR', sans-serif;
+        gap: 20px;
+    }
+
+    /* --- Header --- */
+    .lens-header {
+        text-align: center;
+        color: var(--main-blue);
+    }
+    .lens-header h1 {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 900;
+        letter-spacing: -1px;
+        line-height: 1.2;
+        margin: 0;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .lens-header p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 6px;
+    }
+
+    /* --- Upload Area --- */
+    .upload-area {
+        width: 100%;
+        max-width: 400px;
+        background: #ffffff;
+        border: 2px dashed #cbd5e1;
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .upload-area:hover, .upload-area.dragover {
+        border-color: var(--main-blue);
+        background: #f0f7ff;
+    }
+    .upload-icon {
+        width: 48px;
+        height: 48px;
+        color: #94a3b8;
+        margin-bottom: 12px;
+        transition: color 0.3s ease;
+    }
+    .upload-area:hover .upload-icon {
+        color: var(--main-blue);
+    }
+    .upload-text {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+    .upload-subtext {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* Hidden File Input */
+    #lens-file-input {
+        display: none;
+    }
+
+    /* --- Preview Area --- */
+    .preview-area {
+        width: 100%;
+        max-width: 400px;
+        display: none; /* hidden by default */
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        animation: fadeIn 0.4s ease;
+    }
+    .preview-image-wrapper {
+        position: relative;
+        width: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        background: #000;
+    }
+    #preview-img {
+        width: 100%;
+        height: auto;
+        display: block;
+        max-height: 40vh;
+        object-fit: contain;
+    }
+    .re-upload-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s ease;
+    }
+    .re-upload-btn:hover { background: rgba(0,0,0,0.8); }
+
+    /* Analyze Button */
+    .analyze-btn {
+        background: linear-gradient(135deg, var(--main-blue), #1e40af);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 40px;
+        font-family: 'Noto Sans KR', sans-serif;
+        font-weight: 700;
+        font-size: 1.05rem;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(12, 48, 96, 0.3);
+        transition: all 0.2s ease;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .analyze-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(12, 48, 96, 0.4); }
+    .analyze-btn:active { transform: translateY(0); }
+    .analyze-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+    /* --- Loading Spinner --- */
+    .loading-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid var(--main-blue);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.9rem; color: #64748b; font-weight: 500; }
+
+    /* --- Result Card --- */
+    .analysis-result {
+        width: 100%;
+        max-width: 400px;
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        display: none; /* hidden by default */
+        flex-direction: column;
+        gap: 20px;
+        animation: slideUp 0.5s ease;
+    }
+    
+    .food-name-area {
+        text-align: center;
+        border-bottom: 2px dashed #f1f5f9;
+        padding-bottom: 15px;
+    }
+    .food-emoji { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+    .food-title { font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0; }
+
+    .nutrition-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .nutri-box {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        border: 1px solid #e2e8f0;
+    }
+    .nutri-label { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;}
+    .nutri-value { font-family: 'Nunito', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+    .nutri-unit { font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+
+    .health-score-area {
+        background: #f0fdf4;
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #bbf7d0;
+    }
+    .health-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;}
+    .health-label { font-size: 0.85rem; font-weight: 700; color: #166534; }
+    .health-value { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 900; color: #16a34a; line-height: 1; }
+    .progress-bg {
+        width: 100%;
+        height: 10px;
+        background: #dcfce7;
+        border-radius: 50px;
+        overflow: hidden;
+    }
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+        border-radius: 50px;
+        width: 0%; /* JS will animate this */
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- API Settings Modal --- */
+    .settings-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+    }
+    .settings-btn:hover { background: #e2e8f0; color: #334155; }
+    
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 320px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .modal-content h3 { margin-top: 0; color: #1e293b; font-size: 1.1rem; }
+    .modal-content label { display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 6px; }
+    .modal-content input {
+        width: 100%; padding: 10px; box-sizing: border-box;
+        border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;
+        font-family: inherit; font-size: 0.9rem;
+    }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-btns button {
+        padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+    }
+    .btn-cancel { background: #f1f5f9; color: #475569; }
+    .btn-save { background: var(--main-blue); color: white; }
+    #calorie-container { position: relative; } /* For absolute settings btn */
+
+    /* --- Empty State Placeholder --- */
+    .empty-state {
+        width: 100%;
+        max-width: 400px;
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px dashed #cbd5e1;
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+        color: #64748b;
+    }
+    .empty-emoji { font-size: 2.5rem; margin-bottom: 5px; opacity: 0.8; }
+    .empty-title { font-size: 1.1rem; font-weight: 800; color: #475569; margin: 0; }
+    .empty-desc { font-size: 0.85rem; line-height: 1.5; }
+
 </style>
-<div class="calorie-container">
-    <h2>AI 렌즈 (칼로리 분석)</h2>
-    <p>식단 업로드 및 AI 분석 기능이 추가될 예정입니다.</p>
+
+
+<div id="calorie-container">
+    <button class="settings-btn" id="btn-api-settings" title="API 설정">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    
+    <div class="lens-header">
+        <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12A10 10 0 1 0 22 12A10 10 0 1 0 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>AI 렌즈</h1>
+        <p>음식 사진을 올리면 칼로리를 알려드려요</p>
+    </div>
+
+    <!-- State 1: Upload -->
+    <div class="upload-area" id="upload-zone" onclick="document.getElementById('lens-file-input').click()">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <div class="upload-text">사진 업로드 또는 촬영</div>
+        <div class="upload-subtext">터치하거나 사진을 끌어다 놓으세요<br>(Ctrl+V 붙여넣기 지원)</div>
+        <input type="file" id="lens-file-input" accept="image/*" capture="environment">
+    </div>
+
+    <!-- State 2: Preview & Analyze -->
+    <div class="preview-area" id="preview-zone">
+        <div class="preview-image-wrapper">
+            <img id="preview-img" src="" alt="Preview">
+            <button class="re-upload-btn" onclick="resetUpload()" title="다시 선택">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+            </button>
+        </div>
+        <button class="analyze-btn" id="start-analyze-btn" onclick="startAnalysis()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H5"/><path d="M14 20h-2"/></svg>
+            AI 분석 시작하기
+        </button>
+    </div>
+
+    <!-- State: Empty Placeholder (Shown during upload/preview) -->
+    <div class="empty-state" id="empty-state-zone">
+        <div class="empty-emoji">🤔</div>
+        <h3 class="empty-title">오늘의 식단은 뭔가요?</h3>
+        <p class="empty-desc">사진을 업로드해주시면 AI가 칼로리와<br>영양 성분을 꼼꼼하게 분석해 드릴게요!</p>
+        
+        <div class="api-guide" style="margin-top: 15px; background: rgba(255,255,255,0.8); padding: 12px; border-radius: 12px; font-size: 0.8rem; color: #475569; text-align: left; line-height: 1.4;">
+            <strong>💡 AI 렌즈 사용법</strong><br>
+            1. 우측 상단의 <strong>⚙️ (톱니바퀴)</strong> 버튼을 누르세요.<br>
+            2. 발급받으신 <strong>Gemini API Key</strong>를 입력하고 저장합니다. (키는 연결된 브라우저에만 안전히 보관됩니다.)<br>
+            3. 음식 사진을 업로드하고 <strong>'AI 분석 시작하기'</strong>를 누르면 끝!
+        </div>
+    </div>
+
+    <!-- State 3: Loading -->
+    <div class="loading-container" id="loading-zone">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-msg">AI가 음식을 맛있게 분석 중입니다...</div>
+    </div>
+
+    <!-- State 4: Result -->
+    <div class="analysis-result" id="result-zone">
+        <div class="food-name-area">
+            <span class="food-emoji" id="res-emoji">🍽️</span>
+            <h2 class="food-title" id="res-title">분석 완료</h2>
+        </div>
+        
+        <div class="nutrition-grid">
+            <div class="nutri-box">
+                <div class="nutri-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>칼로리</div>
+                <div><span class="nutri-value" id="res-kcal">0</span><span class="nutri-unit"> kcal</span></div>
+            </div>
+            <div class="nutri-box">
+                <div class="nutri-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>단백질</div>
+                <div><span class="nutri-value" id="res-protein">0</span><span class="nutri-unit"> g</span></div>
+            </div>
+        </div>
+
+        <div class="health-score-area">
+            <div class="health-header">
+                <span class="health-label">💙 웰빙 점수</span>
+                <div><span class="health-value" id="res-score">0</span><span style="font-size:0.8rem;color:#22c55e;font-weight:700;">/100</span></div>
+            </div>
+            <div class="progress-bg">
+                <div class="progress-bar" id="res-progress"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: #166534; margin-top: 8px; text-align: right;" id="res-comment">건강한 식단이에요!</div>
+        </div>
+
+        <button class="analyze-btn" style="background: #f1f5f9; color: #475569; box-shadow: none; font-size: 0.95rem; padding: 10px;" onclick="resetUpload()">
+            다른 사진 분석하기
+        </button>
+    </div>
+
+    <!-- API Modal -->
+    <div class="modal-overlay" id="api-modal">
+        <div class="modal-content">
+            <h3>🔑 Gemini API 설정</h3>
+            <label for="gemini-key">Google Gemini API Key를 입력해주세요. 로컬(브라우저)에만 저장되어 안전합니다.</label>
+            <input type="password" id="gemini-key" placeholder="AIzaSy...">
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeApiModal()">취소</button>
+                <button class="btn-save" onclick="saveApiKey()">저장</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+(() => {
+    // --- State Variables ---
+    let currentImageFile = null;
+    let base64Image = null;
+
+    // --- API Key Management ---
+    function getApiKey() { return localStorage.getItem('gemini_api_key_lens'); }
+    
+    window.openApiModal = function() {
+        const modal = document.getElementById('api-modal');
+        const input = document.getElementById('gemini-key');
+        if (modal && input) {
+            input.value = getApiKey() || '';
+            modal.style.display = 'flex';
+        } else {
+            alert("시스템 오류: 설정 창을 불러올 수 없습니다. 페이지를 새로고침 해주세요.");
+        }
+    };
+    
+    window.closeApiModal = function() { 
+        const modal = document.getElementById('api-modal');
+        if (modal) modal.style.display = 'none'; 
+    };
+    
+    window.saveApiKey = function() {
+        const input = document.getElementById('gemini-key');
+        if (input && input.value.trim()) { 
+            localStorage.setItem('gemini_api_key_lens', input.value.trim()); 
+        }
+        window.closeApiModal();
+    };
+
+    // --- File Handling ---
+    function setupUploadEvents() {
+        // [기존 코드 동일]
+        const uploadZone = document.getElementById('upload-zone');
+        if (!uploadZone) return;
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        const fileInput = document.getElementById('lens-file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+        }
+    }
+
+    // --- Paste (Ctrl+V) ---
+    document.addEventListener('paste', (e) => {
+        if (!document.getElementById('calorie-container')) return;
+        if (e.clipboardData && e.clipboardData.items) {
+            for (let i = 0; i < e.clipboardData.items.length; i++) {
+                if (e.clipboardData.items[i].type.indexOf("image") !== -1) {
+                    const file = e.clipboardData.items[i].getAsFile();
+                    handleFile(file);
+                    break;
+                }
+            }
+        }
+    }, { passive: true });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드 가능합니다.');
+            return;
+        }
+        currentImageFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewImg = document.getElementById('preview-img');
+            if (previewImg) {
+                previewImg.src = e.target.result;
+                base64Image = e.target.result.split(',')[1];
+                showState('preview');
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- State Management ---
+    window.resetUpload = function() {
+        currentImageFile = null;
+        base64Image = null;
+        const fileInput = document.getElementById('lens-file-input');
+        if (fileInput) fileInput.value = '';
+        showState('upload');
+    };
+
+    function showState(state) {
+        const ids = ['upload-zone', 'preview-zone', 'loading-zone', 'result-zone', 'empty-state-zone'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        if (state === 'upload') {
+            const z1 = document.getElementById('upload-zone');
+            const z2 = document.getElementById('empty-state-zone');
+            if (z1) z1.style.display = 'block';
+            if (z2) z2.style.display = 'flex';
+        } else if (state === 'preview') {
+            const z1 = document.getElementById('preview-zone');
+            const z2 = document.getElementById('empty-state-zone');
+            if (z1) z1.style.display = 'flex';
+            if (z2) z2.style.display = 'flex';
+        } else if (state === 'loading') {
+            const z = document.getElementById('loading-zone');
+            if (z) z.style.display = 'flex';
+        } else if (state === 'result') {
+            const z = document.getElementById('result-zone');
+            if (z) z.style.display = 'flex';
+        }
+    }
+
+    // --- Gemini Analysis Logic ---
+    window.startAnalysis = async function() {
+        if (!currentImageFile || !base64Image) return;
+        
+        const apiKey = getApiKey();
+        if(!apiKey) {
+            alert('먼저 우측 상단 톱니바퀴 버튼을 눌러 Gemini API Key를 설정해주세요.');
+            window.openApiModal();
+            return;
+        }
+
+        showState('loading');
+        const msgEl = document.getElementById('loading-msg');
+        if (msgEl) msgEl.innerText = "이미지 스캔 중...";
+
+        try {
+            if (msgEl) msgEl.innerText = "AI가 음식을 분석하고 있어요...";
+            
+            const prompt = `이 사진에 있는 음식이 무엇인지 파악하고, 대략적인 칼로리(kcal), 단백질 함유량(g), 그리고 건강 점수(100점 만점)를 평가해줘. 
+            반드시 아래의 JSON 형식으로만 짧고 명확하게 응답해야 해. 다른 말은 절대로 덧붙이지 마.
+            {
+               "emoji": "음식에 어울리는 이모지 1개",
+               "name": "음식 이름 (예: 닭가슴살 샐러드)",
+               "kcal": 300,
+               "protein": 25,
+               "score": 85,
+               "comment": "건강에 대한 짧고 다정한 코멘트 1줄"
+            }`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inline_data: { mime_type: currentImageFile.type, data: base64Image } }
+                        ]
+                    }],
+                    generationConfig: { temperature: 0.2 }
+                })
+            });
+
+            if (!response.ok) throw new Error(`API 오류: ${response.status}`);
+            
+            const data = await response.json();
+            const textResponse = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const result = JSON.parse(textResponse);
+            
+            renderResult(result);
+            
+        } catch (error) {
+            console.error(error);
+            alert("분석에 실패했습니다. API 키가 유효한지 확인해주세요.\n오류: " + error.message);
+            showState('preview');
+        }
+    };
+
+    function renderResult(result) {
+        showState('result');
+        
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+        
+        setVal('res-emoji', result.emoji || '🍽️');
+        setVal('res-title', result.name || '알 수 없는 음식');
+        
+        animateValue('res-kcal', 0, result.kcal || 0, 1000);
+        animateValue('res-protein', 0, result.protein || 0, 1000);
+        
+        const score = result.score || 0;
+        animateValue('res-score', 0, score, 1000);
+        
+        const bar = document.getElementById('res-progress');
+        if (bar) {
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = score + '%';
+                if(score >= 70) { bar.style.background = 'linear-gradient(90deg, #22c55e, #16a34a)'; }
+                else if(score >= 40) { bar.style.background = 'linear-gradient(90deg, #eab308, #ca8a04)'; }
+                else { bar.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)'; }
+            }, 100);
+        }
+
+        setVal('res-comment', result.comment || '식단을 기록해보세요!');
+    }
+
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // --- Initialize ---
+    setupUploadEvents();
+    showState('upload');
+
+    // 이벤트 리스너: DOM 교체 이슈를 피하기 위해 전역 Delegate 방식 적용 (1회만 등록)
+    if (!window.lensEventAttached) {
+        document.body.addEventListener('click', function(e) {
+            const btn = e.target.closest('#btn-api-settings');
+            if (btn) {
+                if (typeof window.openApiModal === 'function') {
+                    window.openApiModal();
+                }
+            }
+        });
+        window.lensEventAttached = true;
+    }
+})();
+</script>

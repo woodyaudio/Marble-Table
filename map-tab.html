@@ -254,11 +254,15 @@
 
         try {
             await initFirebase();
-            const res = await fetch(`data/restaurants.json?v=${Date.now()}`);
+            const res = await fetch(`./data/restaurants.json?v=${Date.now()}`);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             restaurantsData = await res.json();
             restaurantsData = restaurantsData.filter(r => r.name !== 'Dev_Test');
             filterData();
-        } catch(e) { console.error(e); }
+        } catch(e) { 
+            console.error('Data fetch error:', e); 
+            document.getElementById('restaurantCards').innerHTML = `<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 0.9em; font-weight: 700;">데이터를 불러오지 못했습니다.<br>새로고침 해주세요.</div>`;
+        }
     }
 
     // ✅ 마커 아이콘 생성 함수 (선택 여부에 따라 다른 디자인)
@@ -362,8 +366,8 @@
 
         // SNS 버튼 렌더링 (인스타 + 카카오톡 채널)
         let snsHtml = '';
-        if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램</a>`;
-        if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/></svg> 카톡 채널</a>`;
+        if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램<\/a>`;
+        if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/><\/svg> 카톡 채널<\/a>`;
         document.getElementById('snsArea').innerHTML = snsHtml;
 
         // 한줄평 로드

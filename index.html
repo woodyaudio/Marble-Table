@@ -236,10 +236,21 @@
             item.classList.toggle('active', item.dataset.tab === tabName);
         });
 
-        fetch(`${tabName}-tab.html?v=${Date.now()}`)
-            .then(res => res.text())
+        fetch(`./${tabName}-tab.html?v=${Date.now()}`)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.text();
+            })
             .then(html => {
                 const area = document.getElementById('content-area');
+                
+                // Live Server 등 dev tools 주입 코드 제거 (끝태그 뒤 잔여물 정리)
+                const marker = '<' + '/script>';
+                const lastClose = html.lastIndexOf(marker);
+                if (lastClose !== -1) {
+                    html = html.substring(0, lastClose + marker.length);
+                }
+                
                 area.innerHTML = html;
                 
                 // 스크립트 강제 실행 로직 (안전한 생성 방식)
@@ -251,6 +262,13 @@
                     document.body.appendChild(newScript);
                     newScript.remove();
                 });
+            })
+            .catch(err => {
+                console.error('Error loading tab:', err);
+                document.getElementById('content-area').innerHTML = 
+                    `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#ef4444; font-weight:700;">
+                        탭을 불러오지 못했습니다. (경로 확인 필요)
+                    </div>`;
             });
     }
 

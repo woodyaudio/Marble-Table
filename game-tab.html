@@ -19,7 +19,7 @@
     .roulette-header {
         text-align: center;
         color: white;
-        margin-top: auto; /* 상단 여백을 자동으로 밀어내어 중앙 정렬 유도 */
+        margin-bottom: 5px; /* 자동 여백 제거, 약간의 고정 여백만 유지 */
     }
     .roulette-header h1 {
         font-family: 'Nunito', sans-serif;
@@ -210,10 +210,10 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        margin-bottom: auto; /* 하단 여백을 자동으로 밀어내어 중앙 정렬 유도 */
+        margin-top: 10px; /* 자동 여백 제거, 약간의 고정 여백만 유지 */
     }
     @media (max-width: 768px) {
-        .result-card { min-height: 120px; padding: 8px 14px; margin-bottom: 5px; }
+        .result-card { min-height: 120px; padding: 8px 14px; margin-top: 5px; }
     }
     .result-card.visible {
         opacity: 1;
