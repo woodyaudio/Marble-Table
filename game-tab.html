@@ -6,7 +6,7 @@
         flex-direction: column;
         align-items: center;
         min-height: 100%;
-        background: linear-gradient(145deg, #0c3060 0%, #1a5fa8 50%, #0c3060 100%);
+        background: linear-gradient(160deg, #e0f2fe 0%, #f0f9ff 50%, #dbeafe 100%);
         overflow-y: auto;
         overflow-x: hidden;
         padding: clamp(10px, 2vh, 25px) 16px; /* 모바일 대응 패딩 축소 */
@@ -18,7 +18,7 @@
     /* --- Header --- */
     .roulette-header {
         text-align: center;
-        color: white;
+        color: #0c3060;
         margin-bottom: 5px; /* 자동 여백 제거, 약간의 고정 여백만 유지 */
     }
     .roulette-header h1 {
@@ -27,7 +27,7 @@
         font-weight: 900;
         letter-spacing: -1px;
         line-height: 1.1;
-        text-shadow: 0 2px 15px rgba(0,0,0,0.3);
+        text-shadow: 0 1px 4px rgba(255,255,255,0.8);
         transition: all 0.3s ease;
     }
     @media (max-width: 768px) {
@@ -36,7 +36,8 @@
     }
     .roulette-header p {
         font-size: 0.8rem;
-        opacity: 0.7;
+        color: #4a7ab5;
+        opacity: 0.9;
         margin-top: 4px;
         transition: all 0.3s ease;
     }
@@ -44,8 +45,8 @@
     /* --- Game Type Toggle (점심 / 커피) --- */
     .game-type-toggle {
         display: flex;
-        background: rgba(0,0,0,0.25);
-        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.5);
+        border: 1px solid rgba(12,48,96,0.12);
         border-radius: 50px;
         padding: 3px;
         backdrop-filter: blur(10px);
@@ -55,7 +56,7 @@
         padding: 7px 24px;
         border: none;
         background: transparent;
-        color: rgba(255,255,255,0.55);
+        color: rgba(12,48,96,0.5);
         font-family: 'Noto Sans KR', sans-serif;
         font-weight: 700;
         font-size: 0.82rem;
@@ -66,9 +67,9 @@
         white-space: nowrap;
     }
     .game-type-btn.active {
-        background: rgba(255,255,255,0.18);
+        background: #0c3060;
         color: white;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 12px rgba(12,48,96,0.25);
     }
 
     /* --- 통합 모드 토글 (미니/일반/커피) --- */
@@ -76,12 +77,13 @@
         display: flex;
         width: 100%;
         max-width: 320px;
-        background: rgba(0,0,0,0.25);
-        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.55);
+        border: 1px solid rgba(12,48,96,0.12);
         border-radius: 50px;
         padding: 3px;
         backdrop-filter: blur(10px);
         flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(12,48,96,0.08);
     }
     @media (max-width: 768px) {
         .mode-toggle { max-width: 280px; }
@@ -92,7 +94,7 @@
         padding: 8px 0;
         border: none;
         background: transparent;
-        color: rgba(255,255,255,0.55);
+        color: rgba(12,48,96,0.45);
         font-family: 'Noto Sans KR', sans-serif;
         font-weight: 700;
         font-size: 0.82rem;
@@ -104,9 +106,9 @@
         white-space: nowrap;
     }
     .mode-btn.active {
-        background: white;
-        color: #0c3060;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        background: #0c3060;
+        color: white;
+        box-shadow: 0 2px 12px rgba(12,48,96,0.25);
     }
 
     /* --- Wheel Area --- */
@@ -191,26 +193,26 @@
 
     /* --- Result Card --- */
     .result-card {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.22);
+        background: rgba(255,255,255,0.75);
+        border: 1px solid rgba(12,48,96,0.1);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border-radius: 14px;
         padding: 10px 18px;
         text-align: center;
-        color: white;
+        color: #0c3060;
         width: 100%;
         max-width: 320px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 20px rgba(12,48,96,0.1);
         transition: all 0.4s ease;
-        opacity: 0.85; /* 기본 상태에서도 보이게 */
+        opacity: 0.92;
         flex-shrink: 0;
-        min-height: 135px; /* 당첨 후 가격, 링크 등이 표시될 때의 전체 높이와 동일하게 고정 */
+        min-height: 135px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        margin-top: 10px; /* 자동 여백 제거, 약간의 고정 여백만 유지 */
+        margin-top: 10px;
     }
     @media (max-width: 768px) {
         .result-card { min-height: 120px; padding: 8px 14px; margin-top: 5px; }
@@ -221,7 +223,7 @@
     }
     .result-label {
         font-size: 0.68rem;
-        opacity: 0.65;
+        color: #64748b;
         letter-spacing: 1px;
         text-transform: uppercase;
         margin-bottom: 4px;
@@ -230,6 +232,7 @@
         font-family: 'Nunito', sans-serif;
         font-size: 1.25rem;
         font-weight: 900;
+        color: #0c3060;
         margin-bottom: 4px;
         line-height: 1.2;
         display: flex;
@@ -242,7 +245,7 @@
     }
     .result-meta {
         font-size: 0.72rem;
-        opacity: 0.7;
+        color: #64748b;
         margin-bottom: 8px;
     }
     .result-links {
@@ -262,34 +265,41 @@
         font-family: 'Noto Sans KR', sans-serif;
         text-decoration: none;
         transition: all 0.2s ease;
-        border: 1px solid rgba(255,255,255,0.3);
-        color: white;
-        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(12,48,96,0.15);
+        color: #0c3060;
+        background: rgba(12,48,96,0.06);
         cursor: pointer;
     }
     .result-link-btn:hover {
-        background: rgba(255,255,255,0.25);
+        background: rgba(12,48,96,0.12);
         transform: scale(1.04);
     }
-    .result-link-btn.instagram { background: linear-gradient(135deg, rgba(193,53,132,0.5), rgba(253,81,29,0.5)); border-color: rgba(253,81,29,0.4); }
-    .result-link-btn.kakao { background: rgba(254,229,0,0.25); border-color: rgba(254,229,0,0.4); color: #fff; }
+    .result-link-btn.instagram { background: linear-gradient(135deg, rgba(193,53,132,0.15), rgba(253,81,29,0.15)); border-color: rgba(253,81,29,0.3); color: #c13584; }
+    .result-link-btn.kakao { background: rgba(254,229,0,0.35); border-color: rgba(200,160,0,0.35); color: #3C1E1E; }
 
     /* --- Coffee Result 특별 스타일 --- */
     .result-card.coffee-result {
-        background: rgba(139, 94, 60, 0.25);
-        border-color: rgba(212, 165, 116, 0.4);
+        background: rgba(255, 248, 240, 0.85);
+        border-color: rgba(212, 165, 116, 0.35);
+        color: #5c3d1e;
     }
     .result-card.coffee-result .result-name {
         font-size: 2rem;
+        color: #5c3d1e;
+    }
+    .result-card.coffee-result .result-label,
+    .result-card.coffee-result .result-meta {
+        color: #8B6240;
     }
     .result-prob-badge {
         display: inline-block;
-        background: rgba(255,255,255,0.15);
-        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(139,94,60,0.1);
+        border: 1px solid rgba(139,94,60,0.25);
         border-radius: 50px;
         padding: 2px 12px;
         font-size: 0.72rem;
         font-weight: 700;
+        color: #5c3d1e;
         margin-top: 4px;
         letter-spacing: 0.5px;
     }
