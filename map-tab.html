@@ -119,6 +119,61 @@
         padding: 12px 14px; background: rgba(255,255,255,0.8); border-radius: 12px; 
         margin-bottom: 8px; border: 1px solid #fff; cursor: pointer;
     }
+
+    /* 위치 지정 모드 UI */
+    #location-picker-ui {
+        display: none;
+        position: absolute;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+        background: rgba(255,255,255,0.95);
+        padding: 12px 16px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        text-align: center;
+    }
+    #location-picker-ui.active { display: block; }
+    #picker-crosshair {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -100%);
+        z-index: 1000;
+        pointer-events: none;
+        font-size: 38px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    #picker-crosshair.active { display: block; }
+    .picker-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        margin: 4px;
+        font-family: inherit;
+    }
+    .picker-btn-save { background: var(--main-blue); color: #fff; }
+    .picker-btn-cancel { background: #e5e7eb; color: #4b5563; }
+    /* GPS 현재 위치 마커 애니메이션 */
+    @keyframes gps-pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.6); }
+        70%  { box-shadow: 0 0 0 12px rgba(59,130,246,0); }
+        100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    }
+    .gps-dot {
+        width: 18px; height: 18px;
+        background: #3b82f6;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        animation: gps-pulse 1.8s infinite;
+    }
+    /* GPS 이동 버튼 (floating 제거, 필터로 이동) */
+    #gps-btn.locating { animation: gps-pulse 1s infinite; background: #eff6ff; border-radius: 10px; }
 </style>
 
 <div id="map-container">
@@ -138,8 +193,10 @@
                     <option value="8000">8,000원대</option>
                 </select>
                 <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식</div>
-                <div id="themeToggle" class="filter-item" onclick="toggleMapTheme()">🌎 기본맵</div>
-                <div class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
+                <div id="locate-btn" class="filter-item home-inline-btn" onclick="moveToGPS()" title="현재 위치" style="display:flex; align-items:center; justify-content:center;">
+                    <div style="width:14px; height:14px; background:#3b82f6; border-radius:50%; border:2px solid #fff; outline:1px solid #3b82f6;"></div>
+                </div>
+                <div id="home-btn" class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
             </div>
         </div>
         <div id="list-scroll"><div id="restaurantCards"></div></div>
@@ -172,14 +229,43 @@
         </div>
     </div>
 
-    <div id="map-area"><div id="map"></div></div>
+    <div id="map-area">
+        <div id="map"></div>
+        <div id="picker-crosshair">📍</div>
+        <div id="location-picker-ui">
+            <div style="font-weight:700; font-size:0.9em; margin-bottom:8px; color:var(--main-blue);" id="picker-title">새 위치 지정</div>
+            <div style="font-size:0.75em; color:#64748b; margin-bottom:12px;">지도를 움직여 중심을 맞춘 후<br>완료를 눌러주세요.</div>
+            <button class="picker-btn picker-btn-save" onclick="saveLocation()">이 위치로 설정</button>
+            <button class="picker-btn picker-btn-cancel" onclick="cancelLocationPicker()">뒤로 가기</button>
+        </div>
+    </div>
 </div>
 
 <script>
 (function() {
     let restaurantsData = [];
-    const homeLoc = { lat: 37.479932, lng: 126.895215 };
+    
+    // 기본값
+    const defaultCompanyLoc = { lat: 37.479932, lng: 126.895215 };
+    
+    // 로컬 스토리지에서 위치 불러오기
+    let savedHomeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
+    let savedCompanyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : defaultCompanyLoc;
+    
+    // 초기 지도의 중심점
+    let centerLoc = savedCompanyLoc;
+
     let map, markerLayer, selectedMarkerId = null, markerMap = {};
+    let homeMarker = null, companyMarker = null, gpsMarker = null;
+    
+    // 위치 지정 모드 여부 확인
+    const pickerMode = localStorage.getItem('woody_location_picker_mode'); // 'home' or 'company'
+    const searchedLocStr = localStorage.getItem('woody_picker_search_loc');
+    
+    // 탭 이동 시 위치 지정 모드 유지 방지 (읽은 후 즉시 삭제)
+    localStorage.removeItem('woody_location_picker_mode');
+    localStorage.removeItem('woody_picker_search_loc');
+    
     let currentTileLayer;
     
     // 테마 전환 (0: Voyager, 1: Positron, 2: Dark Matter)
@@ -223,7 +309,7 @@
     async function init() {
         if (typeof L === 'undefined') { setTimeout(init, 100); return; }
         const isMobile = window.innerWidth <= 768;
-        map = L.map('map', { zoomControl: false }).setView([isMobile ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17);
+        map = L.map('map', { zoomControl: false }); // 초기 좌표 설정은 하단에서 수행
         
         // 사용자가 마지막으로 선택한 테마 또는 기본 테마 로드
         const t = THEMES[currentThemeIndex];
@@ -233,17 +319,47 @@
             maxZoom: 20
         }).addTo(map);
 
-        // 초기 버튼 스타일 동기화
-        const tb = document.getElementById('themeToggle');
-        tb.innerHTML = t.name;
-        tb.style.background = t.bg;
-        tb.style.color = t.color;
-
         markerLayer = L.layerGroup().addTo(map);
 
-        L.marker([homeLoc.lat, homeLoc.lng], { 
-            icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ffcf00;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#d97706; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">넷마블 컴퍼니</div></div>`, className: '', iconSize: [100, 60] }) 
+        // 회사 위치 마커
+        companyMarker = L.marker([savedCompanyLoc.lat, savedCompanyLoc.lng], { 
+            icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ffcf00;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#d97706; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">회사</div></div>`, className: '', iconSize: [100, 60] }) 
         }).addTo(map);
+
+        // 집 위치 마커 (있을 경우만)
+        if (savedHomeLoc) {
+            homeMarker = L.marker([savedHomeLoc.lat, savedHomeLoc.lng], { 
+                icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">🏠</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">집</div></div>`, className: '', iconSize: [100, 60] }) 
+            }).addTo(map);
+        }
+
+        // GPS 로 시작 위치 결정 (pickerMode 제외)
+        if (pickerMode) {
+            // 피커 모드일 경우: 검색 좌표 또는 회사 위치
+            let initialLat = centerLoc.lat;
+            let initialLng = centerLoc.lng;
+            if (searchedLocStr) {
+                try {
+                    const parsed = JSON.parse(searchedLocStr);
+                    if (parsed.lat && parsed.lng) { initialLat = parsed.lat; initialLng = parsed.lng; }
+                } catch(e) {}
+            }
+            map.setView([isMobile ? initialLat - 0.0006 : initialLat, initialLng], 17);
+        } else {
+            // 일반 모드: GPS 우선, 실패 시 회사 위치
+            map.setView([isMobile ? centerLoc.lat - 0.0006 : centerLoc.lat, centerLoc.lng], 17);
+            startGPS(false); // 지도를 GPS로 이동 (isMobile 동일하게 적용)
+        }
+
+        // 검색 모드 UI 활성화
+        if (pickerMode) {
+            document.getElementById('picker-crosshair').classList.add('active');
+            document.getElementById('location-picker-ui').classList.add('active');
+            document.getElementById('picker-title').innerText = pickerMode === 'home' ? '🏠 집 위치 지정' : '🏢 회사 위치 지정';
+            
+            // 모바일에서 왼쪽 패널이 화면을 가리지 않도록 자동 접기
+            document.getElementById('left-panel').classList.add('collapsed');
+        }
 
         // ✅ 지도 빈 공간 클릭 시 선택 해제
         map.on('click', function() {
@@ -403,9 +519,9 @@
         filterData();
     }
     
-    // ✅ 지도 테마(기본/라이트/다크) 3단 토글 함수
-    window.toggleMapTheme = function() {
-        currentThemeIndex = (currentThemeIndex + 1) % 3; // 0 -> 1 -> 2 -> 0 순환
+    // ✅ 지도 테마 설정 (기본/라이트/다크)
+    window.setMapTheme = function(index) {
+        currentThemeIndex = index;
         localStorage.setItem('woody_map_theme', currentThemeIndex); // 로컬 스토리지에 저장
         
         const t = THEMES[currentThemeIndex];
@@ -424,16 +540,184 @@
         }).addTo(map);
         
         // 버튼 스타일 및 텍스트 변경
-        b.innerHTML = t.name;
-        b.style.background = t.bg;
-        b.style.color = t.color;
-        b.style.borderColor = (currentThemeIndex === 2) ? '#0f172a' : '#fff';
+        if (b) {
+            b.innerHTML = t.name;
+            b.style.background = t.bg;
+            b.style.color = t.color;
+            b.style.borderColor = (currentThemeIndex === 2) ? '#0f172a' : '#fff';
+        }
     }
     
-    window.goHome = function() { 
-        map.setView([window.innerWidth <= 768 ? homeLoc.lat - 0.0006 : homeLoc.lat, homeLoc.lng], 17); 
-        closeDetail(); 
+    // ✅ 3단 토글 함수
+    window.toggleMapTheme = function() {
+        window.setMapTheme((currentThemeIndex + 1) % 3);
     }
+    
+    // 위치 지정 모드 저장
+    window.saveLocation = function() {
+        if (!pickerMode) return;
+        const c = map.getCenter();
+        const saveKey = pickerMode === 'home' ? 'woody_home_loc' : 'woody_company_loc';
+        localStorage.setItem(saveKey, JSON.stringify({lat: c.lat, lng: c.lng}));
+        
+        // 1. 마커 화면에서 즉시 위치 이동 처리
+        if (pickerMode === 'home') {
+            savedHomeLoc = {lat: c.lat, lng: c.lng};
+            if (homeMarker) {
+                homeMarker.setLatLng([c.lat, c.lng]);
+            } else {
+                homeMarker = L.marker([c.lat, c.lng], { 
+                    icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">🏠</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">집</div></div>`, className: '', iconSize: [100, 60] }) 
+                }).addTo(map);
+            }
+        } else if (pickerMode === 'company') {
+            savedCompanyLoc = {lat: c.lat, lng: c.lng};
+            centerLoc = savedCompanyLoc;
+            if (companyMarker) companyMarker.setLatLng([c.lat, c.lng]);
+        }
+        
+        // 2. 안내 모달 UI 변경
+        const uiContainer = document.getElementById('location-picker-ui');
+        const titleEl = document.getElementById('picker-title');
+        const descEl = titleEl.nextElementSibling;
+        titleEl.innerText = "설정이 완료 되었습니다! ✅";
+        titleEl.style.color = "#10b981"; // 초록빛 성공색
+        descEl.innerText = pickerMode === 'home' ? "이제 집 핀이 이 위치에 고정됩니다." : "이제 회사 핀이 이 위치에 고정됩니다.";
+        
+        // 버튼 숨김
+        const btns = document.querySelectorAll('#location-picker-ui .picker-btn');
+        btns.forEach(b => b.style.display = 'none');
+        
+        // 크로스헤어 즉시 숨김
+        document.getElementById('picker-crosshair').classList.remove('active');
+        
+        // 상태 초기화 방지 (5초 후 다시 복구하기 위함)
+        // localStorage.removeItem('woody_location_picker_mode');
+        
+        // 검색결과 기준점은 삭제 (더 이상 고정되지 않게)
+        localStorage.removeItem('woody_picker_search_loc');
+        
+        // 3. 약간의 딜레이 후 UI 창 복구 (실수 대비)
+        setTimeout(() => {
+            document.getElementById('picker-crosshair').classList.add('active');
+            
+            // 향후 진입을 위해 원상 복구
+            titleEl.style.color = "var(--main-blue)";
+            titleEl.innerText = pickerMode === 'home' ? '🏠 집 위치 지정' : '🏢 회사 위치 지정';
+            descEl.innerText = "지도를 움직여 중심을 맞춘 후\n완료를 눌러주세요.";
+            btns.forEach(b => b.style.display = 'inline-block');
+        }, 3000);
+    };
+
+    // 위치 지정 모드 취소
+    window.cancelLocationPicker = function() {
+        // 설정 화면의 '자주 가는 장소 설정' 탭으로 복귀
+        localStorage.setItem('woody_setting_resume_screen', 'favorite-places');
+        if (window.loadTab) {
+            window.loadTab('contact'); // 설정 화면으로 복구
+        } else {
+            document.getElementById('picker-crosshair').classList.remove('active');
+            document.getElementById('location-picker-ui').classList.remove('active');
+        }
+    };
+    
+    window.goHome = function() {
+        const dest = getSmartHomeDest();
+        const isMobile = window.innerWidth <= 768;
+        map.setView([isMobile ? dest.lat - 0.0006 : dest.lat, dest.lng], 17);
+        closeDetail();
+    }
+
+    // ===== GPS 현재 위치 =====
+    function getDistanceKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // 현재 GPS 좌표 저장 (proximity 연산용)
+    let currentGPSLat = null, currentGPSLng = null;
+
+    // Home 버튼: GPS 위치에 따라 집/회사 중 가까운 쪽 반환
+    function getSmartHomeDest() {
+        if (currentGPSLat === null) return savedCompanyLoc;
+        const distHome = savedHomeLoc ? getDistanceKm(currentGPSLat, currentGPSLng, savedHomeLoc.lat, savedHomeLoc.lng) : Infinity;
+        const distCompany = getDistanceKm(currentGPSLat, currentGPSLng, savedCompanyLoc.lat, savedCompanyLoc.lng);
+        return distHome < distCompany ? savedHomeLoc : savedCompanyLoc;
+    }
+
+    // Home 버튼 UI 업데이트
+    function updateHomeBtn() {
+        const btn = document.getElementById('home-btn');
+        if (!btn) return;
+        if (currentGPSLat === null) { btn.innerText = '🏠'; return; }
+        const dest = getSmartHomeDest();
+        btn.innerText = (savedHomeLoc && dest === savedHomeLoc) ? '🏠' : '🏢';
+    }
+    function placeGPSMarker(lat, lng) {
+        currentGPSLat = lat;
+        currentGPSLng = lng;
+        if (gpsMarker) {
+            gpsMarker.setLatLng([lat, lng]);
+        } else {
+            gpsMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    html: `<div class="gps-dot"></div>`,
+                    className: '',
+                    iconSize: [18, 18],
+                    iconAnchor: [9, 9]
+                }),
+                zIndexOffset: 500
+            }).addTo(map);
+        }
+        updateHomeBtn();
+    }
+
+    // 내 위치로 지도 이동 + 마커 표시
+    function startGPS(panToLocation) {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                placeGPSMarker(lat, lng);
+                // panToLocation === false 일 때: 시작 시 GPS로 이동
+                const isMobile = window.innerWidth <= 768;
+                map.setView([isMobile ? lat - 0.0006 : lat, lng], 17);
+            },
+            function(err) { console.warn('GPS 오류:', err.message); },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+    }
+
+    // GPS 버튼 클릭 시 현위치로 이동
+    window.moveToGPS = function() {
+        const btn = document.getElementById('locate-btn');
+        if (btn) btn.style.opacity = '0.5';
+        if (!navigator.geolocation) {
+            alert('이 기기는 GPS를 지원하지 않습니다.');
+            if (btn) btn.style.opacity = '1';
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                placeGPSMarker(lat, lng);
+                const isMobile = window.innerWidth <= 768;
+                map.setView([isMobile ? lat - 0.0006 : lat, lng], 17);
+                if (btn) btn.style.opacity = '1';
+            },
+            function(err) {
+                console.warn('GPS 오류:', err.message);
+                alert('현재 위치를 가져올 수 없습니다.\n위치 사용 권한을 확인해주세요.');
+                if (btn) btn.style.opacity = '1';
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+    };
 
     // ========== 한줄평 시스템 (파이어베이스 연동) ==========
     const COOLDOWN_KEY = 'woody_review_cooldown';

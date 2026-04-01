@@ -208,16 +208,15 @@
     .notice-detail-body {
         font-size: 0.9em;
         color: #374151;
-        line-height: 1.8;
-        white-space: pre-wrap;
+        line-height: 1.5;
         word-break: keep-all;
     }
     .notice-detail-body .change-item {
         display: flex;
         align-items: flex-start;
         gap: 8px;
-        margin-bottom: 10px;
-        padding: 10px 12px;
+        margin-bottom: 6px;
+        padding: 8px 10px;
         background: #f8f9fa;
         border-radius: 8px;
         border-left: 3px solid var(--settings-blue);
@@ -490,6 +489,22 @@
                 </div>
             </div>
         </div>
+
+        <div class="settings-section">
+            <div class="settings-section-label">시스템</div>
+            <div class="settings-group">
+                <div class="settings-row" onclick="showScreen('system')">
+                    <div class="settings-row-icon" style="background: #e1bee7;">🌍</div>
+                    <div class="settings-row-text">지도 맵 스킨</div>
+                    <div class="settings-row-chevron">›</div>
+                </div>
+                <div class="settings-row" onclick="showScreen('favorite-places')">
+                    <div class="settings-row-icon" style="background: #bfdbfe;">📍</div>
+                    <div class="settings-row-text">자주 가는 장소 설정</div>
+                    <div class="settings-row-chevron">›</div>
+                </div>
+            </div>
+        </div>
     </div>
 
         <!-- ===== 사용방법 화면 ===== -->
@@ -514,9 +529,10 @@
                     <div class="notice-title" style="margin-bottom:8px;">식당 지도 보기</div>
                     <div style="font-size:0.85em; color:#374151; line-height:1.7; word-break:keep-all;">
                         회사 주변 식당 정보를 지도에서 한눈에 확인하세요.<br>
-                        • <b>식당 카드</b>를 탭하여 위치와 상세 정보를 볼 수 있어요.<br>
-                        • <b>검색</b>을 통해 식당 이름을 빠르게 찾을 수 있어요.<br>
-                        • <b>가격/종류</b> 필터로 원하는 메뉴를 골라볼 수 있어요.
+                        • <b>식당 카드</b>: 탭하여 위치와 상세 정보를 볼 수 있어요.<br>
+                        • <b>🔵 내 위치</b>: 필터 메뉴 우측의 파란 점 버튼으로 현위치를 찾아요.<br>
+                        • <b>🏠 스마트 홈</b>: 내 현재 위치에서 더 가까운 곳(집/회사)을 버튼 하나로 찾아가요.<br>
+                        • <b>검색/필터</b>: 식당 이름이나 가격대별로 빠르게 필터링해요.
                     </div>
                 </div>
 
@@ -553,16 +569,89 @@
                     <div class="notice-meta">
                         <span class="notice-badge" style="background:#6366f1;">⚙️ 설정</span>
                     </div>
-                    <div class="notice-title" style="margin-bottom:8px;">기타 설정</div>
+                    <div class="notice-title" style="margin-bottom:8px;">마이 설정 및 시스템</div>
                     <div style="font-size:0.85em; color:#374151; line-height:1.7; word-break:keep-all;">
-                        앱 관리 및 소통을 위한 공간입니다.<br>
-                        • <b>공지사항</b>: 업데이트 및 점검 소식을 확인하세요.<br>
-                        • <b>문의하기</b>: 건의사항이나 오류 제보를 남겨주세요.<br>
-                        • 다른 사용자들이 남긴 문의 내용도 함께 볼 수 있어요.
+                        나만의 앱 환경을 만들고 소통하는 공간입니다.<br>
+                        • <b>📍 장소 설정</b>: 집과 회사 위치를 지도로 직접 고정하세요.<br>
+                        • <b>🌍 시스템</b>: 지도 테마(기본/라이트/다크)를 취향껏 바꿔요.<br>
+                        • <b>공지사항/문의</b>: 최신 소식을 확인하고 건의사항을 남겨주세요.
                     </div>
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <!-- ===== 시스템 화면 ===== -->
+    <div id="screen-system" class="sub-screen">
+        <div class="settings-header">
+            <div class="settings-header-inner">
+                <button class="back-btn" onclick="showScreen('main')">
+                    ‹ 설정
+                </button>
+                <div class="settings-title">시스템</div>
+                <div class="header-spacer"></div>
+            </div>
+        </div>
+        <div class="sub-content">
+            <div class="form-label" style="margin-left:8px;">지도 맵 스킨 설정</div>
+            <div class="category-grid" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 24px;">
+                <button class="category-btn" id="skin-btn-0" onclick="setGlobalMapTheme(0)">🌍 기본맵</button>
+                <button class="category-btn" id="skin-btn-1" onclick="setGlobalMapTheme(1)">☀️ 라이트</button>
+                <button class="category-btn" id="skin-btn-2" onclick="setGlobalMapTheme(2)">🌃 다크맵</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== 자주 가는 장소 설정 화면 ===== -->
+    <div id="screen-favorite-places" class="sub-screen">
+        <div class="settings-header">
+            <div class="settings-header-inner">
+                <button class="back-btn" onclick="showScreen('main')">
+                    ‹ 설정
+                </button>
+                <div class="settings-title">장소 설정</div>
+                <div class="header-spacer"></div>
+            </div>
+        </div>
+        <div class="sub-content">
+            <div class="form-label" style="margin-left:8px;">장소 등록</div>
+            <div class="settings-group" style="margin: 0 0 16px 0;">
+                <div class="settings-row" onclick="openLocationSearch('home')">
+                    <div class="settings-row-icon" style="background: #dbeafe;">🏠</div>
+                    <div class="settings-row-text">집 위치 지정</div>
+                    <div class="settings-row-chevron">›</div>
+                </div>
+                <div class="settings-row" onclick="openLocationSearch('company')">
+                    <div class="settings-row-icon" style="background: #fef08a;">🏢</div>
+                    <div class="settings-row-text">회사 위치 지정</div>
+                    <div class="settings-row-chevron">›</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== 위치 검색 화면 ===== -->
+    <div id="screen-locsearch" class="sub-screen">
+        <div class="settings-header">
+            <div class="settings-header-inner">
+                <button class="back-btn" onclick="showScreen('favorite-places')">
+                    ‹ 뒤로
+                </button>
+                <div class="settings-title" id="locsearch-title">위치 검색</div>
+                <div class="header-spacer"></div>
+            </div>
+        </div>
+        <div class="sub-content">
+            <div class="form-label">주소 또는 장소명 검색</div>
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <input type="text" id="loc-search-input" class="inquiry-input" style="flex:1; margin-bottom:0;" placeholder="예: 구로구 디지털로" onkeydown="if(event.key==='Enter') searchLocation()">
+                <button class="submit-btn" style="width: auto; padding: 0 16px;" onclick="searchLocation()">검색</button>
+            </div>
+            <div id="loc-search-results" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 20px;"></div>
+            
+            <div class="form-label">기타 옵션</div>
+            <button class="submit-btn" style="background:var(--settings-section);" onclick="openMapPickerDirectly()">지도에서 직접 찾기 (확대 후 이동 필요)</button>
         </div>
     </div>
 <!-- ===== 공지사항 목록 화면 ===== -->
@@ -678,6 +767,20 @@
     // ===== 공지사항 데이터 =====
     const NOTICES = [
         {
+            id: 3,
+            title: "v1.2 업데이트: 내 위치와 자주 가는 장소 맞춤 기능 강화! 🏠",
+            date: "2026-04-01",
+            version: "v1.2",
+            preview: "GPS 기반 내 위치 확인 및 자주 가는 장소(집/회사) 설정 기능이 추가되었습니다.",
+            changes: [
+                { icon: "🏠", text: "자주 가는 장소(집/회사) 직접 설정 및 핀 고정 기능 추가" },
+                { icon: "🎯", text: "정밀한 위치 지정을 위한 십자선 마커 및 지도 이동 모드 도입" },
+                { icon: "🏢", text: "현재 위치에 따라 집/회사로 변하는 스마트 '홈' 버튼" },
+                { icon: "🔵", text: "실시간 GPS 기반 현재 위치 확인 및 전용 이동 버튼 추가" },
+                { icon: "⚙️", text: "지도 스킨 설정 메뉴를 설정 탭 내 시스템 메뉴로 통합" }
+            ]
+        },
+        {
             id: 2,
             title: "사용 경험 개선 업데이트 ✨",
             date: "2026-04-01",
@@ -705,7 +808,7 @@
     ];
 
     // ===== 화면 전환 =====
-    const SCREENS = ['main', 'notice', 'notice-detail', 'inquiry', 'howto'];
+    const SCREENS = ['main', 'notice', 'notice-detail', 'inquiry', 'howto', 'system', 'favorite-places', 'locsearch'];
 
     window.showScreen = function(name) {
         SCREENS.forEach(s => {
@@ -723,13 +826,79 @@
 
         if (name === 'notice') renderNoticeList();
         if (name === 'inquiry' && currentInqTab === 'list') loadInquiries();
+        if (name === 'system') {
+            const currentTheme = parseInt(localStorage.getItem('woody_map_theme')) || 0;
+            [0, 1, 2].forEach(i => document.getElementById(`skin-btn-${i}`).classList.remove('selected'));
+            const activeBtn = document.getElementById(`skin-btn-${currentTheme}`);
+            if (activeBtn) activeBtn.classList.add('selected');
+        }
+    };
+
+    window.setGlobalMapTheme = function(index) {
+        localStorage.setItem('woody_map_theme', index);
+        [0, 1, 2].forEach(i => document.getElementById(`skin-btn-${i}`).classList.remove('selected'));
+        const activeBtn = document.getElementById(`skin-btn-${index}`);
+        if (activeBtn) activeBtn.classList.add('selected');
+        if (window.setMapTheme) window.setMapTheme(index);
+    };
+
+    // ===== 위치 검색 시스템 =====
+    let targetLocMode = 'home';
+    window.openLocationSearch = function(mode) {
+        targetLocMode = mode;
+        document.getElementById('locsearch-title').innerText = mode === 'home' ? '🏠 집 위치 설정' : '🏢 회사 위치 설정';
+        document.getElementById('loc-search-input').value = '';
+        document.getElementById('loc-search-results').innerHTML = '';
+        showScreen('locsearch');
+    };
+
+    window.searchLocation = async function() {
+        const query = document.getElementById('loc-search-input').value.trim();
+        if (!query) return;
+        
+        const resEl = document.getElementById('loc-search-results');
+        resEl.innerHTML = '<div style="color:var(--settings-sub); font-size:0.85em; text-align:center;">검색 중... ⏳</div>';
+        
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            
+            if (!data || data.length === 0) {
+                resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">검색 결과가 없습니다.<br>OpenStreetMap 기반이므로 한국어 주소 인식이 부족할 수 있습니다.</div>';
+                return;
+            }
+            
+            resEl.innerHTML = data.slice(0, 5).map(item => `
+                <div class="notice-item" style="padding:12px; margin-bottom:0;" onclick="selectSearchedLocation(${item.lat}, ${item.lon})">
+                    <div class="notice-title" style="font-size:0.85em; margin-bottom:0;">${item.display_name}</div>
+                </div>
+            `).join('');
+            
+        } catch(e) {
+            console.error(e);
+            resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">검색 중 오류가 발생했습니다.</div>';
+        }
+    };
+
+    window.selectSearchedLocation = function(lat, lng) {
+        localStorage.setItem('woody_location_picker_mode', targetLocMode);
+        localStorage.setItem('woody_picker_search_loc', JSON.stringify({lat: parseFloat(lat), lng: parseFloat(lng)}));
+        if (window.loadTab) window.loadTab('map');
+    };
+
+    window.openMapPickerDirectly = function() {
+        localStorage.setItem('woody_location_picker_mode', targetLocMode);
+        localStorage.removeItem('woody_picker_search_loc');
+        if (window.loadTab) window.loadTab('map');
     };
 
     // ===== 공지사항 목록 렌더 =====
     function renderNoticeList() {
         const container = document.getElementById('notice-list-content');
         if (!container) return;
-        container.innerHTML = NOTICES.slice().reverse().map(n => `
+        // 날짜 기준 최신순 정렬
+        const sortedNotices = NOTICES.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
+        container.innerHTML = sortedNotices.map(n => `
             <div class="notice-item" onclick="showNoticeDetail(${n.id})">
                 <div class="notice-meta">
                     <span class="notice-badge">${n.version}</span>
@@ -822,6 +991,16 @@
         const len = document.getElementById('inq-content').value.length;
         document.getElementById('char-count').textContent = len;
     };
+
+    document.getElementById('inq-nickname').addEventListener('focus', function() {
+        document.getElementById('screen-inquiry').scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    const resumeScreen = localStorage.getItem('woody_setting_resume_screen');
+    if (resumeScreen) {
+        localStorage.removeItem('woody_setting_resume_screen');
+        showScreen(resumeScreen);
+    }
 
     // 탭 전환
     window.switchInquiryTab = function(tab) {
