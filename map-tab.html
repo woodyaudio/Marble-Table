@@ -187,6 +187,9 @@
         <div id="list-header">
             <input type="text" id="searchInput" style="width:100%; padding:10px 15px; border-radius:12px; border:1px solid #fff; background:rgba(255,255,255,0.8);" placeholder="식당 검색..." oninput="filterData()">
             <div class="filter-row">
+                <select id="regionFilter" class="filter-item" onchange="filterData()">
+                    <option value="all">지역 전체</option>
+                </select>
                 <select id="priceFilter" class="filter-item" onchange="filterData()">
                     <option value="all">가격 전체</option>
                     <option value="7000">7,000원대</option>
@@ -370,13 +373,67 @@
 
         try {
             await initFirebase();
-            const res = await fetch(`./data/restaurants.json?v=${Date.now()}`);
+            const res = await fetch(`./data/restaurants.xlsx?v=${Date.now()}`);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            restaurantsData = await res.json();
-            restaurantsData = restaurantsData.filter(r => r.name !== 'Dev_Test');
+            const arrayBuffer = await res.arrayBuffer();
+
+            // SheetJS로 XLSX 파싱
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+            // 1행: 헤더, 2행~: 데이터
+            const headerMap = {
+                'id': 'id', '이름': 'name', '지역': 'region', '주소': 'address',
+                'lat': 'lat', 'lng': 'lng', '설명': 'description',
+                '가격': 'price', '영업 시간': 'hours',
+                '인스타': 'instagram', '카카오': 'kakaoChannel'
+            };
+            const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
+
+            restaurantsData = rows.slice(1)
+                .map(row => {
+                    const obj = {};
+                    headers.forEach((key, i) => { obj[key] = row[i]; });
+                    return obj;
+                })
+                .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
+                .map(r => ({
+                    id:           parseInt(r.id) || 0,
+                    name:         String(r.name).trim(),
+                    region:       r.region && String(r.region).trim() !== '' ? String(r.region).trim() : '미지정',
+                    address:      r.address ? String(r.address).trim() : '',
+                    lat:          parseFloat(r.lat) || 0,
+                    lng:          parseFloat(r.lng) || 0,
+                    description:  r.description && String(r.description).trim() !== '' ? String(r.description).trim() : '',
+                    price:        parseInt(r.price) || 0,
+                    hours:        r.hours ? String(r.hours).trim() : '',
+                    instagram:    (r.instagram && String(r.instagram).trim() !== '' && String(r.instagram).trim().toLowerCase() !== 'null') ? String(r.instagram).trim() : null,
+                    kakaoChannel: (r.kakaoChannel && String(r.kakaoChannel).trim() !== '' && String(r.kakaoChannel).trim().toLowerCase() !== 'null') ? String(r.kakaoChannel).trim() : null
+                }));
+
+            // 지역 옵션 동적 생성
+            const regions = [...new Set(restaurantsData.map(r => r.region))].filter(r => r && r !== '미지정');
+            const regionSelect = document.getElementById('regionFilter');
+            regionSelect.innerHTML = '<option value="all">지역 전체</option>'; // 초기화
+            regions.forEach(rg => {
+                const opt = document.createElement('option');
+                opt.value = rg;
+                opt.text = rg;
+                regionSelect.appendChild(opt);
+            });
+
+            // 지역 미지정이 있으면 맨 뒤에 추가
+            if (restaurantsData.some(r => r.region === '미지정')) {
+                const opt = document.createElement('option');
+                opt.value = '미지정';
+                opt.text = '미지정';
+                regionSelect.appendChild(opt);
+            }
+
             filterData();
-        } catch(e) { 
-            console.error('Data fetch error:', e); 
+        } catch(e) {
+            console.error('Data fetch error:', e);
             document.getElementById('restaurantCards').innerHTML = `<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 0.9em; font-weight: 700;">데이터를 불러오지 못했습니다.<br>새로고침 해주세요.</div>`;
         }
     }
@@ -414,13 +471,15 @@
     window.filterData = function() {
         const q = document.getElementById('searchInput').value.toLowerCase();
         const p = document.getElementById('priceFilter').value;
+        const rFilter = document.getElementById('regionFilter') ? document.getElementById('regionFilter').value : 'all';
         const isD = document.getElementById('dinnerToggle').classList.contains('active');
         
         const filtered = restaurantsData.filter(r => {
             const mQ = r.name.toLowerCase().includes(q);
             const mP = p === 'all' || (p === '7000' ? r.price < 8000 : r.price >= 8000);
+            const mR = rFilter === 'all' || r.region === rFilter;
             const mD = !isD || (r.hours.includes('석식') || /17:|18:|19:/.test(r.hours));
-            return mQ && mP && mD;
+            return mQ && mP && mR && mD;
         });
 
         document.getElementById('restaurantCards').innerHTML = filtered.map(r => {
