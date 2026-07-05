@@ -18,12 +18,16 @@
 
     /* 상세 패널 */
     #detail-panel {
-        position: absolute; left: var(--panel-w); top: 0; width: var(--detail-w); height: 100%;
+        position: absolute; left: 0; top: 0; width: var(--detail-w); height: 100%;
         background: rgba(255, 255, 255, 0.90); border-right: 1px solid rgba(0,0,0,0.1); z-index: 100;
         transform: translateX(-100%); transition: transform 0.3s ease;
         display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.05);
     }
     #detail-panel.open { transform: translateX(0); }
+    /* 모바일에서는 left-panel이 있으므로 그 옆에 위치 */
+    @media (max-width: 768px) {
+        #detail-panel { left: var(--panel-w); }
+    }
 
     #map-area { 
         flex: 1; height: 100%; position: relative; z-index: 1; 
@@ -31,17 +35,7 @@
     }
     #map { width: 100%; flex: 1; min-height: 0; }
 
-    /* PC 728x90 하단 광고 배너만큼 빈 공간 확보 (flex-shrink 0) */
-    @media (min-width: 769px) {
-        #map-area::after {
-            content: '';
-            display: block;
-            height: 90px;
-            width: 100%;
-            flex-shrink: 0;
-            background: transparent;
-        }
-    }
+
 
     /* 헤더 및 필터 */
     .main-title-box { margin: 15px 16px; padding: 0; background: transparent; border: none; }
@@ -88,6 +82,11 @@
 
     /* ✅ PC에서 접기/펼치기 숨김 */
     .drag-handle { display: none; }
+
+    /* PC에서 left-panel 숨김 (persistent-left-panel이 대신함) */
+    @media (min-width: 769px) {
+        #left-panel { display: none !important; }
+    }
 
     /* 모바일 대응 */
     @media (max-width: 768px) {
@@ -190,11 +189,6 @@
                 <select id="regionFilter" class="filter-item" onchange="filterData()">
                     <option value="all">지역 전체</option>
                 </select>
-                <select id="priceFilter" class="filter-item" onchange="filterData()">
-                    <option value="all">가격 전체</option>
-                    <option value="7000">7,000원대</option>
-                    <option value="8000">8,000원대</option>
-                </select>
                 <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식</div>
                 <div id="locate-btn" class="filter-item home-inline-btn" onclick="moveToGPS()" title="현재 위치" style="display:flex; align-items:center; justify-content:center;">
                     <div style="width:14px; height:14px; background:#3b82f6; border-radius:50%; border:2px solid #fff; outline:1px solid #3b82f6;"></div>
@@ -213,7 +207,7 @@
         <div style="padding: 0 20px 20px; overflow-y: auto; flex: 1;">
             <div id="detailDesc" style="font-size: 0.9em; color:#475569; line-height:1.6; margin-bottom:15px; word-break: keep-all;"></div>
             <div style="font-size: 0.85em; color:#64748b; background: rgba(255,255,255,0.5); padding: 12px; border-radius: 10px;">
-                <p style="margin-bottom:5px;"><strong>🕒 영업 시간:</strong> <span id="detailHours"></span></p>
+                <p style="margin-bottom:8px;"><strong>🕒 영업 시간</strong><br><span id="detailHours" style="display:inline-block; margin-top:4px;"></span></p>
                 <p><strong>💰 가격:</strong> <span id="detailPrice"></span></p>
             </div>
             <!-- SNS 버튼 영역 -->
@@ -432,6 +426,23 @@
             }
 
             filterData();
+
+            // 다른 탭에서 식당 클릭 후 지도 탭으로 전환된 경우 자동 선택
+            if (window._pendingSelectId !== undefined) {
+                const pendingId = window._pendingSelectId;
+                delete window._pendingSelectId;
+                setTimeout(() => window.selectRestaurant(pendingId), 100);
+            }
+
+            // 다른 탭에서 위치 이동(GPS/Home) 후 지도 탭으로 전환된 경우
+            if (window._pendingAction !== undefined) {
+                const action = window._pendingAction;
+                delete window._pendingAction;
+                setTimeout(() => {
+                    if (action === 'gps') window.moveToGPS();
+                    else if (action === 'home') window.goHome();
+                }, 100);
+            }
         } catch(e) {
             console.error('Data fetch error:', e);
             document.getElementById('restaurantCards').innerHTML = `<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 0.9em; font-weight: 700;">데이터를 불러오지 못했습니다.<br>새로고침 해주세요.</div>`;
@@ -470,16 +481,14 @@
 
     window.filterData = function() {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        const p = document.getElementById('priceFilter').value;
         const rFilter = document.getElementById('regionFilter') ? document.getElementById('regionFilter').value : 'all';
         const isD = document.getElementById('dinnerToggle').classList.contains('active');
         
         const filtered = restaurantsData.filter(r => {
             const mQ = r.name.toLowerCase().includes(q);
-            const mP = p === 'all' || (p === '7000' ? r.price < 8000 : r.price >= 8000);
             const mR = rFilter === 'all' || r.region === rFilter;
             const mD = !isD || (r.hours.includes('석식') || /17:|18:|19:/.test(r.hours));
-            return mQ && mP && mR && mD;
+            return mQ && mR && mD;
         });
 
         document.getElementById('restaurantCards').innerHTML = filtered.map(r => {
@@ -513,6 +522,12 @@
     }
 
     window.selectRestaurant = function(id) {
+        const isPanelOpen = document.getElementById('detail-panel').classList.contains('open');
+        if (selectedMarkerId === id && isPanelOpen) {
+            window.closeDetail();
+            return;
+        }
+
         const r = restaurantsData.find(x => x.id === id);
         if (!r) return;
         
@@ -535,8 +550,14 @@
         map.panTo([isMobile ? r.lat - 0.0006 : r.lat, r.lng]);
         
         document.getElementById('detailName').innerText = r.name;
-        document.getElementById('detailDesc').innerText = r.description || "상세 설명이 등록되지 않은 식당입니다.";
-        document.getElementById('detailHours').innerText = r.hours || "정보 없음";
+        
+        const detailDescEl = document.getElementById('detailDesc');
+        detailDescEl.innerText = r.description || "";
+        detailDescEl.style.display = r.description ? 'block' : 'none';
+        
+        let formattedHours = r.hours || "정보 없음";
+        formattedHours = formattedHours.replace(/, /g, "<br>").replace(/,/g, "<br>");
+        document.getElementById('detailHours').innerHTML = formattedHours;
         document.getElementById('detailPrice').innerText = `${r.price.toLocaleString()}원`;
 
         // SNS 버튼 렌더링 (인스타 + 카카오톡 채널)
