@@ -6,19 +6,20 @@
         flex-direction: column;
         align-items: center;
         min-height: 100%;
-        background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+        background: var(--bg-app);
         overflow-y: auto;
         overflow-x: hidden;
         padding: clamp(15px, 3vh, 30px) 20px;
         box-sizing: border-box;
-        font-family: 'Noto Sans KR', sans-serif;
-        gap: 20px;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+        gap: 16px;
+        color: var(--text-primary);
     }
 
     /* --- Header --- */
     .lens-header {
         text-align: center;
-        color: var(--main-blue);
+        color: var(--text-primary);
     }
     .lens-header h1 {
         font-family: 'Nunito', sans-serif;
@@ -35,7 +36,7 @@
     }
     .lens-header p {
         font-size: 0.85rem;
-        color: #64748b;
+        color: var(--text-secondary);
         margin-top: 6px;
     }
 
@@ -43,39 +44,39 @@
     .upload-area {
         width: 100%;
         max-width: 400px;
-        background: #ffffff;
-        border: 2px dashed #cbd5e1;
-        border-radius: 20px;
+        background: var(--bg-surface);
+        border: 2px dashed var(--border-light);
+        border-radius: 24px;
         padding: 30px 20px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
         position: relative;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        box-shadow: var(--shadow-sm);
     }
     .upload-area:hover, .upload-area.dragover {
-        border-color: var(--main-blue);
-        background: #f0f7ff;
+        border-color: var(--primary);
+        background: var(--primary-light);
     }
     .upload-icon {
         width: 48px;
         height: 48px;
-        color: #94a3b8;
+        color: var(--text-secondary);
         margin-bottom: 12px;
         transition: color 0.3s ease;
     }
     .upload-area:hover .upload-icon {
-        color: var(--main-blue);
+        color: var(--primary);
     }
     .upload-text {
         font-size: 1rem;
-        font-weight: 700;
-        color: #334155;
+        font-weight: 800;
+        color: var(--text-primary);
         margin-bottom: 6px;
     }
     .upload-subtext {
         font-size: 0.75rem;
-        color: #94a3b8;
+        color: var(--text-secondary);
     }
 
     /* Hidden File Input */
@@ -129,26 +130,25 @@
 
     /* Analyze Button */
     .analyze-btn {
-        background: linear-gradient(135deg, var(--main-blue), #1e40af);
+        background: var(--primary);
         color: white;
         border: none;
-        border-radius: 50px;
+        border-radius: 14px;
         padding: 14px 40px;
-        font-family: 'Noto Sans KR', sans-serif;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1rem;
         cursor: pointer;
-        box-shadow: 0 6px 20px rgba(12, 48, 96, 0.3);
-        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(49, 130, 246, 0.25);
+        transition: opacity 0.15s;
         width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
     }
-    .analyze-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(12, 48, 96, 0.4); }
-    .analyze-btn:active { transform: translateY(0); }
-    .analyze-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .analyze-btn:hover { opacity: 0.88; }
+    .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     /* --- Loading Spinner --- */
     .loading-container {
@@ -161,35 +161,36 @@
     .spinner {
         width: 40px;
         height: 40px;
-        border: 4px solid #e2e8f0;
-        border-top: 4px solid var(--main-blue);
+        border: 4px solid var(--border-light);
+        border-top: 4px solid var(--primary);
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text { font-size: 0.9rem; color: #64748b; font-weight: 500; }
+    .loading-text { font-size: 0.9rem; color: var(--text-secondary); font-weight: 700; }
 
     /* --- Result Card --- */
     .analysis-result {
         width: 100%;
         max-width: 400px;
-        background: white;
+        background: var(--bg-surface);
         border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        display: none; /* hidden by default */
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        display: none;
         flex-direction: column;
-        gap: 20px;
-        animation: slideUp 0.5s ease;
+        gap: 16px;
+        animation: slideUp 0.4s ease;
+        border: 1px solid var(--border-light);
     }
     
     .food-name-area {
         text-align: center;
-        border-bottom: 2px dashed #f1f5f9;
+        border-bottom: 2px dashed var(--border-light);
         padding-bottom: 15px;
     }
     .food-emoji { font-size: 2.5rem; display: block; margin-bottom: 8px; }
-    .food-title { font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0; }
+    .food-title { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin: 0; }
 
     .nutrition-grid {
         display: grid;
@@ -197,31 +198,31 @@
         gap: 15px;
     }
     .nutri-box {
-        background: #f8fafc;
+        background: var(--bg-app);
         border-radius: 12px;
-        padding: 15px;
+        padding: 14px;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-light);
     }
-    .nutri-label { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;}
-    .nutri-value { font-family: 'Nunito', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
-    .nutri-unit { font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+    .nutri-label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+    .nutri-value { font-family: 'Nunito', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--text-primary); }
+    .nutri-unit { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
 
     .health-score-area {
-        background: #f0fdf4;
+        background: var(--bg-app);
         border-radius: 12px;
-        padding: 15px;
-        border: 1px solid #bbf7d0;
+        padding: 14px;
+        border: 1px solid var(--border-light);
     }
     .health-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;}
-    .health-label { font-size: 0.85rem; font-weight: 700; color: #166534; }
-    .health-value { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 900; color: #16a34a; line-height: 1; }
+    .health-label { font-size: 0.85rem; font-weight: 800; color: var(--primary); }
+    .health-value { font-family: 'Nunito', sans-serif; font-size: 1.5rem; font-weight: 900; color: var(--primary); line-height: 1; }
     .progress-bg {
         width: 100%;
         height: 10px;
-        background: #dcfce7;
+        background: var(--border-dark);
         border-radius: 50px;
         overflow: hidden;
     }
@@ -243,7 +244,7 @@
         right: 15px;
         background: transparent;
         border: none;
-        color: #94a3b8;
+        color: var(--text-secondary);
         cursor: pointer;
         padding: 8px;
         border-radius: 50%;
@@ -253,7 +254,7 @@
         transition: all 0.2s;
         z-index: 10;
     }
-    .settings-btn:hover { background: #e2e8f0; color: #334155; }
+    .settings-btn:hover { background: var(--border-dark); color: var(--text-primary); }
     
     .modal-overlay {
         position: fixed;
@@ -266,46 +267,51 @@
         backdrop-filter: blur(4px);
     }
     .modal-content {
-        background: white;
+        background: var(--bg-surface);
         padding: 24px;
-        border-radius: 16px;
+        border-radius: 20px;
         width: 90%;
-        max-width: 320px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        max-width: 340px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+        border: 1px solid var(--border-light);
     }
-    .modal-content h3 { margin-top: 0; color: #1e293b; font-size: 1.1rem; }
-    .modal-content label { display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 6px; }
+    .modal-content h3 { margin-top: 0; color: var(--text-primary); font-size: 1.1rem; font-weight: 800; }
+    .modal-content label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.4; }
     .modal-content input {
-        width: 100%; padding: 10px; box-sizing: border-box;
-        border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;
-        font-family: inherit; font-size: 0.9rem;
+        width: 100%; padding: 12px; box-sizing: border-box;
+        border: 1px solid var(--border-light); border-radius: 12px; margin-bottom: 16px;
+        font-family: inherit; font-size: 0.95rem; background: var(--bg-app); color: var(--text-primary);
+        outline: none; transition: border-color 0.2s;
     }
+    .modal-content input:focus { border-color: var(--primary); }
     .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
     .modal-btns button {
-        padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+        padding: 10px 18px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: inherit; transition: transform 0.2s;
     }
-    .btn-cancel { background: #f1f5f9; color: #475569; }
-    .btn-save { background: var(--main-blue); color: white; }
+    .modal-btns button:active { transform: scale(0.95); }
+    .btn-cancel { background: var(--border-dark); color: var(--text-primary); }
+    .btn-save { background: var(--primary); color: white; }
     #calorie-container { position: relative; } /* For absolute settings btn */
 
     /* --- Empty State Placeholder --- */
     .empty-state {
         width: 100%;
         max-width: 400px;
-        background: rgba(255, 255, 255, 0.5);
-        border: 1px dashed #cbd5e1;
-        border-radius: 20px;
-        padding: 30px 20px;
+        background: var(--bg-surface);
+        border: 1px dashed var(--border-light);
+        border-radius: 24px;
+        padding: 32px 20px;
         text-align: center;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
         margin-top: 10px;
-        color: #64748b;
+        color: var(--text-secondary);
+        box-shadow: var(--shadow-sm);
     }
     .empty-emoji { font-size: 2.5rem; margin-bottom: 5px; opacity: 0.8; }
-    .empty-title { font-size: 1.1rem; font-weight: 800; color: #475569; margin: 0; }
-    .empty-desc { font-size: 0.85rem; line-height: 1.5; }
+    .empty-title { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin: 0; }
+    .empty-desc { font-size: 0.9rem; line-height: 1.5; }
 
 </style>
 
@@ -352,7 +358,7 @@
         <h3 class="empty-title">오늘의 식단은 뭔가요?</h3>
         <p class="empty-desc">사진을 업로드해주시면 AI가 칼로리와<br>영양 성분을 꼼꼼하게 분석해 드릴게요!</p>
         
-        <div class="api-guide" style="margin-top: 15px; background: rgba(255,255,255,0.8); padding: 12px; border-radius: 12px; font-size: 0.8rem; color: #475569; text-align: left; line-height: 1.4;">
+        <div class="api-guide" style="margin-top: 20px; background: var(--bg-panel); padding: 16px; border-radius: 16px; font-size: 0.85rem; color: var(--text-primary); text-align: left; line-height: 1.6; border: 1px solid var(--border-light);">
             <strong>💡 AI 렌즈 사용법</strong><br>
             1. 우측 상단의 <strong>⚙️ (톱니바퀴)</strong> 버튼을 누르세요.<br>
             2. 발급받으신 <strong>Gemini API Key</strong>를 입력하고 저장합니다. (키는 연결된 브라우저에만 안전히 보관됩니다.)<br>
@@ -386,16 +392,16 @@
 
         <div class="health-score-area">
             <div class="health-header">
-                <span class="health-label">💙 웰빙 점수</span>
-                <div><span class="health-value" id="res-score">0</span><span style="font-size:0.8rem;color:#22c55e;font-weight:700;">/100</span></div>
+                <span class="health-label" style="color:var(--primary);">💙 웰빙 점수</span>
+                <div><span class="health-value" id="res-score">0</span><span style="font-size:0.8rem;color:var(--text-secondary);font-weight:700;">/100</span></div>
             </div>
             <div class="progress-bg">
                 <div class="progress-bar" id="res-progress"></div>
             </div>
-            <div style="font-size: 0.75rem; color: #166534; margin-top: 8px; text-align: right;" id="res-comment">건강한 식단이에요!</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 10px; text-align: right; font-weight:700;" id="res-comment">건강한 식단이에요!</div>
         </div>
 
-        <button class="analyze-btn" style="background: #f1f5f9; color: #475569; box-shadow: none; font-size: 0.95rem; padding: 10px;" onclick="resetUpload()">
+        <button class="analyze-btn" style="background: var(--bg-panel); color: var(--text-primary); box-shadow: none; font-size: 0.95rem; padding: 12px; border: 1px solid var(--border-light);" onclick="resetUpload()">
             다른 사진 분석하기
         </button>
     </div>

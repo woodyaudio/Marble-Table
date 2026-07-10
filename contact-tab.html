@@ -1,33 +1,42 @@
 <style>
     :root {
-        --settings-bg: #f2f2f7;
-        --settings-card: #ffffff;
-        --settings-blue: #0ea5e9;
-        --settings-text: #1c1c1e;
-        --settings-sub: #8e8e93;
-        --settings-border: #e5e5ea;
-        --settings-section: #6d6d72;
+        --settings-bg: var(--bg-app, #F2F4F6);
+        --settings-card: var(--bg-surface, #FFFFFF);
+        --settings-blue: var(--text-primary, #191F28);
+        --settings-text: var(--text-primary, #191F28);
+        --settings-sub: var(--text-secondary, #6B7684);
+        --settings-border: var(--border-light, #E5E8EB);
+        --settings-section: #6B7684;
+    }
+    body.dark-theme {
+        --settings-bg: var(--bg-app, #101216);
+        --settings-card: var(--bg-surface, #1C1C1E);
+        --settings-blue: var(--text-primary, #FFFFFF);
+        --settings-text: var(--text-primary, #FFFFFF);
+        --settings-sub: var(--text-secondary, #98989E);
+        --settings-border: var(--border-light, #2C2C2E);
+        --settings-section: #98989E;
     }
 
     #settings-container {
         width: 100%;
         height: 100%;
         background: var(--settings-bg);
-        font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        transition: background 0.3s ease;
     }
 
     /* ===== 공통 헤더 ===== */
     .settings-header {
         position: sticky;
         top: 0;
-        background: rgba(242, 242, 247, 0.92);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        padding: 16px 20px 12px;
+        background: var(--settings-bg);
+        padding: 14px 20px 12px;
         z-index: 10;
         border-bottom: 1px solid var(--settings-border);
+        transition: background 0.3s ease, border-color 0.3s ease;
     }
     .settings-header-inner {
         display: flex;
@@ -97,7 +106,8 @@
         -webkit-tap-highlight-color: transparent;
     }
     .settings-row:last-child { border-bottom: none; }
-    .settings-row:active { background: #f0f0f5; }
+    .settings-row:active { background: var(--settings-border); }
+    body.dark-theme .settings-row:active { background: rgba(255,255,255,0.06); }
     .settings-row-icon {
         width: 30px;
         height: 30px;
@@ -116,7 +126,7 @@
         color: var(--settings-text);
     }
     .settings-row-chevron {
-        color: #c7c7cc;
+        color: var(--settings-border);
         font-size: 0.9em;
         font-weight: 700;
     }
@@ -161,7 +171,7 @@
         padding: 2px 8px;
         border-radius: 20px;
         background: var(--settings-blue);
-        color: #fff;
+        color: var(--settings-bg);
     }
     .notice-date {
         font-size: 0.75em;
@@ -207,7 +217,7 @@
     }
     .notice-detail-body {
         font-size: 0.9em;
-        color: #374151;
+        color: var(--settings-text);
         line-height: 1.5;
         word-break: keep-all;
     }
@@ -217,7 +227,7 @@
         gap: 8px;
         margin-bottom: 6px;
         padding: 8px 10px;
-        background: #f8f9fa;
+        background: var(--settings-bg);
         border-radius: 8px;
         border-left: 3px solid var(--settings-blue);
     }
@@ -249,8 +259,8 @@
     }
     .inquiry-tab-btn.active {
         background: var(--settings-blue);
-        color: #fff;
-        box-shadow: 0 2px 8px rgba(14,165,233,0.3);
+        color: var(--settings-bg);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
 
     /* 작성 폼 */
@@ -279,10 +289,10 @@
         padding: 10px 6px;
         border: 2px solid var(--settings-border);
         border-radius: 10px;
-        background: #f8f9fa;
+        background: var(--settings-bg);
         font-size: 0.82em;
         font-weight: 700;
-        color: #6b7280;
+        color: var(--settings-sub);
         cursor: pointer;
         text-align: center;
         transition: all 0.2s;
@@ -292,7 +302,7 @@
     .category-btn:active { transform: scale(0.97); }
     .category-btn.selected {
         border-color: var(--settings-blue);
-        background: rgba(14,165,233,0.08);
+        background: var(--settings-bg);
         color: var(--settings-blue);
     }
     .inquiry-input {
@@ -302,14 +312,14 @@
         border: 1.5px solid var(--settings-border);
         font-size: 0.9em;
         font-family: inherit;
-        background: #f8f9fa;
+        background: var(--settings-bg);
         color: var(--settings-text);
         outline: none;
         transition: border-color 0.2s;
         box-sizing: border-box;
         margin-bottom: 10px;
     }
-    .inquiry-input:focus { border-color: var(--settings-blue); background: #fff; }
+    .inquiry-input:focus { border-color: var(--settings-blue); background: var(--settings-card); }
     .inquiry-textarea {
         min-height: 100px;
         resize: none;
@@ -327,7 +337,7 @@
         border: none;
         border-radius: 12px;
         background: var(--settings-blue);
-        color: #fff;
+        color: var(--settings-bg);
         font-size: 0.95em;
         font-weight: 800;
         cursor: pointer;
@@ -391,7 +401,7 @@
     .filter-chip.active {
         border-color: var(--settings-blue);
         background: var(--settings-blue);
-        color: #fff;
+        color: var(--settings-bg);
     }
 
     .inquiry-card {
@@ -432,7 +442,7 @@
     }
     .inquiry-content {
         font-size: 0.88em;
-        color: #374151;
+        color: var(--settings-text);
         line-height: 1.6;
         word-break: keep-all;
     }
@@ -467,7 +477,7 @@
             <div class="settings-section-label">앱 안내</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('howto')">
-                    <div class="settings-row-icon" style="background: #e8f0fe;">📖</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">📖</div>
                     <div class="settings-row-text">사용 방법</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -478,12 +488,12 @@
             <div class="settings-section-label">서비스</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('notice')">
-                    <div class="settings-row-icon" style="background: #fff3e0;">📢</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">📢</div>
                     <div class="settings-row-text">공지사항</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="showScreen('inquiry')">
-                    <div class="settings-row-icon" style="background: #e8f5e9;">💬</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">💬</div>
                     <div class="settings-row-text">문의하기</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -494,12 +504,12 @@
             <div class="settings-section-label">시스템</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('system')">
-                    <div class="settings-row-icon" style="background: #e1bee7;">🌍</div>
-                    <div class="settings-row-text">지도 맵 스킨</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">🌍</div>
+                    <div class="settings-row-text">시스템 및 테마</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="showScreen('favorite-places')">
-                    <div class="settings-row-icon" style="background: #bfdbfe;">📍</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">📍</div>
                     <div class="settings-row-text">자주 가는 장소 설정</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -524,10 +534,10 @@
                 <!-- 지도 홈 -->
                 <div class="notice-item" style="cursor:default;">
                     <div class="notice-meta">
-                        <span class="notice-badge" style="background:#3b82f6;">🗺️ 지도 홈</span>
+                        <span class="notice-badge">🗺️ 지도 홈</span>
                     </div>
                     <div class="notice-title" style="margin-bottom:8px;">식당 지도 보기</div>
-                    <div style="font-size:0.85em; color:#374151; line-height:1.7; word-break:keep-all;">
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
                         회사 주변 식당 정보를 지도에서 한눈에 확인하세요.<br>
                         • <b>식당 카드</b>: 탭하여 위치와 상세 정보를 볼 수 있어요.<br>
                         • <b>🔵 내 위치</b>: 필터 메뉴 우측의 파란 점 버튼으로 현위치를 찾아요.<br>
@@ -539,10 +549,10 @@
                 <!-- AI 렌즈 -->
                 <div class="notice-item" style="cursor:default;">
                     <div class="notice-meta">
-                        <span class="notice-badge" style="background:#10b981;">✨ AI 렌즈</span>
+                        <span class="notice-badge">✨ AI 렌즈</span>
                     </div>
                     <div class="notice-title" style="margin-bottom:8px;">AI 영양 분석</div>
-                    <div style="font-size:0.85em; color:#374151; line-height:1.7; word-break:keep-all;">
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
                         음식 사진을 분석해 칼로리와 영양 성분을 알려드려요.<br>
                         • <b>Google Gemini API Key</b> 설정이 필요합니다.<br>
                         • 카메라 촬영 또는 갤러리 업로드로 분석이 가능해요.<br>
@@ -553,10 +563,10 @@
                 <!-- 룰렛 -->
                 <div class="notice-item" style="cursor:default;">
                     <div class="notice-meta">
-                        <span class="notice-badge" style="background:#f59e0b;">🎰 룰렛</span>
+                        <span class="notice-badge">🎰 룰렛</span>
                     </div>
                     <div class="notice-title" style="margin-bottom:8px;">점심 룰렛</div>
-                    <div style="font-size:0.85em; color:#374151; line-height:1.7; word-break:keep-all;">
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
                         오늘 점심 메뉴가 고민된다면 룰렛을 활용해보세요!<br>
                         • <b>⚡ 미니</b>: 주요 식당 4곳 중 빠르게 선택해요.<br>
                         • <b>🌟 일반</b>: 전체 식당을 대상으로 운명을 결정해요.<br>
@@ -567,13 +577,13 @@
                 <!-- 설정 -->
                 <div class="notice-item" style="cursor:default;">
                     <div class="notice-meta">
-                        <span class="notice-badge" style="background:#6366f1;">⚙️ 설정</span>
+                        <span class="notice-badge">⚙️ 설정</span>
                     </div>
                     <div class="notice-title" style="margin-bottom:8px;">마이 설정 및 시스템</div>
-                    <div style="font-size:0.85em; color:#374151; line-height:1.7; word-break:keep-all;">
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
                         나만의 앱 환경을 만들고 소통하는 공간입니다.<br>
                         • <b>📍 장소 설정</b>: 집과 회사 위치를 지도로 직접 고정하세요.<br>
-                        • <b>🌍 시스템</b>: 지도 테마(기본/라이트/다크)를 취향껏 바꿔요.<br>
+                        • <b>🌍 시스템</b>: 앱 전체 테마를 취향껏 바꿔요.<br>
                         • <b>공지사항/문의</b>: 최신 소식을 확인하고 건의사항을 남겨주세요.
                     </div>
                 </div>
@@ -594,11 +604,10 @@
             </div>
         </div>
         <div class="sub-content">
-            <div class="form-label" style="margin-left:8px;">지도 맵 스킨 설정</div>
-            <div class="category-grid" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 24px;">
-                <button class="category-btn" id="skin-btn-0" onclick="setGlobalMapTheme(0)">🌍 기본맵</button>
-                <button class="category-btn" id="skin-btn-1" onclick="setGlobalMapTheme(1)">☀️ 라이트</button>
-                <button class="category-btn" id="skin-btn-2" onclick="setGlobalMapTheme(2)">🌃 다크맵</button>
+            <div class="form-label" style="margin-left:8px;">앱 전체 테마</div>
+            <div class="category-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 32px;">
+                <button class="category-btn" id="app-theme-default" onclick="setGlobalAppTheme('default')">✨ 기본</button>
+                <button class="category-btn" id="app-theme-dark" onclick="setGlobalAppTheme('dark')">🌙 다크 모드</button>
             </div>
         </div>
     </div>
@@ -618,12 +627,12 @@
             <div class="form-label" style="margin-left:8px;">장소 등록</div>
             <div class="settings-group" style="margin: 0 0 16px 0;">
                 <div class="settings-row" onclick="openLocationSearch('home')">
-                    <div class="settings-row-icon" style="background: #dbeafe;">🏠</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">🏠</div>
                     <div class="settings-row-text">집 위치 지정</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="openLocationSearch('company')">
-                    <div class="settings-row-icon" style="background: #fef08a;">🏢</div>
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">🏢</div>
                     <div class="settings-row-text">회사 위치 지정</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -651,7 +660,7 @@
             <div id="loc-search-results" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 20px;"></div>
             
             <div class="form-label">기타 옵션</div>
-            <button class="submit-btn" style="background:var(--settings-section);" onclick="openMapPickerDirectly()">지도에서 직접 찾기 (확대 후 이동 필요)</button>
+            <button class="submit-btn" style="background:var(--settings-section);" onclick="openMapPickerDirectly()">지도에서 직접 찾기</button>
         </div>
     </div>
 <!-- ===== 공지사항 목록 화면 ===== -->
@@ -764,7 +773,6 @@
 <script>
 (function() {
 
-    // ===== 공지사항 데이터 =====
     const NOTICES = [
         {
             id: 4,
@@ -790,8 +798,7 @@
                 { icon: "🏠", text: "자주 가는 장소(집/회사) 직접 설정 및 핀 고정 기능 추가" },
                 { icon: "🎯", text: "정밀한 위치 지정을 위한 십자선 마커 및 지도 이동 모드 도입" },
                 { icon: "🏢", text: "현재 위치에 따라 집/회사로 변하는 스마트 '홈' 버튼" },
-                { icon: "🔵", text: "실시간 GPS 기반 현재 위치 확인 및 전용 이동 버튼 추가" },
-                { icon: "⚙️", text: "지도 스킨 설정 메뉴를 설정 탭 내 시스템 메뉴로 통합" }
+                { icon: "🔵", text: "실시간 GPS 기반 현재 위치 확인 및 전용 이동 버튼 추가" }
             ]
         },
         {
@@ -801,7 +808,7 @@
             version: "v1.1",
             preview: "설정 화면 등 UI/UX가 개선되었습니다.",
             changes: [
-                { icon: "🎨", text: "앱 테마 일관성에 맞춘 설정 탭 디자인 개편 (밝은 하늘색톤)" },
+                { icon: "🎨", text: "앱 테마 일관성에 맞춘 설정 탭 디자인 개편" },
                 { icon: "📖", text: "기능 설명을 위한 사용 방법 안내 메뉴 고도화" },
                 { icon: "✨", text: "AI 렌즈 영양 분석 설명란 추가" }
             ]
@@ -821,7 +828,6 @@
         }
     ];
 
-    // ===== 화면 전환 =====
     const SCREENS = ['main', 'notice', 'notice-detail', 'inquiry', 'howto', 'system', 'favorite-places', 'locsearch'];
 
     window.showScreen = function(name) {
@@ -841,18 +847,21 @@
         if (name === 'notice') renderNoticeList();
         if (name === 'inquiry' && currentInqTab === 'list') loadInquiries();
         if (name === 'system') {
-            const currentTheme = parseInt(localStorage.getItem('woody_map_theme')) || 0;
-            [0, 1, 2].forEach(i => document.getElementById(`skin-btn-${i}`).classList.remove('selected'));
-            const activeBtn = document.getElementById(`skin-btn-${currentTheme}`);
-            if (activeBtn) activeBtn.classList.add('selected');
+            updateMapThemeUI();
+            updateAppThemeUI();
         }
     };
 
+    function updateMapThemeUI() {
+        const theme = parseInt(localStorage.getItem('woody_map_theme')) || 0;
+        [0, 1, 2].forEach(i => document.getElementById(`skin-btn-${i}`).classList.remove('selected'));
+        const activeBtn = document.getElementById(`skin-btn-${theme}`);
+        if (activeBtn) activeBtn.classList.add('selected');
+    }
+
     window.setGlobalMapTheme = function(index) {
         localStorage.setItem('woody_map_theme', index);
-        [0, 1, 2].forEach(i => document.getElementById(`skin-btn-${i}`).classList.remove('selected'));
-        const activeBtn = document.getElementById(`skin-btn-${index}`);
-        if (activeBtn) activeBtn.classList.add('selected');
+        updateMapThemeUI();
         if (window.setMapTheme) window.setMapTheme(index);
     };
 
@@ -1159,8 +1168,29 @@
         if (e.key === 'Enter' && !e.shiftKey) e.preventDefault();
     });
 
+    function updateAppThemeUI() {
+        const theme = localStorage.getItem('woody_app_theme') || 'default';
+        document.getElementById('app-theme-default').classList.toggle('selected', theme === 'default');
+        document.getElementById('app-theme-dark').classList.toggle('selected', theme === 'dark');
+    }
+
+    window.setGlobalAppTheme = function(theme) {
+        localStorage.setItem('woody_app_theme', theme);
+        if (window.applyAppTheme) {
+            window.applyAppTheme();
+        }
+        updateAppThemeUI();
+        
+        // 앱 테마와 지도 테마 동기화 (default -> 0, dark -> 2)
+        const mapThemeIndex = theme === 'dark' ? 2 : 0;
+        localStorage.setItem('woody_map_theme', mapThemeIndex);
+        if (window.setMapTheme) {
+            window.setMapTheme(mapThemeIndex);
+        }
+    };
+
     // 초기 화면
     showScreen('main');
-
+    updateAppThemeUI();
 })();
 </script>
