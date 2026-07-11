@@ -101,7 +101,7 @@
         #persistent-left-panel .filter-item:focus { outline: none; border-color: var(--text-primary); }
         #persistent-left-panel select.filter-item {
             appearance: none; -webkit-appearance: none;
-            padding-left: 22px; padding-right: 22px;
+            padding-left: 8px; padding-right: 22px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236B7684' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 8px center;
         }
@@ -111,6 +111,9 @@
         #persistent-left-panel select.filter-item option {
             text-align: center;
         }
+        #persistent-left-panel #plpRegionFilter,
+        #persistent-left-panel #plpSortToggle { flex: 1.2; }
+        #persistent-left-panel #plpDinnerToggle { flex: 0.75; font-size: 0.7em; padding: 7px 4px; }
         #persistent-left-panel .home-inline-btn { flex: 0.5; font-size: 1.1em; }
         #persistent-left-panel #plp-list-scroll { flex: 1; overflow-y: auto; padding: 4px 12px 20px; }
         #persistent-left-panel #plp-list-scroll::-webkit-scrollbar { width: 4px; }
@@ -419,6 +422,7 @@
                 <select id="plpRegionFilter" class="filter-item" onchange="plpFilterData()">
                     <option value="all">지역 전체</option>
                 </select>
+                <div id="plpSortToggle" class="filter-item" onclick="plpToggleSort()">🔥 인기순</div>
                 <div id="plpDinnerToggle" class="filter-item" onclick="plpToggleDinner()">🌙 석식</div>
                 <div id="plp-locate-btn" class="filter-item home-inline-btn" onclick="plpMoveToGPS()" title="현재 위치" style="display:flex; align-items:center; justify-content:center;">
                     <div style="width:14px; height:14px; background:var(--primary); border-radius:50%; border:2px solid var(--bg-surface); outline:1px solid var(--primary);"></div>
@@ -574,19 +578,43 @@
             const rFilter = document.getElementById('plpRegionFilter').value;
             const dinnerToggle = document.getElementById('plpDinnerToggle');
             const isD = dinnerToggle ? dinnerToggle.classList.contains('active') : false;
+            const sortToggle = document.getElementById('plpSortToggle');
+            const isPopSort = sortToggle ? sortToggle.classList.contains('active') : false;
 
-            const filtered = window.plpRestaurantsData.filter(r => {
+            let filtered = window.plpRestaurantsData.filter(r => {
                 const mQ = r.name.toLowerCase().includes(q);
                 const mR = rFilter === 'all' || r.region === rFilter;
                 const mD = !isD || (r.hours.includes('석식') || /17:|18:|19:/.test(r.hours));
                 return mQ && mR && mD;
             });
 
-            document.getElementById('plpRestaurantCards').innerHTML = filtered.map(r => {
+            if (isPopSort && window.popularityData) {
+                filtered.sort((a, b) => {
+                    const popA = window.popularityData[a.id] || 0;
+                    const popB = window.popularityData[b.id] || 0;
+                    return popB - popA;
+                });
+            }
+
+            document.getElementById('plpRestaurantCards').innerHTML = filtered.map((r, index) => {
                 const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
+                const popCount = (window.popularityData && window.popularityData[r.id]) || 0;
+                
+                let rankIcon = '';
+                let popHtml = '';
+                if (isPopSort && popCount > 0) {
+                    if (index === 0) rankIcon = '🥇 ';
+                    else if (index === 1) rankIcon = '🥈 ';
+                    else if (index === 2) rankIcon = '🥉 ';
+                    popHtml = `<span style="font-size:0.8em; color:var(--primary); font-weight:800; margin-left:8px;">🔥 ${popCount}</span>`;
+                }
+
                 return `
                 <div class="restaurant-card ${window.plpSelectedId === r.id ? 'selected-card' : ''}" onclick="plpSelectRestaurant(${r.id})">
-                    <div style="font-weight:800; font-size:1em; color:var(--text-primary); margin-bottom:6px;">${r.name}</div>
+                    <div style="font-weight:800; font-size:1em; color:var(--text-primary); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>${rankIcon}${r.name}</span>
+                        ${popHtml}
+                    </div>
                     <div style="font-size:0.85em; color:var(--text-secondary); display:flex; align-items:center;">
                         <span style="background:var(--border-dark); padding:3px 8px; border-radius:8px; margin-right:6px;">💳 ${r.price.toLocaleString()}원</span>
                         ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
@@ -597,6 +625,21 @@
 
         window.plpToggleDinner = function() {
             const b = document.getElementById('plpDinnerToggle');
+            b.classList.toggle('active');
+            if (b.classList.contains('active')) {
+                b.style.background = 'var(--text-primary)';
+                b.style.color = 'var(--bg-app)';
+                b.style.borderColor = 'var(--text-primary)';
+            } else {
+                b.style.background = 'var(--bg-surface)';
+                b.style.color = 'var(--text-primary)';
+                b.style.borderColor = 'var(--border-light)';
+            }
+            plpFilterData();
+        };
+
+        window.plpToggleSort = function() {
+            const b = document.getElementById('plpSortToggle');
             b.classList.toggle('active');
             if (b.classList.contains('active')) {
                 b.style.background = 'var(--text-primary)';
@@ -670,8 +713,8 @@
             document.getElementById('plp-popup-price').innerText = `${r.price.toLocaleString()}원`;
 
             let snsHtml = '';
-            if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램</a>`;
-            if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/></svg> 카톡 채널</a>`;
+            if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn" onclick="if(window.increasePopularity) window.increasePopularity(${r.id})">📸 인스타그램</a>`;
+            if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn" onclick="if(window.increasePopularity) window.increasePopularity(${r.id})"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/></svg> 카톡 채널</a>`;
             const snsEl = document.getElementById('plp-popup-sns');
             snsEl.innerHTML = snsHtml;
             snsEl.style.display = snsHtml ? 'flex' : 'none';
