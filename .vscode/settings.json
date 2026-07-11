@@ -1,0 +1,15 @@
+{
+    "liveServer.settings.AdvanceCustomBrowserCmdLine": "",
+    "liveServer.settings.donotVerifyTags": true,
+    "liveServer.settings.donotShowInfoMsg": true,
+    "liveServer.settings.NoBrowser": false,
+    "liveServer.settings.ignoreFiles": [
+        "**/*.map"
+    ],
+    "liveServer.settings.mount": [],
+    "liveServer.settings.proxy": {
+        "enable": false,
+        "baseUri": "",
+        "proxyUri": ""
+    }
+}

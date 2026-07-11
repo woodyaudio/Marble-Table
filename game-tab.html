@@ -1,0 +1,804 @@
+<style>
+
+    #game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100%;
+        background: var(--bg-app);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: clamp(10px, 2vh, 25px) 16px;
+        box-sizing: border-box;
+        font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+        gap: clamp(6px, 1.5vh, 16px);
+        color: var(--text-primary);
+    }
+
+    /* --- Header --- */
+    .roulette-header {
+        text-align: center;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+    .roulette-header h1 {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 900;
+        letter-spacing: -1px;
+        line-height: 1.1;
+        transition: all 0.3s ease;
+    }
+    @media (max-width: 768px) {
+        .roulette-header h1 { font-size: 1.4rem; }
+        .roulette-header p { font-size: 0.75rem; }
+    }
+    .roulette-header p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 6px;
+        transition: all 0.3s ease;
+    }
+
+    /* --- Game Type Toggle (점심 / 커피) --- */
+    .game-type-toggle {
+        display: flex;
+        background: rgba(255,255,255,0.5);
+        border: 1px solid rgba(12,48,96,0.12);
+        border-radius: 50px;
+        padding: 3px;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+    }
+    .game-type-btn {
+        padding: 7px 24px;
+        border: none;
+        background: transparent;
+        color: rgba(12,48,96,0.5);
+        font-family: 'Noto Sans KR', sans-serif;
+        font-weight: 700;
+        font-size: 0.82rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+    .game-type-btn.active {
+        background: #0c3060;
+        color: white;
+        box-shadow: 0 2px 12px rgba(12,48,96,0.25);
+    }
+
+    /* --- 통합 모드 토글 (미니/일반/커피) --- */
+    .mode-toggle {
+        display: flex;
+        width: 100%;
+        max-width: 320px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: 50px;
+        padding: 4px;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+        box-shadow: var(--shadow-sm);
+    }
+    @media (max-width: 768px) {
+        .mode-toggle { max-width: 280px; }
+        .mode-btn { padding: 8px 0; font-size: 0.78rem; }
+    }
+    .mode-btn {
+        flex: 1;
+        padding: 10px 0;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+        font-weight: 800;
+        font-size: 0.85rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        line-height: 1.4;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .mode-btn.active {
+        background: var(--text-primary);
+        color: var(--bg-app);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    /* --- Wheel Area --- */
+    .wheel-area {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        width: min(42vh, 420px, calc(100vw - 40px));
+        height: min(42vh, 420px, calc(100vw - 40px));
+    }
+
+    @media (max-width: 768px) {
+        .wheel-area {
+            /* 90px 광고 대응을 위해 휠 사이즈 대폭 축소 */
+            width: min(35vh, 290px);
+            height: min(35vh, 290px);
+        }
+    }
+
+    .wheel-pointer {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-top: 28px solid #FFD700;
+        filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+        z-index: 10;
+    }
+    @media (max-width: 768px) {
+        .wheel-pointer {
+            border-top-width: 22px;
+            border-left-width: 11px;
+            border-right-width: 11px;
+            top: -8px;
+        }
+    }
+    canvas {
+        border-radius: 50%;
+        box-shadow: 0 0 0 6px var(--bg-surface), 0 0 40px rgba(0,0,0,0.15);
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* --- Spin Button --- */
+    .spin-btn {
+        background: var(--text-primary);
+        color: var(--bg-app);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 44px;
+        font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+        font-weight: 900;
+        font-size: 1.05rem;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        box-shadow: 0 6px 20px var(--primary-light);
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    @media (max-width: 768px) {
+        .spin-btn { padding: 11px 36px; font-size: 0.95rem; }
+    }
+    .spin-btn:hover:not(:disabled) { opacity: 0.88; }
+    .spin-btn:active:not(:disabled) { transform: scale(0.97); }
+    .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* --- Coffee Spin Button (커피 커럿) --- */
+    .spin-btn.coffee-btn {
+        background: #6F4E37;
+        color: #fff;
+        box-shadow: 0 6px 20px rgba(111, 78, 55, 0.3);
+    }
+    .spin-btn.coffee-btn:hover:not(:disabled) { opacity: 0.88; }
+
+    /* --- Result Card --- */
+    .result-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 20px;
+        padding: 16px 20px;
+        text-align: center;
+        color: var(--text-primary);
+        width: 100%;
+        max-width: 320px;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.4s ease;
+        flex-shrink: 0;
+        min-height: 135px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+    @media (max-width: 768px) {
+        .result-card { min-height: 120px; padding: 8px 14px; margin-top: 5px; }
+    }
+    .result-card.visible {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+    .result-label {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        font-weight: 800;
+    }
+    .result-name {
+        font-family: 'Nunito', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .result-name .emoji-icon {
+        font-size: 2rem;
+    }
+    .result-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+    .result-links {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .result-link-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border-light);
+        color: var(--text-primary);
+        background: var(--bg-panel);
+        cursor: pointer;
+    }
+    .result-link-btn:hover {
+        background: rgba(12,48,96,0.12);
+        transform: scale(1.04);
+    }
+    .result-link-btn.instagram { background: linear-gradient(135deg, rgba(193,53,132,0.15), rgba(253,81,29,0.15)); border-color: rgba(253,81,29,0.3); color: #c13584; }
+    .result-link-btn.kakao { background: rgba(254,229,0,0.35); border-color: rgba(200,160,0,0.35); color: #3C1E1E; }
+
+    /* --- Coffee Result 특별 스타일 --- */
+    .result-card.coffee-result {
+        background: var(--bg-surface);
+        border-color: rgba(212, 165, 116, 0.5);
+        color: var(--text-primary);
+    }
+    .result-card.coffee-result .result-name {
+        font-size: 2rem;
+        color: #8B5E3C;
+    }
+    .result-card.coffee-result .result-label,
+    .result-card.coffee-result .result-meta {
+        color: #8B6240;
+    }
+    .result-prob-badge {
+        display: inline-block;
+        background: rgba(139,94,60,0.1);
+        border: 1px solid rgba(139,94,60,0.25);
+        border-radius: 50px;
+        padding: 2px 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #5c3d1e;
+        margin-top: 4px;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<div id="game-container">
+    <div class="roulette-header">
+        <h1 id="mainTitle">🍽️ 점심 룰렛</h1>
+        <p id="mainSubtitle">오늘 뭐 먹을지 결정 못 하겠다면?</p>
+    </div>
+
+    <!-- 통합 모드 토글 (3단) -->
+    <div class="mode-toggle">
+        <button class="mode-btn active" id="btnMini" onclick="setGlobalMode('mini')">⚡ 미니</button>
+        <button class="mode-btn" id="btnFull" onclick="setGlobalMode('full')">🌐 일반</button>
+        <button class="mode-btn" id="btnCoffee" onclick="setGlobalMode('coffee')">☕ 커피</button>
+    </div>
+
+    <!-- 점심 룰렛 영역 -->
+    <div class="wheel-area" id="wheelArea">
+        <div class="wheel-pointer"></div>
+        <canvas id="rouletteCanvas"></canvas>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="roulette.spin()">🎰 돌려돌려!</button>
+    <div class="result-card visible" id="resultCard">
+        <div class="result-label" id="resultLabel">오늘의 점심은</div>
+        <div class="result-name" id="resultName"><span class="emoji-icon">🤔</span> 무엇이 나올까요?</div>
+        <div class="result-meta" id="resultMeta">돌려돌려 버튼을 눌러보세요!</div>
+        <div class="result-links" id="resultLinks"></div>
+    </div>
+
+    <!-- 커피 룰렛 영역 (처음엔 숨김) -->
+    <div class="wheel-area" id="coffeeWheelArea" style="display:none;">
+        <div class="wheel-pointer"></div>
+        <canvas id="coffeeCanvas"></canvas>
+    </div>
+    <button class="spin-btn coffee-btn" id="coffeeSpinBtn" onclick="coffeeRoulette.spin()" style="display:none;">☕ 돌려돌려!</button>
+    <div class="result-card visible coffee-result" id="coffeeResultCard" style="display:none;">
+        <div class="result-label" id="coffeeResultLabel">커피 타임 장소는</div>
+        <div class="result-name" id="coffeeResultName"><span class="emoji-icon">☕</span> 어디가 당첨될까요?</div>
+        <div class="result-meta" id="coffeeResultMeta">돌려돌려 버튼을 눌러 운명을 확인하세요!</div>
+    </div>
+</div>
+
+<script>
+// =============================================
+//  게임 전환 (점심 ↔ 커피)
+// =============================================
+function setGlobalMode(mode) {
+    const isCoffee = (mode === 'coffee');
+    
+    // UI 타이틀 및 버튼 활성화 전환
+    document.getElementById('mainTitle').textContent = isCoffee ? '☕ 커피 룰렛' : '🍽️ 점심 룰렛';
+    document.getElementById('mainSubtitle').textContent = isCoffee ? '커피 어디서 마실지 결정 못 하겠다면?' : '오늘 뭐 먹을지 결정 못 하겠다면?';
+    
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', 
+            (mode === 'mini' && btn.id === 'btnMini') ||
+            (mode === 'full' && btn.id === 'btnFull') ||
+            (mode === 'coffee' && btn.id === 'btnCoffee')
+        );
+    });
+
+    // 영역 전환
+    document.getElementById('wheelArea').style.display = isCoffee ? 'none' : 'flex';
+    document.getElementById('spinBtn').style.display = isCoffee ? 'none' : 'block';
+    document.getElementById('resultCard').style.display = isCoffee ? 'none' : 'block';
+
+    document.getElementById('coffeeWheelArea').style.display = isCoffee ? 'flex' : 'none';
+    document.getElementById('coffeeSpinBtn').style.display = isCoffee ? 'block' : 'none';
+    document.getElementById('coffeeResultCard').style.display = isCoffee ? 'block' : 'none';
+
+    if (isCoffee) {
+        coffeeRoulette.init();
+        coffeeRoulette.resetCoffeeResult();
+    } else {
+        roulette.setMode(mode);
+        roulette.resetLunchResult();
+    }
+}
+
+// =============================================
+//  점심 룰렛
+// =============================================
+window.roulette = (function() {
+    const ALL_RESTAURANTS = [
+        { id: 1,  name: "굿푸드(구로점)",   price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/goodfood_highend/", kakao: "https://pf.kakao.com/_CuTbn" },
+        { id: 2,  name: "KJ푸드",          price: 7500, hours: "중식 11:00~14:00", instagram: null, kakao: null },
+        { id: 3,  name: "제이오제이엠푸드", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/jojmfood/", kakao: null },
+        { id: 4,  name: "밥쥴랭",           price: 8500, hours: "중식 11:00~13:40", instagram: "https://www.instagram.com/babjulrang_guro/", kakao: null },
+        { id: 5,  name: "푸드포커스",        price: 7500, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/anadasia_yoo/", kakao: null },
+        { id: 6,  name: "갓한밥",           price: 7500, hours: "중식 11:30~14:00", instagram: "https://www.instagram.com/god1bab", kakao: null },
+        { id: 7,  name: "벽산더이룸",        price: 8000, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/byeoksan_theirum/", kakao: null },
+        { id: 8,  name: "더드림푸드",        price: 7000, hours: "미확인", instagram: null, kakao: null },
+        { id: 9,  name: "윤쉐프 코오롱",     price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/yoon_chef_/", kakao: null },
+        { id: 10, name: "얌얌 한식 뷔페",    price: 8000, hours: "중식 11:30~14:00", instagram: "https://www.instagram.com/yamyam_ask", kakao: null },
+        { id: 11, name: "더이츠푸드",        price: 7000, hours: "중식 11:00~13:40", instagram: null, kakao: null },
+        { id: 12, name: "알찬푸드",          price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/your_table__/", kakao: null },
+        { id: 13, name: "푸드라운지",        price: 8200, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/samsungit_foodlounge", kakao: null },
+        { id: 14, name: "그린푸드 가산",     price: 8000, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/greenfood_gasan/", kakao: null }
+    ];
+
+    const MINI_IDS = [1, 2, 3, 4];
+    const COLORS = [
+        '#3B82F6','#6366F1','#8B5CF6','#EC4899','#EF4444',
+        '#F97316','#EAB308','#22C55E','#14B8A6','#06B6D4',
+        '#0EA5E9','#84CC16','#A855F7','#F43F5E'
+    ];
+
+    let restaurants = [];
+    let isSpinning = false;
+    let currentAngle = 0;
+
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function syncCanvasResolution() {
+        const area = document.getElementById('wheelArea');
+        if (!area) return;
+        const size = area.getBoundingClientRect().width;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(size * dpr);
+        canvas.height = Math.round(size * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function setMode(mode) {
+        restaurants = mode === 'mini'
+            ? ALL_RESTAURANTS.filter(r => MINI_IDS.includes(r.id))
+            : [...ALL_RESTAURANTS];
+        currentAngle = 0;
+        resetLunchResult();
+        syncCanvasResolution();
+        drawWheel(currentAngle);
+    }
+
+    function drawWheel(angle) {
+        if (!restaurants.length) return;
+        const n = restaurants.length;
+        const area = document.getElementById('wheelArea');
+        if (!area) return;
+        const displaySize = area.getBoundingClientRect().width;
+        const cx = displaySize / 2, cy = displaySize / 2;
+        const radius = cx - 5;
+        const slice = (2 * Math.PI) / n;
+
+        ctx.clearRect(0, 0, displaySize, displaySize);
+
+        for (let i = 0; i < n; i++) {
+            const s = angle + i * slice;
+            const e = s + slice;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, radius, s, e);
+            ctx.closePath();
+            ctx.fillStyle = COLORS[i % COLORS.length];
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(s + slice / 2);
+
+            const isMini = n <= 4;
+            ctx.textAlign = isMini ? 'center' : 'right';
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'rgba(0,0,0,0.45)';
+            ctx.shadowBlur = 4;
+
+            const name = restaurants[i].name;
+            const label = isMini ? name : (name.length > 7 ? name.slice(0, 7) + '…' : name);
+
+            ctx.font = `bold 16px 'Noto Sans KR', sans-serif`;
+
+            if (isMini) {
+                ctx.fillText(label, radius * 0.55, 16 * 0.35);
+            } else {
+                ctx.fillText(label, radius - 12, 16 * 0.35);
+            }
+            ctx.restore();
+        }
+
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.13);
+        grad.addColorStop(0, '#fff');
+        grad.addColorStop(1, '#c7d2fe');
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.11, 0, 2 * Math.PI);
+        ctx.fillStyle = grad;
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function spin() {
+        if (isSpinning || !restaurants.length) return;
+        isSpinning = true;
+        resetLunchResult();
+        
+        // 🌀 돌아가는 중 효과
+        document.getElementById('resultName').textContent = '🌀 돌아가는 중...';
+        document.getElementById('resultMeta').textContent = '두구두구두구...';
+        
+        document.getElementById('spinBtn').disabled = true;
+
+        const n = restaurants.length;
+        const slice = (2 * Math.PI) / n;
+        const targetIndex = Math.floor(Math.random() * n);
+
+        const targetCenter = targetIndex * slice + slice / 2;
+        const randomOffset = (Math.random() * 0.6 - 0.3) * slice;
+        const targetAngle = -Math.PI / 2 - targetCenter + randomOffset;
+
+        const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const normalizedTarget = ((targetAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+        let delta = normalizedTarget - normalizedCurrent;
+        if (delta < 0) delta += 2 * Math.PI;
+
+        const extraRot = Math.floor(5 + Math.random() * 6) * 2 * Math.PI;
+        const finalAngle = currentAngle + extraRot + delta;
+        const duration = 4200 + Math.random() * 1400;
+        const startAngle = currentAngle;
+        const startTime = performance.now();
+
+        function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+            drawWheel(currentAngle);
+            if (t < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                currentAngle = finalAngle;
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+                showResult(restaurants[targetIndex]);
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+
+    function showResult(r) {
+        document.getElementById('resultLabel').style.display = '';
+        document.getElementById('resultName').innerHTML = `<span class="emoji-icon">🍽️</span> ${r.name}`;
+        
+        const meta = [];
+        if (r.price) meta.push(`💰 ${r.price.toLocaleString()}원`);
+        if (r.hours && r.hours !== '미확인') meta.push(`🕐 ${r.hours}`);
+        document.getElementById('resultMeta').textContent = meta.join('  ·  ');
+
+        const linksEl = document.getElementById('resultLinks');
+        linksEl.innerHTML = '';
+        if (r.instagram) {
+            const a = document.createElement('a');
+            a.href = r.instagram; a.target = '_blank'; a.rel = 'noopener';
+            a.className = 'result-link-btn instagram';
+            a.innerHTML = '📸 인스타그램';
+            linksEl.appendChild(a);
+        }
+        if (r.kakao) {
+            const a = document.createElement('a');
+            a.href = r.kakao; a.target = '_blank'; a.rel = 'noopener';
+            a.className = 'result-link-btn kakao';
+            a.innerHTML = '💬 카카오채널';
+            linksEl.appendChild(a);
+        }
+
+        const card = document.getElementById('resultCard');
+        card.classList.add('visible');
+        setTimeout(() => { card.classList.remove('visible'); }, 400);
+    }
+
+    function resetLunchResult() {
+        document.getElementById('resultLabel').style.display = 'block';
+        document.getElementById('resultName').innerHTML = '<span class="emoji-icon">🤔</span> 무엇이 나올까요?';
+        document.getElementById('resultMeta').textContent = '돌려돌려 버튼을 눌러 운명을 확인하세요!';
+        document.getElementById('resultLinks').innerHTML = '';
+    }
+
+    window.addEventListener('resize', () => {
+        syncCanvasResolution();
+        drawWheel(currentAngle);
+    });
+
+    // 최초 초기화 — DOM이 레이아웃된 후 실행
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setGlobalMode('mini');
+        });
+    });
+
+    return { setMode, spin, resetLunchResult };
+})();
+
+
+// =============================================
+//  커피 룰렛
+// =============================================
+window.coffeeRoulette = (function() {
+    // 가중치 기반 항목 (확률: 2층 30%, 3층 30%, 외출 30%, 1층 10%)
+    // 가중치를 시각적 호(arc) 크기로 반영
+    const coffeeItems = [
+        { name: '2층',  weight: 30, color: '#6F4E37', emoji: '☕' },
+        { name: '3층',  weight: 30, color: '#A0522D', emoji: '🏢' },
+        { name: '외출', weight: 30, color: '#8B4513', emoji: '🚶' },
+        { name: '1층',  weight: 10, color: '#D2691E', emoji: '🏠' },
+    ];
+    const TOTAL_WEIGHT = coffeeItems.reduce((s, it) => s + it.weight, 0);
+
+    // 각 항목이 시작하는 누적 각도 (라디안) 미리 계산
+    const slices = [];
+    let accum = 0;
+    for (const it of coffeeItems) {
+        const angle = (it.weight / TOTAL_WEIGHT) * 2 * Math.PI;
+        slices.push({ ...it, startAngle: accum, sweepAngle: angle });
+        accum += angle;
+    }
+
+    let isSpinning = false;
+    let currentAngle = 0;
+    let initialized = false;
+
+    const canvas = document.getElementById('coffeeCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function syncCanvasResolution() {
+        const area = document.getElementById('coffeeWheelArea');
+        if (!area) return false;
+        const size = area.getBoundingClientRect().width;
+        if (size === 0) return false;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(size * dpr);
+        canvas.height = Math.round(size * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return true;
+    }
+
+    function drawWheel(angle) {
+        if (!coffeeItems.length) return;
+        const n = coffeeItems.length;
+        const area = document.getElementById('coffeeWheelArea');
+        if (!area) return;
+        const displaySize = area.getBoundingClientRect().width;
+        if (displaySize === 0) return;
+
+        const cx = displaySize / 2, cy = displaySize / 2;
+        const radius = cx - 5;
+
+        ctx.clearRect(0, 0, displaySize, displaySize);
+
+        for (const sl of slices) {
+            const s = angle + sl.startAngle;
+            const e = s + sl.sweepAngle;
+
+            // 조각 채우기
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, radius, s, e);
+            ctx.closePath();
+            ctx.fillStyle = sl.color;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 텍스트
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(s + sl.sweepAngle / 2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 5;
+
+            const isPC = window.innerWidth > 768;
+            const baseFontSize = isPC ? 20 : 15;
+
+            // 확률 표시 (작은 글씨)
+            ctx.font = `700 ${baseFontSize * 0.65}px 'Noto Sans KR', sans-serif`;
+            ctx.globalAlpha = 0.8;
+            ctx.fillText(`${sl.weight}%`, radius * 0.72, -baseFontSize * 0.5);
+            ctx.globalAlpha = 1;
+
+            // 이름 (큰 글씨)
+            ctx.font = `900 ${baseFontSize}px 'Noto Sans KR', sans-serif`;
+            ctx.fillText(sl.name, radius * 0.72, baseFontSize * 0.45);
+
+            ctx.restore();
+        }
+
+        // 중앙 원
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.13);
+        grad.addColorStop(0, '#fff8f0');
+        grad.addColorStop(1, '#d4a574');
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.11, 0, 2 * Math.PI);
+        ctx.fillStyle = grad;
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function init() {
+        if (initialized) {
+            drawWheel(currentAngle);
+            return;
+        }
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (syncCanvasResolution()) {
+                    drawWheel(currentAngle);
+                    initialized = true;
+                }
+            });
+        });
+    }
+
+    function spin() {
+        if (isSpinning) return;
+        isSpinning = true;
+
+        // 커피 결과 카드 초기화 및 도는 중 효과
+        resetCoffeeResult();
+        document.getElementById('coffeeResultName').textContent = '🌀 도는 중...';
+        document.getElementById('coffeeResultMeta').textContent = '제발 외출...! (두구두구)';
+
+        document.getElementById('coffeeSpinBtn').disabled = true;
+
+        // 가중치 기반 랜덤 선택
+        const rand = Math.random() * TOTAL_WEIGHT;
+        let cumulative = 0;
+        let targetSlice = slices[slices.length - 1];
+        for (const sl of slices) {
+            cumulative += sl.weight;
+            if (rand < cumulative) { targetSlice = sl; break; }
+        }
+
+        // 포인터(상단 −π/2)가 targetSlice 중앙에 오도록 최종 각도 계산
+        const targetCenter = targetSlice.startAngle + targetSlice.sweepAngle / 2;
+        // 약간의 랜덤 오프셋 (슬라이스 40% 범위 내)
+        const randomOffset = (Math.random() * 0.8 - 0.4) * targetSlice.sweepAngle;
+        const targetAngle = -Math.PI / 2 - targetCenter - randomOffset;
+
+        const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const normalizedTarget  = ((targetAngle  % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+        let delta = normalizedTarget - normalizedCurrent;
+        if (delta < 0) delta += 2 * Math.PI;
+
+        const extraRot  = Math.floor(5 + Math.random() * 6) * 2 * Math.PI;
+        const finalAngle = currentAngle + extraRot + delta;
+        const duration  = 4200 + Math.random() * 1400;
+        const startAngle = currentAngle;
+        const startTime  = performance.now();
+
+        function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
+            drawWheel(currentAngle);
+            if (t < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                currentAngle = finalAngle;
+                isSpinning = false;
+                document.getElementById('coffeeSpinBtn').disabled = false;
+                showCoffeeResult(targetSlice);
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+
+    function showCoffeeResult(sl) {
+        document.getElementById('coffeeResultName').innerHTML = `<span class="emoji-icon">${sl.emoji}</span> ${sl.name}`;
+        document.getElementById('coffeeResultMeta').innerHTML =
+            `<span class="result-prob-badge">당첨 확률 ${sl.weight}%</span> | ☕ 맛있는 커피 타임 되세요!`;
+
+        const card = document.getElementById('coffeeResultCard');
+        card.classList.add('coffee-result', 'visible');
+        setTimeout(() => { card.classList.remove('visible'); }, 400);
+    }
+
+    function resetCoffeeResult() {
+        document.getElementById('coffeeResultName').innerHTML = '<span class="emoji-icon">☕</span> 어디가 당첨될까요?';
+        document.getElementById('coffeeResultName').style.fontSize = '1.3rem';
+        document.getElementById('coffeeResultMeta').innerHTML = '돌려돌려 버튼을 눌러 운명을 확인하세요!';
+    }
+
+    window.addEventListener('resize', () => {
+        if (initialized) {
+            syncCanvasResolution();
+            drawWheel(currentAngle);
+        }
+    });
+
+    return { init, spin, resetCoffeeResult };
+})();
+</script>
