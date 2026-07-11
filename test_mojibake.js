@@ -1,1 +1,0 @@
-﻿const headerMap = { 'id': 'id', '̸': 'name', '': 'region', 'ּ': 'address', 'lat': 'lat', 'lng': 'lng', '': 'description', '': 'price', ' ð': 'hours', 'ν': 'instagram', 'īī': 'kakaoChannel' };

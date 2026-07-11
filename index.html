@@ -148,6 +148,39 @@
             #persistent-left-panel { display: none !important; }
         }
 
+        /* PC 전용 탭 내비게이션 로고 */
+        .nav-logo {
+            width: 100%;
+            padding: 0; /* 상하 사이즈를 이미지 크기에 딱 맞추기 위해 여백 제거 */
+            margin-top: 8px; /* 위쪽 살짝 틈 주기 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-sizing: border-box;
+            margin-bottom: 4px;
+            transition: opacity 0.2s ease;
+            overflow: hidden;
+        }
+        .nav-logo:hover {
+            opacity: 0.8;
+        }
+        .nav-logo img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain; /* 캐릭터가 잘 맞게 보이도록 조정 */
+            transform: scale(2.5);
+        }
+        body.dark-theme .nav-logo img.dark-logo {
+            transform: scale(2.5) translateY(1.5px); /* 상단 짤림 방지: 약간 아래로 내림 */
+        }
+        body:not(.dark-theme) .dark-logo { display: none; }
+        body.dark-theme .light-logo { display: none; }
+        
+        @media (max-width: 768px) {
+            .nav-logo { display: none !important; }
+        }
+
         /* [PC] 왼쪽 탭 네비게이션 */
         #tab-nav {
             width: var(--tab-width);
@@ -367,12 +400,17 @@
 </head>
 <body>
 <div id="mobile-ad-banner">
-    <img src="Image/ad01.jpg" class="ad-blur-bg">
-    <img src="Image/ad01.jpg" class="ad-main-img">
+    <img src="Image/Ads/ad01.jpg" class="ad-blur-bg">
+    <img src="Image/Ads/ad01.jpg" class="ad-main-img">
 </div>
 
 <div id="app">
     <nav id="tab-nav">
+        <!-- 상단 로고 (PC 전용, 다크모드 토글) -->
+        <div class="nav-logo" onclick="toggleThemeManually()" title="다크모드/라이트모드 전환">
+            <img src="Image/Logo/WoodyTable_Logo.png" class="light-logo" alt="Woody Table">
+            <img src="Image/Logo/WoodyTable_Logo_dark.png" class="dark-logo" alt="Woody Table">
+        </div>
         <!-- 지도 홈 -->
         <div class="tab-item active" data-tab="map">
             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -380,6 +418,13 @@
                 <circle cx="12" cy="9" r="2.5"/>
             </svg>
             <div class="tab-text">지도홈</div>
+        </div>
+        <!-- 즐겨찾기 -->
+        <div class="tab-item" data-tab="favorite">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <div class="tab-text">즐겨찾기</div>
         </div>
         <!-- AI 렌즈 -->
         <div class="tab-item" data-tab="calorie">
@@ -413,7 +458,7 @@
     <div id="persistent-left-panel">
         <div class="main-title-box">
             <h1 class="app-logo">
-                <span class="app-logo-icon">🗺️</span> Woody Table
+                Woody Table
             </h1>
         </div>
         <div id="plp-list-header">
@@ -437,8 +482,8 @@
         <main id="content-area"></main>
         <!-- PC 전용 하단 광고 배너 -->
         <div id="pc-ad-banner">
-            <img src="Image/ad01.jpg" class="ad-blur-bg">
-            <img src="Image/ad01.jpg" class="ad-main-img">
+            <img src="Image/Ads/ad01.jpg" class="ad-blur-bg">
+            <img src="Image/Ads/ad01.jpg" class="ad-main-img">
         </div>
     </div>
 </div>
@@ -465,6 +510,10 @@
     let currentTab = '';
     function loadTab(tabName) {
         if (currentTab === tabName) return;
+
+        const targetFile = tabName === 'favorite' ? 'map' : tabName;
+        window.isFavoriteMode = (tabName === 'favorite');
+
         currentTab = tabName;
         document.body.setAttribute('data-tab', tabName);
         
@@ -472,7 +521,15 @@
             item.classList.toggle('active', item.dataset.tab === tabName);
         });
 
-        fetch(`./${tabName}-tab.html?v=${Date.now()}`)
+        // 맵이 이미 로드되어 있다면 HTML을 다시 받지 않고 필터만 갱신
+        const area = document.getElementById('content-area');
+        if (targetFile === 'map' && area.querySelector('#map-container')) {
+            if (typeof window.plpFilterData === 'function') window.plpFilterData();
+            if (typeof window.updateListAndMarkers === 'function') window.updateListAndMarkers();
+            return;
+        }
+
+        fetch(`./${targetFile}-tab.html?v=${Date.now()}`)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.text();
@@ -537,8 +594,8 @@
                 window.plpRestaurantsData = rows.slice(1)
                     .map(row => { const obj = {}; headers.forEach((key, i) => { obj[key] = row[i]; }); return obj; })
                     .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
-                    .map(r => ({
-                        id:           parseInt(r.id) || 0,
+                    .map((r, index) => ({
+                        id:           parseInt(r.id) || (index + 1),
                         name:         String(r.name).trim(),
                         region:       r.region && String(r.region).trim() !== '' ? String(r.region).trim() : '미지정',
                         address:      r.address ? String(r.address).trim() : '',
@@ -585,7 +642,8 @@
                 const mQ = r.name.toLowerCase().includes(q);
                 const mR = rFilter === 'all' || r.region === rFilter;
                 const mD = !isD || (r.hours.includes('석식') || /17:|18:|19:/.test(r.hours));
-                return mQ && mR && mD;
+                const mF = !window.isFavoriteMode || window.getFavorites().includes(r.id);
+                return mQ && mR && mD && mF;
             });
 
             if (isPopSort && window.popularityData) {
@@ -600,6 +658,10 @@
                 const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
                 const popCount = (window.popularityData && window.popularityData[r.id]) || 0;
                 
+                const favs = window.getFavorites();
+                const isFav = favs.includes(r.id);
+                const favIcon = isFav ? '<span style="color:#FBBF24;">⭐</span>' : '<span style="color:var(--border-light); filter: grayscale(1) brightness(1.5);">☆</span>';
+
                 let rankIcon = '';
                 let popHtml = '';
                 if (isPopSort && popCount > 0) {
@@ -613,10 +675,13 @@
                 <div class="restaurant-card ${window.plpSelectedId === r.id ? 'selected-card' : ''}" onclick="plpSelectRestaurant(${r.id})">
                     <div style="font-weight:800; font-size:1em; color:var(--text-primary); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                         <span>${rankIcon}${r.name}</span>
-                        ${popHtml}
+                        <div>
+                            ${popHtml}
+                            <span style="cursor:pointer; font-size:1.15em; margin-left:6px;" onclick="window.toggleFavorite(event, ${r.id})" title="즐겨찾기">${favIcon}</span>
+                        </div>
                     </div>
                     <div style="font-size:0.85em; color:var(--text-secondary); display:flex; align-items:center;">
-                        <span style="background:var(--border-dark); padding:3px 8px; border-radius:8px; margin-right:6px;">💳 ${r.price.toLocaleString()}원</span>
+                        <span style="background:var(--border-dark); padding:3px 8px; border-radius:8px; margin-right:6px;">💳 ${r.price ? r.price.toLocaleString() + '원' : '-'}</span>
                         ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
                     </div>
                 </div>`;
@@ -656,9 +721,9 @@
         // 식당 클릭 시: 지도 탭이 활성이면 selectRestaurant 호출, 다른 탭은 폈팅 팝업 표시
         window.plpSelectRestaurant = function(id) {
             window.plpSelectedId = id;
-            plpFilterData(); // 선택 상태 UI 갱신
+            plpFilterData(); // 선택 UI 갱신
 
-            if (currentTab === 'map' && typeof window.selectRestaurant === 'function') {
+            if ((currentTab === 'map' || currentTab === 'favorite') && typeof window.selectRestaurant === 'function') {
                 window.selectRestaurant(id);
             } else {
                 plpShowPopup(id);
@@ -710,7 +775,7 @@
             let formattedHours = r.hours || '정보 없음';
             formattedHours = formattedHours.replace(/, /g, '<br>').replace(/,/g, '<br>');
             document.getElementById('plp-popup-hours').innerHTML = formattedHours;
-            document.getElementById('plp-popup-price').innerText = `${r.price.toLocaleString()}원`;
+            document.getElementById('plp-popup-price').innerText = r.price ? `${r.price.toLocaleString()}원` : '-';
 
             let snsHtml = '';
             if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn" onclick="if(window.increasePopularity) window.increasePopularity(${r.id})">📸 인스타그램</a>`;
@@ -757,6 +822,119 @@
             document.body.classList.remove('dark-theme');
         }
     };
+
+    // 로고 클릭 시 테마 전환 함수
+    window.toggleThemeManually = function() {
+        const currentTheme = localStorage.getItem('woody_app_theme') || 'default';
+        const newTheme = currentTheme === 'dark' ? 'default' : 'dark';
+        
+        // 1. 앱 전체 테마 (index.html, 각 탭 UI)
+        localStorage.setItem('woody_app_theme', newTheme);
+        window.applyAppTheme();
+        
+        // 2. 지도 자체 테마 (map-tab.html 안의 지도 타일)
+        // 0: 기본맵, 2: 다크맵
+        localStorage.setItem('woody_map_theme', newTheme === 'dark' ? '2' : '0');
+        
+        // iframe 내부 지도 등도 테마가 즉시 적용되도록 페이지 전체 새로고침
+        location.reload();
+    };
+
+    // 전역 즐겨찾기 로직
+    window.getFavorites = function() {
+        try {
+            return JSON.parse(localStorage.getItem('woody_favorites') || '[]');
+        } catch { return []; }
+    };
+    
+    window.toggleFavorite = function(e, id) {
+        if(e) e.stopPropagation();
+        let favs = window.getFavorites();
+        if(favs.includes(id)) {
+            favs = favs.filter(f => f !== id);
+        } else {
+            favs.push(id);
+        }
+        localStorage.setItem('woody_favorites', JSON.stringify(favs));
+        
+        // PC 화면 목록 새로고침 (별 즉시 업데이트)
+        if(typeof window.plpFilterData === 'function') window.plpFilterData();
+        
+        // 활성 탭이 지도이거나 즐겨찾기 탭이면 iframe 내용도 새로고침
+        const activeTab = document.querySelector('.tab-item.active').dataset.tab;
+        const iframe = document.querySelector('#content-area iframe');
+        if (iframe && iframe.contentWindow) {
+            // map-tab.html의 경우 renderList 함수가 있다면 호출해서 즉시 갱신
+            if(typeof iframe.contentWindow.updateListAndMarkers === 'function') {
+                iframe.contentWindow.updateListAndMarkers();
+            } else {
+                iframe.contentWindow.location.reload();
+            }
+        }
+    };
+
+    // ✅ 광고 롤링 시스템 (10초마다 슬라이드 전환)
+    (function() {
+        let adIndex = 1;
+        const mobileBg = document.querySelector('#mobile-ad-banner .ad-blur-bg');
+        const mobileMain = document.querySelector('#mobile-ad-banner .ad-main-img');
+        const pcBg = document.querySelector('#pc-ad-banner .ad-blur-bg');
+        const pcMain = document.querySelector('#pc-ad-banner .ad-main-img');
+
+        function updateAds(indexStr) {
+            const src = `Image/Ads/ad${indexStr}.jpg`;
+            const elements = [mobileBg, mobileMain, pcBg, pcMain].filter(Boolean);
+
+            // 1. 왼쪽으로 슬라이드하며 페이드아웃
+            elements.forEach(el => {
+                el.style.transition = "opacity 0.4s ease-in, transform 0.4s ease-in";
+                el.style.opacity = "0";
+                el.style.transform = el.classList.contains('ad-blur-bg') 
+                    ? "scale(1.1) translateX(-30px)" 
+                    : "translateX(-30px)";
+            });
+
+            // 2. 0.4초 후 소스 변경 및 오른쪽에서 슬라이드인 준비
+            setTimeout(() => {
+                elements.forEach(el => {
+                    el.src = src;
+                    el.style.transition = "none";
+                    el.style.transform = el.classList.contains('ad-blur-bg') 
+                        ? "scale(1.1) translateX(30px)" 
+                        : "translateX(30px)";
+                });
+
+                // 강제 리플로우 (브라우저가 위치 변경을 인식하게 함)
+                void mobileBg.offsetWidth;
+
+                // 3. 다시 가운데로 슬라이드하며 페이드인
+                elements.forEach(el => {
+                    el.style.transition = "opacity 0.4s ease-out, transform 0.4s ease-out";
+                    el.style.opacity = "1";
+                    el.style.transform = el.classList.contains('ad-blur-bg') 
+                        ? "scale(1.1) translateX(0)" 
+                        : "translateX(0)";
+                });
+            }, 400);
+        }
+
+        setInterval(() => {
+            adIndex++;
+            let indexStr = adIndex < 10 ? '0' + adIndex : adIndex;
+            let testImg = new Image();
+            testImg.onload = function() {
+                updateAds(indexStr);
+            };
+            testImg.onerror = function() {
+                // 이미지가 없으면 다시 1번으로 돌아감
+                adIndex = 1;
+                updateAds('01');
+            };
+            testImg.src = `Image/Ads/ad${indexStr}.jpg`;
+        }, 10000);
+    })();
+    // --------------------------------------------------
+
     // 초기 로드 시 테마 적용
     window.applyAppTheme();
 </script>

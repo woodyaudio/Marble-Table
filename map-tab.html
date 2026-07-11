@@ -239,6 +239,107 @@
     }
     /* GPS 이동 버튼 (floating 제거, 필터로 이동) */
     #gps-btn.locating { animation: gps-pulse 1s infinite; background: #eff6ff; border-radius: 10px; }
+
+    /* 지하철 토글 버튼 */
+    #subway-toggle-btn {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        z-index: 900;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 15px;
+        border-radius: 50px;
+        border: 1.5px solid var(--border-light);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 0.82em;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+        transition: all 0.2s;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+        white-space: nowrap;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    #subway-toggle-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 4px 16px rgba(49,130,246,0.15);
+        transform: translateY(-1px);
+    }
+    #subway-toggle-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(49,130,246,0.3);
+    }
+    #subway-toggle-btn .subway-icon {
+        font-size: 1.1em;
+        line-height: 1;
+    }
+    #subway-loading-indicator {
+        position: absolute;
+        bottom: 60px;
+        right: 16px;
+        z-index: 900;
+        padding: 8px 14px;
+        border-radius: 20px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        font-size: 0.78em;
+        font-weight: 700;
+        color: var(--text-secondary);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: none;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        animation: pulse-text 1.2s infinite;
+    }
+    @keyframes pulse-text {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    /* 모바일에서 지하철 버튼 위치 조정 */
+    @media (max-width: 768px) {
+        #subway-toggle-btn {
+            bottom: calc(38dvh + 16px);
+            right: 12px;
+        }
+        #subway-loading-indicator {
+            bottom: calc(38dvh + 60px);
+            right: 12px;
+        }
+    }
+
+    /* 지하철 역 이름 툴팁 - 라이트 모드 */
+    .subway-station-tooltip {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 6px;
+        color: #1a1a2e;
+        font-size: 11px;
+        font-weight: 700;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+        padding: 3px 7px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        white-space: nowrap;
+    }
+    .subway-station-tooltip::before {
+        border-top-color: rgba(255, 255, 255, 0.95) !important;
+    }
+    /* 다크 모드 툴팁 */
+    body.dark-theme .subway-station-tooltip {
+        background: rgba(36, 36, 52, 0.96);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #e8eaf0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    body.dark-theme .subway-station-tooltip::before {
+        border-top-color: rgba(36, 36, 52, 0.96) !important;
+    }
 </style>
 
 <div id="map-container">
@@ -246,7 +347,7 @@
         <div class="drag-handle" onclick="toggleCollapse()"><div class="toggle-btn-text">접기 / 펼치기</div></div>
         <div class="main-title-box">
             <h1 class="app-logo">
-                <span class="app-logo-icon">🗺️</span> Woody Table
+                Woody Table
             </h1>
         </div>
         <div id="list-header">
@@ -305,6 +406,12 @@
                 <button class="picker-btn picker-btn-save" onclick="saveLocation()">이 위치로 설정</button>
             </div>
         </div>
+        <!-- 지하철 토글 버튼 -->
+        <div id="subway-loading-indicator">🚇 노선 불러오는 중...</div>
+        <button id="subway-toggle-btn" onclick="toggleSubway()">
+            <span class="subway-icon">🚇</span>
+            <span id="subway-btn-text">지하철 숨기기</span>
+        </button>
     </div>
 </div>
 
@@ -335,14 +442,292 @@
     
     let currentTileLayer;
     
-    // 테마 설정 (0: Voyager, 1: Positron, 2: Dark Matter)
+    // 테마 설정 (앱 설정과 동기화: 0번=기본, 2번=다크)
     const THEMES = [
         { name: '🌎 기본맵', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', bg: 'rgba(255,255,255,0.7)', color: '#333' },
         { name: '☀️ 라이트', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', bg: '#f1f5f9', color: '#1e293b' },
         { name: '🌃 다크맵', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', bg: '#1e293b', color: '#fff', filterClass: 'dark-map-filter' }
     ];
     let currentThemeIndex = parseInt(localStorage.getItem('woody_map_theme')) || 0;
-    
+
+    // ===== 지하철 노선/역 시스템 =====
+    let subwayVisible = true;
+    let subwayLayerGroup = null;
+    let subwayDataCache = null;
+    let subwayStationLabels = [];
+    const SUBWAY_LABEL_ZOOM = 14;
+
+    // 수도권 지하철 호선별 공식 색상 매핑
+    const SUBWAY_LINE_COLORS = {
+        '1': '#0052A4', '2': '#00A84D', '3': '#EF7C1C', '4': '#00A5DE',
+        '5': '#996CAC', '6': '#CD7C2F', '7': '#747F00', '8': '#E6186C', '9': '#BDB092',
+    };
+
+    function getSubwayColor(tags) {
+        // 1순위: OSM colour 태그 (공식 지정 시)
+        if (tags.colour) return tags.colour;
+
+        const ref = (tags.ref || '').trim();
+        const name = (tags.name || tags['name:ko'] || '').trim();
+        const network = (tags.network || '').trim();
+        const operator = (tags.operator || '').trim();
+        const combined = name + ' ' + network + ' ' + operator;
+
+        // ref 태그 (1~9 고유 번호)
+        if (ref && SUBWAY_LINE_COLORS[ref]) return SUBWAY_LINE_COLORS[ref];
+
+        // 이름/네트워크 키워드 매칭
+        const checks = [
+            // 특수 노선 (1호선 계통보다 먼저 체크)
+            ['신분당', '#D31145'],
+            ['수인분당', '#F5A200'], ['분당', '#F5A200'], ['수인', '#F5A200'],
+            ['경의중앙', '#77C4A3'],
+            ['경춘', '#0C8E72'],
+            ['공항', '#0090D2'],
+            ['경강', '#003DA5'],
+            ['서해', '#8FC31F'],
+            ['신림', '#6789CA'],
+            ['의정부', '#FB5D34'],
+            ['김포', '#7B5EA7'],
+            ['용인', '#509432'],
+            ['GTX', '#9B4AA7'],
+            ['인천2호선', '#F5A200'], ['인천 2호선', '#F5A200'],
+            ['인천1호선', '#7CA8D5'], ['인천 1호선', '#7CA8D5'],
+            // 4호선 계통 (KORAIL 운영 외곽 구간)
+            ['안산', '#00A5DE'], ['과천', '#00A5DE'],
+            // 3호선 계통
+            ['일산', '#EF7C1C'],
+            // 1호선 계통 (KORAIL 운영 외곽: 경부선/경인선/경원선/장항선)
+            ['경부', '#0052A4'], ['경인', '#0052A4'], ['경원', '#0052A4'], ['장항', '#0052A4'],
+            // 명칭 보완
+            ['경의선', '#77C4A3'], ['경원선', '#0052A4'], ['중앙선', '#77C4A3'],
+            ['경강선', '#003DA5'], ['서해선', '#8FC31F'], ['공항철도', '#0090D2'],
+            ['신분당선', '#D31145'], ['경춘선', '#0C8E72']
+        ];
+        for (const [kw, color] of checks) {
+            if (combined.includes(kw)) return color;
+        }
+
+        // '1호선', '2호선' 등 숫자 매칭
+        const numMatch = combined.match(/(\d)호선/);
+        if (numMatch && SUBWAY_LINE_COLORS[numMatch[1]]) return SUBWAY_LINE_COLORS[numMatch[1]];
+
+        return '#888888';
+    }
+
+    // 줌 레벨에 따라 역 이름 라벨 표시/숨김
+    function updateSubwayLabelVisibility() {
+        if (!map) return;
+        const zoom = map.getZoom();
+        const show = zoom >= SUBWAY_LABEL_ZOOM;
+        subwayStationLabels.forEach(({ tooltip }) => {
+            const el = tooltip.getElement();
+            if (el) el.style.display = show ? '' : 'none';
+        });
+    }
+
+    // Overpass API + sessionStorage 캐싱
+    async function fetchSubwayData() {
+        // 캐시 버전 갱신 v13
+        const cached = sessionStorage.getItem('subway_data_v13');
+        if (cached) {
+            try { return JSON.parse(cached); } catch(e) {}
+        }
+
+        const loadingEl = document.getElementById('subway-loading-indicator');
+        if (loadingEl) loadingEl.style.display = 'block';
+
+        const resp = await fetch('./data/subway_raw.json?v=' + Date.now());
+        if (!resp.ok) throw new Error('로컬 노선 데이터 오류: ' + resp.status);
+        const data = await resp.json();
+
+        const lines = [], stations = [];
+        for (const el of data.elements) {
+            if (el.type === 'way' && el.geometry) {
+                // Overpass 쿼리에서 이미 subway, light_rail, commuter만 가져오므로 모두 유효한 노선
+                lines.push({ coords: el.geometry.map(p => [p.lat, p.lon]), tags: el.tags || {} });
+            } else if (el.type === 'node' && el.tags) {
+                const t = el.tags;
+                if (t.railway === 'station' || t.railway === 'halt') {
+                    stations.push({ lat: el.lat, lng: el.lon, name: t['name:ko'] || t.name || '', tags: t });
+                }
+            }
+        }
+
+        // 광명역 셔틀 단절 구간 시각적 보정 (KTX 공용 선로 누락 문제 해결)
+        const gwangmyeong = stations.find(s => s.name === '광명');
+        if (gwangmyeong) {
+            let closestDist = Infinity;
+            let closestPoint = null;
+            
+            // 1호선 노선들의 양 끝점 중 광명역과 가장 가까운 점(단절된 교차로)을 찾음
+            for (const line of lines) {
+                if (getSubwayColor(line.tags) !== '#0052A4') continue;
+                if (line.coords.length < 2) continue;
+                
+                const p1 = line.coords[0];
+                const p2 = line.coords[line.coords.length - 1];
+                
+                const d1 = Math.hypot(p1[0] - gwangmyeong.lat, p1[1] - gwangmyeong.lng);
+                const d2 = Math.hypot(p2[0] - gwangmyeong.lat, p2[1] - gwangmyeong.lng);
+                
+                if (d1 < closestDist) { closestDist = d1; closestPoint = p1; }
+                if (d2 < closestDist) { closestDist = d2; closestPoint = p2; }
+            }
+            
+            // 거리가 약 0.04도(약 4km) 이내인 경우에만 선을 연결
+            if (closestPoint && closestDist < 0.04) {
+                // 선을 약간 구부러지게 만들기 위해 중간점 추가 (자연스러운 연결)
+                const midLat = (closestPoint[0] + gwangmyeong.lat) / 2;
+                const midLng = closestPoint[1]; // 교차로의 경도를 유지하며 내려오도록 (ㄱ자 커브)
+                
+                lines.push({
+                    coords: [closestPoint, [midLat, midLng], [gwangmyeong.lat, gwangmyeong.lng]],
+                    tags: { name: '광명셔틀(보정)', colour: '#0052A4' }
+                });
+            }
+        }
+
+        const result = { lines, stations };
+        
+        // 데이터 구조 변경 시 캐시 갱신을 위해 키 버전을 올립니다.
+        try { sessionStorage.setItem('subway_data_v13', JSON.stringify(result)); } catch(e) {}
+        if (loadingEl) loadingEl.style.display = 'none';
+        return result;
+    }
+
+    // 환승역 중복 제거: 이름 + 좌표 기반 듸의 노드 필터
+    function deduplicateStations(stations) {
+        const THRESHOLD = 0.003; // 약 300m 이내
+        const kept = [];
+
+        for (const st of stations) {
+            if (!st.name) { kept.push(st); continue; }
+
+            // 같은 이름으로 이미 추가된 역이 가까운곳에 있는지 확인
+            const isDup = kept.some(k =>
+                k.name === st.name &&
+                Math.abs(k.lat - st.lat) + Math.abs(k.lng - st.lng) < THRESHOLD
+            );
+            if (!isDup) kept.push(st);
+        }
+        return kept;
+    }
+
+    // 지하철 레이어 렌더링 (영구 역 이름 라벨 포함)
+    function renderSubwayLayer(data) {
+        if (subwayLayerGroup) map.removeLayer(subwayLayerGroup);
+        subwayLayerGroup = L.layerGroup();
+        subwayStationLabels = [];
+
+        // 1) 노선 선분
+        for (const line of data.lines) {
+            if (line.coords.length < 2) continue;
+            L.polyline(line.coords, {
+                color: getSubwayColor(line.tags),
+                weight: 3.5,
+                opacity: 0.85,
+                lineJoin: 'round',
+                lineCap: 'round'
+            }).addTo(subwayLayerGroup);
+        }
+
+        // 2) 역 마커 + 영구 라벨 (환승역 중복 제거 후)
+        const uniqueStations = deduplicateStations(data.stations);
+        for (const st of uniqueStations) {
+            if (!st.lat || !st.lng) continue;
+
+            const circle = L.circleMarker([st.lat, st.lng], {
+                radius: 5,
+                color: '#fff',
+                weight: 2.5,
+                fillColor: '#2d3748',
+                fillOpacity: 1,
+                interactive: !!st.name
+            }).addTo(subwayLayerGroup);
+
+            if (st.name) {
+                // 영구 표시 툴팁 (역 이름)
+                const tooltip = L.tooltip({
+                    permanent: true,
+                    direction: 'top',
+                    offset: [0, -8],
+                    className: 'subway-station-tooltip',
+                    interactive: false
+                }).setContent(st.name);
+
+                circle.bindTooltip(tooltip);
+                circle.openTooltip();
+                subwayStationLabels.push({ circle, tooltip });
+            }
+        }
+
+        subwayLayerGroup.addTo(map);
+
+        // 줌 레벨에 따라 초기 라벨 표시 설정
+        updateSubwayLabelVisibility();
+    }
+
+    // 자동 로드 함수 (init() 완료 후 백그라운드에서 호출)
+    async function initSubwayAutoLoad() {
+        const btn = document.getElementById('subway-toggle-btn');
+        const btnText = document.getElementById('subway-btn-text');
+        try {
+            subwayDataCache = await fetchSubwayData();
+            if (subwayVisible) {
+                renderSubwayLayer(subwayDataCache);
+                if (btn) btn.classList.add('active');
+                if (btnText) btnText.textContent = '지하철 숨기기';
+            }
+        } catch(e) {
+            console.warn('지하철 자동 로드 실패:', e);
+            const loadingEl = document.getElementById('subway-loading-indicator');
+            if (loadingEl) {
+                loadingEl.textContent = '⚠️ 지하철 로드 실패';
+                loadingEl.style.display = 'block';
+                setTimeout(() => { loadingEl.style.display = 'none'; }, 4000);
+            }
+        }
+    }
+
+    // 지하철 토글 (숨기기/보이기)
+    window.toggleSubway = async function() {
+        const btn = document.getElementById('subway-toggle-btn');
+        const btnText = document.getElementById('subway-btn-text');
+
+        if (subwayVisible) {
+            if (subwayLayerGroup) map.removeLayer(subwayLayerGroup);
+            subwayVisible = false;
+            if (btn) btn.classList.remove('active');
+            if (btnText) btnText.textContent = '지하철 노선';
+            return;
+        }
+
+        subwayVisible = true;
+        if (btn) btn.classList.add('active');
+        if (btnText) btnText.textContent = '지하철 숨기기';
+
+        try {
+            if (!subwayDataCache) {
+                if (btn) btn.disabled = true;
+                subwayDataCache = await fetchSubwayData();
+                if (btn) btn.disabled = false;
+            }
+            renderSubwayLayer(subwayDataCache);
+        } catch(e) {
+            console.error('지하철 데이터 로드 실패:', e);
+            subwayVisible = false;
+            if (btn) { btn.classList.remove('active'); btn.disabled = false; }
+            if (btnText) btnText.textContent = '지하철 노선';
+            const loadingEl = document.getElementById('subway-loading-indicator');
+            if (loadingEl) {
+                loadingEl.textContent = '⚠️ 로드 실패. 다시 시도해주세요.';
+                loadingEl.style.display = 'block';
+                setTimeout(() => { loadingEl.style.display = 'none'; }, 3000);
+            }
+        }
+    };
+
     // 파이어베이스 관련 변수
     let db;
     let unsubscribeReviews = null;
@@ -468,8 +853,8 @@
                     return obj;
                 })
                 .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
-                .map(r => ({
-                    id:           parseInt(r.id) || 0,
+                .map((r, index) => ({
+                    id:           parseInt(r.id) || (index + 1),
                     name:         String(r.name).trim(),
                     region:       r.region && String(r.region).trim() !== '' ? String(r.region).trim() : '미지정',
                     address:      r.address ? String(r.address).trim() : '',
@@ -533,6 +918,12 @@
             console.error('Data fetch error:', e);
             document.getElementById('restaurantCards').innerHTML = `<div style="padding: 20px; text-align: center; color: #ef4444; font-size: 0.9em; font-weight: 700;">데이터를 불러오지 못했습니다.<br>새로고침 해주세요.</div>`;
         }
+
+        // 지하철 자동 로드 (백그라운드, 지도 로딩에 영향 없음)
+        initSubwayAutoLoad();
+
+        // 줌 변경 시 역 이름 표시 제어
+        map.on('zoomend', updateSubwayLabelVisibility);
     }
 
     // ✅ 마커 아이콘 생성 함수 (선택 여부에 따라 다른 디자인)
@@ -567,6 +958,12 @@
 
     window.popularityData = {}; // 인기도 캐시
 
+    window.updateListAndMarkers = function() {
+        if (typeof window.filterData === 'function') {
+            window.filterData();
+        }
+    };
+
     window.filterData = function() {
         const q = document.getElementById('searchInput').value.toLowerCase();
         const rFilter = document.getElementById('regionFilter') ? document.getElementById('regionFilter').value : 'all';
@@ -577,7 +974,9 @@
             const mQ = r.name.toLowerCase().includes(q);
             const mR = rFilter === 'all' || r.region === rFilter;
             const mD = !isD || (r.hours.includes('석식') || /17:|18:|19:/.test(r.hours));
-            return mQ && mR && mD;
+            const favs = window.parent.getFavorites ? window.parent.getFavorites() : [];
+            const mF = !window.isFavoriteMode || favs.includes(r.id);
+            return mQ && mR && mD && mF;
         });
 
         // 인기순 정렬 버튼 활성화 시에만 정렬 (내림차순)
@@ -593,6 +992,10 @@
             const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
             const popCount = window.popularityData[r.id] || 0;
             
+            const favs = window.parent.getFavorites ? window.parent.getFavorites() : [];
+            const isFav = favs.includes(r.id);
+            const favIcon = isFav ? '<span style="color:#FBBF24;">⭐</span>' : '<span style="color:var(--border-light); filter: grayscale(1) brightness(1.5);">☆</span>';
+
             // 인기순 정렬 활성화 시에만 상위 3위 메달 및 불꽃 표시
             let rankIcon = '';
             let popHtml = '';
@@ -607,10 +1010,13 @@
             <div class="restaurant-card" onclick="selectRestaurant(${r.id})">
                 <div style="font-weight:700; font-size:0.95em; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center;">
                     <span>${rankIcon}${r.name}</span>
-                    ${popHtml}
+                    <div>
+                        ${popHtml}
+                        <span style="cursor:pointer; font-size:1.15em; margin-left:6px;" onclick="if(window.parent.toggleFavorite) window.parent.toggleFavorite(event, ${r.id})" title="즐겨찾기">${favIcon}</span>
+                    </div>
                 </div>
                 <div style="font-size:0.8em; color:#64748b; margin-top:3px;">
-                    💳 ${r.price.toLocaleString()}원 
+                    💳 ${r.price ? r.price.toLocaleString() + '원' : '-'} 
                     ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
                 </div>
             </div>`;
@@ -674,7 +1080,7 @@
         let formattedHours = r.hours || "정보 없음";
         formattedHours = formattedHours.replace(/, /g, "<br>").replace(/,/g, "<br>");
         document.getElementById('detailHours').innerHTML = formattedHours;
-        document.getElementById('detailPrice').innerText = `${r.price.toLocaleString()}원`;
+        document.getElementById('detailPrice').innerText = r.price ? `${r.price.toLocaleString()}원` : '-';
 
         // SNS 버튼 렌더링 (인스타 + 카카오톡 채널)
         let snsHtml = '';
@@ -771,9 +1177,9 @@
         }
     }
     
-    // ✅ 3단 토글 함수
+    // ✅ 테마 토글 함수
     window.toggleMapTheme = function() {
-        window.setMapTheme((currentThemeIndex + 1) % 3);
+        window.setMapTheme((currentThemeIndex + 1) % THEMES.length);
     }
     
     // 위치 지정 모드 저장
