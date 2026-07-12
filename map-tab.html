@@ -527,9 +527,8 @@
         });
     }
 
-    // Overpass API + sessionStorage 캐싱
+    // 로컬 JSON + sessionStorage 캐싱 (캐시 버전: v17)
     async function fetchSubwayData() {
-        // 캐시 버전 갱신 v13
         const cached = sessionStorage.getItem('subway_data_v17');
         if (cached) {
             try { return JSON.parse(cached); } catch(e) {}
@@ -538,7 +537,7 @@
         const loadingEl = document.getElementById('subway-loading-indicator');
         if (loadingEl) loadingEl.style.display = 'block';
 
-        const resp = await fetch('./data/subway_raw.json?v=' + Date.now());
+        const resp = await fetch('./data/subway_raw.json');
         if (!resp.ok) throw new Error('로컬 노선 데이터 오류: ' + resp.status);
         const data = await resp.json();
 
@@ -606,7 +605,7 @@
         return result;
     }
 
-    // 환승역 중복 제거: 이름 + 좌표 기반 듸의 노드 필터
+    // 환승역 중복 제거: 이름 + 좌표 기반 중복 노드 필터
     function deduplicateStations(stations) {
         const THRESHOLD = 0.003; // 약 300m 이내
         const kept = [];
