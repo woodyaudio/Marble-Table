@@ -373,6 +373,7 @@
             }
 
             .tab-item {
+                border-left: none;
                 border-bottom: none;
                 flex-direction: column;
                 margin: 0;
@@ -382,7 +383,7 @@
                 flex: 1;
             }
             .tab-item.active {
-                border-left: none; background: transparent; color: var(--primary);
+                background: transparent; color: var(--primary);
             }
             body.dark-theme .tab-item.active { background: transparent; }
             .tab-icon { width: 22px; height: 22px; margin-bottom: 3px; }
@@ -521,10 +522,12 @@
             item.classList.toggle('active', item.dataset.tab === tabName);
         });
 
-        // 맵이 이미 로드되어 있다면 HTML을 다시 받지 않고 필터만 갱신
+        // 탭이 바뀔 때마다 PC 화면의 리스트를 즉시 업데이트
+        if (typeof window.plpFilterData === 'function') window.plpFilterData();
+
+        // 맵이 이미 로드되어 있다면 HTML을 다시 받지 않고 모바일 뷰/마커 갱신만 수행
         const area = document.getElementById('content-area');
         if (targetFile === 'map' && area.querySelector('#map-container')) {
-            if (typeof window.plpFilterData === 'function') window.plpFilterData();
             if (typeof window.updateListAndMarkers === 'function') window.updateListAndMarkers();
             return;
         }
@@ -660,7 +663,7 @@
                 
                 const favs = window.getFavorites();
                 const isFav = favs.includes(r.id);
-                const favIcon = isFav ? '<span style="color:#FBBF24;">⭐</span>' : '<span style="color:var(--border-light); filter: grayscale(1) brightness(1.5);">☆</span>';
+                const favIcon = isFav ? '<span style="display:inline-block; width:22px; text-align:center; color:#FBBF24;">⭐</span>' : '<span style="display:inline-block; width:22px; text-align:center; opacity:0.35; filter: grayscale(1);">⭐</span>';
 
                 let rankIcon = '';
                 let popHtml = '';
@@ -860,17 +863,8 @@
         // PC 화면 목록 새로고침 (별 즉시 업데이트)
         if(typeof window.plpFilterData === 'function') window.plpFilterData();
         
-        // 활성 탭이 지도이거나 즐겨찾기 탭이면 iframe 내용도 새로고침
-        const activeTab = document.querySelector('.tab-item.active').dataset.tab;
-        const iframe = document.querySelector('#content-area iframe');
-        if (iframe && iframe.contentWindow) {
-            // map-tab.html의 경우 renderList 함수가 있다면 호출해서 즉시 갱신
-            if(typeof iframe.contentWindow.updateListAndMarkers === 'function') {
-                iframe.contentWindow.updateListAndMarkers();
-            } else {
-                iframe.contentWindow.location.reload();
-            }
-        }
+        // 모바일 지도 화면 목록 새로고침 (별 즉시 업데이트)
+        if(typeof window.updateListAndMarkers === 'function') window.updateListAndMarkers();
     };
 
     // ✅ 광고 롤링 시스템 (10초마다 슬라이드 전환)
