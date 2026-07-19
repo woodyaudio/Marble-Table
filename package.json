@@ -1,0 +1,8 @@
+{
+  "name": "marble-table",
+  "private": true,
+  "description": "정적 웹사이트. puppeteer는 로컬 콘솔 디버깅 스크립트(test_console.js)용으로만 사용됩니다.",
+  "devDependencies": {
+    "puppeteer": "^25.3.0"
+  }
+}
