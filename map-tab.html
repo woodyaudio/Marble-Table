@@ -425,10 +425,10 @@
     
     // 로컬 스토리지에서 위치 불러오기
     let savedHomeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
-    let savedCompanyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : defaultCompanyLoc;
+    let savedCompanyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
     
-    // 초기 지도의 중심점
-    let centerLoc = savedCompanyLoc;
+    // 초기 지도의 중심점 (회사 위치가 없으면 기본 좌표 사용)
+    let centerLoc = savedCompanyLoc || defaultCompanyLoc;
 
     let map, markerLayer, selectedMarkerId = null, markerMap = {};
     let homeMarker = null, companyMarker = null, gpsMarker = null;
@@ -788,10 +788,12 @@
 
         markerLayer = L.layerGroup().addTo(map);
 
-        // 회사 위치 마커
-        companyMarker = L.marker([savedCompanyLoc.lat, savedCompanyLoc.lng], { 
-            icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">회사</div></div>`, className: '', iconSize: [100, 60] }) 
-        }).addTo(map);
+        // 회사 위치 마커 (있을 경우만)
+        if (savedCompanyLoc) {
+            companyMarker = L.marker([savedCompanyLoc.lat, savedCompanyLoc.lng], { 
+                icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">회사</div></div>`, className: '', iconSize: [100, 60] }) 
+            }).addTo(map);
+        }
 
         // 집 위치 마커 (있을 경우만)
         if (savedHomeLoc) {
@@ -1211,7 +1213,13 @@
         } else if (pickerMode === 'company') {
             savedCompanyLoc = {lat: c.lat, lng: c.lng};
             centerLoc = savedCompanyLoc;
-            if (companyMarker) companyMarker.setLatLng([c.lat, c.lng]);
+            if (companyMarker) {
+                companyMarker.setLatLng([c.lat, c.lng]);
+            } else {
+                companyMarker = L.marker([c.lat, c.lng], { 
+                    icon: L.divIcon({ html: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">🏢</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">회사</div></div>`, className: '', iconSize: [100, 60] }) 
+                }).addTo(map);
+            }
         }
         
         // 2. 안내 모달 UI 변경
@@ -1261,8 +1269,12 @@
     
     window.goHome = function() {
         const dest = getSmartHomeDest();
+        if (!dest.loc) {
+            alert(dest.type === 'home' ? '집 위치를 지정해주세요' : '회사 위치를 지정해주세요');
+            return;
+        }
         const isMobile = window.innerWidth <= 768;
-        map.setView([isMobile ? dest.lat - 0.0006 : dest.lat, dest.lng], 17);
+        map.setView([isMobile ? dest.loc.lat - 0.0006 : dest.loc.lat, dest.loc.lng], 17);
         closeDetail();
     }
 
@@ -1278,21 +1290,30 @@
     // 현재 GPS 좌표 저장 (proximity 연산용)
     let currentGPSLat = null, currentGPSLng = null;
 
-    // Home 버튼: GPS 위치에 따라 집/회사 중 가까운 쪽 반환
+    // Home 버튼: GPS 위치에 따라 집/회사 중 가까운 쪽을 { type, loc } 형태로 반환
+    // loc이 null이면 아직 해당 위치가 지정되지 않은 상태
     function getSmartHomeDest() {
-        if (currentGPSLat === null) return savedCompanyLoc;
+        if (currentGPSLat === null) {
+            return savedHomeLoc ? { type: 'home', loc: savedHomeLoc } : { type: 'home', loc: null };
+        }
         const distHome = savedHomeLoc ? getDistanceKm(currentGPSLat, currentGPSLng, savedHomeLoc.lat, savedHomeLoc.lng) : Infinity;
-        const distCompany = getDistanceKm(currentGPSLat, currentGPSLng, savedCompanyLoc.lat, savedCompanyLoc.lng);
-        return distHome < distCompany ? savedHomeLoc : savedCompanyLoc;
+        const distCompany = savedCompanyLoc ? getDistanceKm(currentGPSLat, currentGPSLng, savedCompanyLoc.lat, savedCompanyLoc.lng) : Infinity;
+        if (distHome === Infinity && distCompany === Infinity) {
+            // 둘 다 지정 안 됨: 집 마크를 기본으로 노출
+            return { type: 'home', loc: null };
+        }
+        if (distHome <= distCompany) {
+            return { type: 'home', loc: savedHomeLoc };
+        }
+        return { type: 'company', loc: savedCompanyLoc };
     }
 
     // Home 버튼 UI 업데이트
     function updateHomeBtn() {
         const btn = document.getElementById('home-btn');
         if (!btn) return;
-        if (currentGPSLat === null) { btn.innerText = '🏠'; return; }
         const dest = getSmartHomeDest();
-        btn.innerText = (savedHomeLoc && dest === savedHomeLoc) ? '🏠' : '🏢';
+        btn.innerText = dest.type === 'home' ? '🏠' : '🏢';
     }
     function placeGPSMarker(lat, lng) {
         currentGPSLat = lat;
