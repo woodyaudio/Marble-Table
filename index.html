@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Woody-Table</title>
+    <title>맛쩜</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233182F6'/%3E%3Cpath d='M32 10 C20 10 11 19 11 30 C11 44 32 56 32 56 C32 56 53 44 53 30 C53 19 44 10 32 10 Z' fill='%23fff'/%3E%3Cellipse cx='26' cy='22' rx='5.5' ry='7' fill='%233182F6'/%3E%3Crect x='24' y='28' width='4' height='16' rx='2' fill='%233182F6'/%3E%3Crect x='37' y='16' width='2.3' height='28' rx='1.15' fill='%233182F6'/%3E%3Crect x='40.3' y='16' width='2.3' height='28' rx='1.15' fill='%233182F6'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- 네이버 지도 API v3: NCP 콘솔에서 발급받은 Client ID를 아래 ncpKeyId에 넣어주세요. -->
     <!-- 발급 방법은 README.md의 "네이버 지도 API 키 설정" 항목 참고 -->
     <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=3z36hqrgla&submodules=geocoder"></script>
@@ -74,12 +75,13 @@
             transition: background 0.3s ease, border-color 0.3s ease;
         }
         #persistent-left-panel .main-title-box { margin: 12px 16px; }
-        .app-logo {
+        #persistent-left-panel .app-logo {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            font-size: 1.5rem;
-            font-weight: 900;
+            font-family: 'Jua', 'Pretendard', 'Noto Sans KR', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 400;
             color: var(--text-primary);
             margin: 0;
             padding: 0;
@@ -87,6 +89,11 @@
             gap: 8px;
             letter-spacing: -0.5px;
         }
+        #persistent-left-panel .app-logo .jjeom { color: var(--primary); }
+        .app-subtitle-row { display: flex; align-items: center; gap: 8px; margin: 5px 0 0; }
+        .app-subtitle-rule { width: 14px; height: 1px; background: var(--primary); opacity: 0.4; flex-shrink: 0; }
+        .app-subtitle-text { font-size: 0.68rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.02em; white-space: nowrap; }
+        .app-subtitle-plain { text-align: left; margin: 5px 0 0; }
         .app-logo-icon {
             font-size: 1.3em;
         }
@@ -155,7 +162,7 @@
         /* PC 전용 탭 내비게이션 로고 */
         .nav-logo {
             width: 100%;
-            padding: 0; /* 상하 사이즈를 이미지 크기에 딱 맞추기 위해 여백 제거 */
+            padding: 0;
             margin-top: 8px; /* 위쪽 살짝 틈 주기 */
             display: flex;
             justify-content: center;
@@ -163,24 +170,19 @@
             cursor: pointer;
             box-sizing: border-box;
             margin-bottom: 4px;
-            transition: opacity 0.2s ease;
-            overflow: hidden;
+            transition: opacity 0.2s ease, transform 0.15s ease;
         }
         .nav-logo:hover {
             opacity: 0.8;
+            transform: scale(1.05);
         }
-        .nav-logo img {
-            width: 52px;
-            height: 52px;
-            object-fit: contain; /* 캐릭터가 잘 맞게 보이도록 조정 */
-            transform: scale(2.5);
+        .nav-logo svg {
+            width: 40px;
+            height: 40px;
+            border-radius: 22%;
+            box-shadow: 0 4px 12px rgba(49,130,246,0.35);
         }
-        body.dark-theme .nav-logo img.dark-logo {
-            transform: scale(2.5) translateY(1.5px); /* 상단 짤림 방지: 약간 아래로 내림 */
-        }
-        body:not(.dark-theme) .dark-logo { display: none; }
-        body.dark-theme .light-logo { display: none; }
-        
+
         @media (max-width: 768px) {
             .nav-logo { display: none !important; }
         }
@@ -413,8 +415,14 @@
     <nav id="tab-nav">
         <!-- 상단 로고 (PC 전용, 다크모드 토글) -->
         <div class="nav-logo" onclick="toggleThemeManually()" title="다크모드/라이트모드 전환">
-            <img src="Image/Logo/WoodyTable_Logo.png" class="light-logo" alt="Woody Table">
-            <img src="Image/Logo/WoodyTable_Logo_dark.png" class="dark-logo" alt="Woody Table">
+            <svg viewBox="0 0 64 64" role="img" aria-label="맛쩜">
+                <rect width="64" height="64" rx="14" fill="#3182F6"/>
+                <path d="M32 10 C20 10 11 19 11 30 C11 44 32 56 32 56 C32 56 53 44 53 30 C53 19 44 10 32 10 Z" fill="#fff"/>
+                <ellipse cx="26" cy="22" rx="5.5" ry="7" fill="#3182F6"/>
+                <rect x="24" y="28" width="4" height="16" rx="2" fill="#3182F6"/>
+                <rect x="37" y="16" width="2.3" height="28" rx="1.15" fill="#3182F6"/>
+                <rect x="40.3" y="16" width="2.3" height="28" rx="1.15" fill="#3182F6"/>
+            </svg>
         </div>
         <!-- 지도 홈 -->
         <div class="tab-item active" data-tab="map">
@@ -462,9 +470,15 @@
     <!-- PC 영구 고정 식당 목록 패널 -->
     <div id="persistent-left-panel">
         <div class="main-title-box">
-            <h1 class="app-logo">
-                Woody Table
-            </h1>
+            <h1 class="app-logo"><span>맛<span class="jjeom">쩜</span></span></h1>
+            <!-- 스페어(선 있는 버전) — 나중에 다시 쓸 수도 있어 주석으로 보관
+            <div class="app-subtitle-row">
+                <span class="app-subtitle-rule"></span>
+                <span class="app-subtitle-text">구내식당 · 한식뷔페 지도</span>
+                <span class="app-subtitle-rule"></span>
+            </div>
+            -->
+            <div class="app-subtitle-text app-subtitle-plain">구내식당 · 한식뷔페 지도</div>
         </div>
         <div id="plp-list-header">
             <input type="text" id="plpSearchInput" placeholder="식당 검색..." oninput="plpFilterData()">
