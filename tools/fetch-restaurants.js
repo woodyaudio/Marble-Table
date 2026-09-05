@@ -45,19 +45,44 @@ function parseArgs() {
     return opts;
 }
 
-// 기존 data/restaurants.xlsx에 이미 있는 상호명 목록 (공백 제거 후 비교용)
-function loadExistingNames() {
+// 기존 data/restaurants.xlsx에 이미 있는 장소 목록 (이름 + 좌표)
+// "이름만" 비교하면 같은 위탁급식 브랜드(예: 웰스토리)가 다른 회사/다른 지역에
+// 입점한 별개의 지점까지 중복으로 오인할 수 있어서, 이름이 같으면서 동시에
+// 물리적으로 가까운(약 150m 이내) 경우에만 "이미 등록된 곳"으로 판단한다.
+function loadExistingPlaces() {
     const xlsxPath = path.join(__dirname, '..', 'data', 'restaurants.xlsx');
-    if (!fs.existsSync(xlsxPath)) return new Set();
+    if (!fs.existsSync(xlsxPath)) return [];
     const wb = XLSX.readFile(xlsxPath);
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-    const nameCol = rows[0].findIndex(h => String(h).trim() === '이름');
-    if (nameCol === -1) return new Set();
-    return new Set(
-        rows.slice(1)
-            .map(r => String(r[nameCol] || '').trim().replace(/\s+/g, ''))
-            .filter(Boolean)
+    const header = rows[0];
+    const col = name => header.findIndex(h => String(h).trim() === name);
+    const nameCol = col('이름'), latCol = col('lat'), lngCol = col('lng');
+    if (nameCol === -1) return [];
+    return rows.slice(1)
+        .filter(r => String(r[nameCol] || '').trim() !== '')
+        .map(r => ({
+            name: String(r[nameCol]).trim().replace(/\s+/g, ''),
+            lat: parseFloat(r[latCol]),
+            lng: parseFloat(r[lngCol])
+        }));
+}
+
+// 두 좌표 사이 거리(m), 소규모 거리라 단순 평면 근사로 충분
+function distMeters(lat1, lng1, lat2, lng2) {
+    const dLat = (lat2 - lat1) * 111320;
+    const dLng = (lng2 - lng1) * 111320 * Math.cos(lat1 * Math.PI / 180);
+    return Math.hypot(dLat, dLng);
+}
+
+const DUP_DISTANCE_M = 150;
+
+function isDuplicate(existingPlaces, name, lat, lng) {
+    const normName = name.replace(/\s+/g, '');
+    return existingPlaces.some(p =>
+        p.name === normName &&
+        !isNaN(lat) && !isNaN(lng) && !isNaN(p.lat) && !isNaN(p.lng) &&
+        distMeters(p.lat, p.lng, lat, lng) <= DUP_DISTANCE_M
     );
 }
 
@@ -113,8 +138,8 @@ function toCsvValue(v) {
 async function main() {
     const serviceKey = loadServiceKey();
     const { lat, lng, radius } = parseArgs();
-    const existingNames = loadExistingNames();
-    console.log(`기존 data/restaurants.xlsx에 등록된 이름 ${existingNames.size}개 로드`);
+    const existingPlaces = loadExistingPlaces();
+    console.log(`기존 data/restaurants.xlsx에 등록된 장소 ${existingPlaces.length}개 로드`);
 
     console.log(`(${lat}, ${lng}) 반경 ${radius}m 내 구내식당·뷔페(I207) 조회 중...`);
     const items = await fetchAll(serviceKey, lng, lat, radius); // cx=경도(lng), cy=위도(lat)
@@ -122,7 +147,7 @@ async function main() {
 
     const rowsAll = items.map(it => {
         const name = it.bizesNm || '';
-        const isDup = existingNames.has(name.replace(/\s+/g, ''));
+        const isDup = isDuplicate(existingPlaces, name, it.lat, it.lon);
         return {
             이름: name,
             지역: it.signguNm || '', // 시군구명 (예: 구로구) - 기존 표기와 다를 수 있어 검토 필요
@@ -135,7 +160,7 @@ async function main() {
     });
 
     const newCount = rowsAll.filter(r => !r['(참고)이미등록추정']).length;
-    console.log(`신규 후보: ${newCount}건 / 이미 등록된 듯한 후보: ${rowsAll.length - newCount}건 (이름 완전일치 기준, CSV에 표시만 하고 제외는 안 함)`);
+    console.log(`신규 후보: ${newCount}건 / 이미 등록된 듯한 후보: ${rowsAll.length - newCount}건 (이름 일치 + ${DUP_DISTANCE_M}m 이내 근접 기준, CSV에 표시만 하고 제외는 안 함)`);
 
     const header = ['이름', '지역', '주소', 'lat', 'lng', '설명', '가격', '영업 시간', '인스타', '카카오', '(참고)이미등록추정'];
     const csv = [header, ...rowsAll.map(r => header.map(h => toCsvValue(r[h])))]
