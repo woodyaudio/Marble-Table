@@ -1288,7 +1288,19 @@
                 nickname: nickname,
                 createdAt: window.fsServerTimestamp()
             });
-            
+
+            // 랭킹 탭에서 "전체" 기간 집계를 매번 리뷰를 전부 세지 않고 이 누적치만
+            // 읽으면 되도록, 식당 문서에 리뷰 수를 같이 올려둠 (인기도 카운트와 동일한 패턴)
+            try {
+                await window.fsSetDoc(
+                    window.fsDoc(db, 'restaurants', String(currentDetailId)),
+                    { reviewCount: window.fsIncrement(1) },
+                    { merge: true }
+                );
+            } catch (e) {
+                console.error('reviewCount 갱신 실패:', e);
+            }
+
             localStorage.setItem(COOLDOWN_KEY, String(now));
             input.value = '';
             // 닉네임은 다음 작성 편의를 위해 초기화하지 않습니다
