@@ -901,6 +901,11 @@
 
     // ✅ 광고 롤링 시스템 (10초마다 슬라이드 전환)
     (function() {
+        // Image/Ads/ 폴더에 실제로 들어있는 이미지 개수. 예전엔 다음 번호 이미지가
+        // 있는지 매번 요청해보고 없으면(404) 처음으로 되돌아가는 방식이라, 마지막
+        // 장 다음엔 항상 한 번씩 실패하는 요청이 나가고 콘솔에 에러가 쌓였음.
+        // 개수를 알고 있으니 애초에 그 요청 자체를 안 하도록 함.
+        const AD_COUNT = 3;
         let adIndex = 1;
         const mobileBg = document.querySelector('#mobile-ad-banner .ad-blur-bg');
         const mobileMain = document.querySelector('#mobile-ad-banner .ad-main-img');
@@ -945,18 +950,9 @@
         }
 
         setInterval(() => {
-            adIndex++;
-            let indexStr = adIndex < 10 ? '0' + adIndex : adIndex;
-            let testImg = new Image();
-            testImg.onload = function() {
-                updateAds(indexStr);
-            };
-            testImg.onerror = function() {
-                // 이미지가 없으면 다시 1번으로 돌아감
-                adIndex = 1;
-                updateAds('01');
-            };
-            testImg.src = `Image/Ads/ad${indexStr}.jpg`;
+            adIndex = adIndex < AD_COUNT ? adIndex + 1 : 1;
+            const indexStr = adIndex < 10 ? '0' + adIndex : String(adIndex);
+            updateAds(indexStr);
         }, 10000);
     })();
     // --------------------------------------------------
