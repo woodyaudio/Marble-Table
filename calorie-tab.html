@@ -188,7 +188,7 @@
             </div>
             <div class="rf-filter-row">
                 <input type="text" id="rfRegionFilter" class="rf-select"
-                       placeholder="🔍 지역 검색 (비우면 전체)" autocomplete="off"
+                       placeholder="🔍 지역 검색" autocomplete="off"
                        oninput="onRegionFilterInput()" onfocus="onRegionFilterFocus()">
                 <div id="rfRegionDropdown" class="rf-region-dropdown" hidden></div>
             </div>
@@ -319,7 +319,7 @@
         const matches = q ? allRegions.filter(r => r.includes(q)) : allRegions;
         const rows = [
             `<div class="rf-region-option all" onclick="window.selectRegionOption('')">전체</div>`,
-            `<div class="rf-region-option current-loc" onclick="window.selectCurrentLocationOption()">📍 현재 위치</div>`
+            `<div class="rf-region-option current-loc" onclick="window.selectCurrentLocationOption()">현재 위치</div>`
         ].concat(matches.length
             ? matches.map(r => `<div class="rf-region-option" onclick="window.selectRegionOption('${r.replace(/'/g, "\\'")}')">${escapeHtml(r)}</div>`)
             : [`<div class="rf-region-option empty">일치하는 지역이 없어요</div>`]);
@@ -354,7 +354,7 @@
         if (!navigator.geolocation) return;
         const originalPlaceholder = input.placeholder;
         input.value = '';
-        input.placeholder = '📍 위치 확인 중...';
+        input.placeholder = '위치 확인 중...';
         withRestaurantMeta((metaList) => {
             navigator.geolocation.getCurrentPosition((pos) => {
                 input.placeholder = originalPlaceholder;
