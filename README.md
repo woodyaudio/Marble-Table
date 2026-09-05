@@ -102,6 +102,10 @@ npx http-server -p 5500
 4. Service URL(허용 도메인)에 배포 주소 등록 — 지금은 `https://woodyaudio.github.io`, 나중에 커스텀 도메인을 사면 콘솔에서 추가만 하면 됨 (코드 변경 불필요)
 5. 발급된 Client ID를 `index.html`의 `ncpKeyId=` 뒤에 그대로 입력 (공개용 클라이언트 키라 코드에 노출돼도 안전)
 
+Application 이름은 `Client ID`에 대응하는 NCP 내부 식별자일 뿐 사용자에게 노출되지 않으며, 영문자/숫자/하이픈만 허용됩니다(한글 불가).
+
+무료 이용량은 등록 즉시 콘솔에서 실측 확인 가능 (2026-09-05 기준, 이 프로젝트 계정): Geocoding 월 3,000,000회, Dynamic Map 월 6,000,000회. 로컬 개발 중 `localhost`에서도 지도를 띄우려면 콘솔의 Service URL 목록에 `http://localhost:5500`(또는 사용하는 포트)을 추가로 등록하면 됩니다.
+
 ## 💡 팁
 - 브라우저 캐시 때문에 변경사항이 안 보이면 `Ctrl+Shift+R` (강력 새로고침)
 - 지도가 제대로 안 보이면 개발자도구(F12) → Console 탭에서 에러 확인
