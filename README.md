@@ -10,8 +10,7 @@
 ├── contact-tab.html        # 문의 탭
 │
 └── /data
-    ├── restaurants.xlsx    # 식당 데이터 (브라우저에서 SheetJS로 직접 파싱)
-    └── subway_slim.json    # 지하철 노선/역 데이터
+    └── restaurants.xlsx    # 식당 데이터 (브라우저에서 SheetJS로 직접 파싱)
 ```
 
 ## 🚀 사용 방법
