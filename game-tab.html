@@ -70,7 +70,7 @@
         box-shadow: 0 2px 12px rgba(12,48,96,0.25);
     }
 
-    /* --- 통합 모드 토글 (미니/일반/커피) --- */
+    /* --- 모드 토글 (미니/일반) --- */
     .mode-toggle {
         display: flex;
         width: 100%;
@@ -181,14 +181,6 @@
     .spin-btn:active:not(:disabled) { transform: scale(0.97); }
     .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* --- Coffee Spin Button (커피 커럿) --- */
-    .spin-btn.coffee-btn {
-        background: #6F4E37;
-        color: #fff;
-        box-shadow: 0 6px 20px rgba(111, 78, 55, 0.3);
-    }
-    .spin-btn.coffee-btn:hover:not(:disabled) { opacity: 0.88; }
-
     /* --- Result Card --- */
     .result-card {
         background: var(--bg-surface);
@@ -276,32 +268,6 @@
     .result-link-btn.instagram { background: linear-gradient(135deg, rgba(193,53,132,0.15), rgba(253,81,29,0.15)); border-color: rgba(253,81,29,0.3); color: #c13584; }
     .result-link-btn.kakao { background: rgba(254,229,0,0.35); border-color: rgba(200,160,0,0.35); color: #3C1E1E; }
 
-    /* --- Coffee Result 특별 스타일 --- */
-    .result-card.coffee-result {
-        background: var(--bg-surface);
-        border-color: rgba(212, 165, 116, 0.5);
-        color: var(--text-primary);
-    }
-    .result-card.coffee-result .result-name {
-        font-size: 2rem;
-        color: #8B5E3C;
-    }
-    .result-card.coffee-result .result-label,
-    .result-card.coffee-result .result-meta {
-        color: #8B6240;
-    }
-    .result-prob-badge {
-        display: inline-block;
-        background: rgba(139,94,60,0.1);
-        border: 1px solid rgba(139,94,60,0.25);
-        border-radius: 50px;
-        padding: 2px 12px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: #5c3d1e;
-        margin-top: 4px;
-        letter-spacing: 0.5px;
-    }
 </style>
 
 <div id="game-container">
@@ -310,11 +276,10 @@
         <p id="mainSubtitle">오늘 뭐 먹을지 결정 못 하겠다면?</p>
     </div>
 
-    <!-- 통합 모드 토글 (3단) -->
+    <!-- 모드 토글 (미니/일반) -->
     <div class="mode-toggle">
         <button class="mode-btn active" id="btnMini" onclick="setGlobalMode('mini')">⚡ 미니</button>
         <button class="mode-btn" id="btnFull" onclick="setGlobalMode('full')">🌐 일반</button>
-        <button class="mode-btn" id="btnCoffee" onclick="setGlobalMode('coffee')">☕ 커피</button>
     </div>
 
     <!-- 점심 룰렛 영역 -->
@@ -329,91 +294,117 @@
         <div class="result-meta" id="resultMeta">돌려돌려 버튼을 눌러보세요!</div>
         <div class="result-links" id="resultLinks"></div>
     </div>
-
-    <!-- 커피 룰렛 영역 (처음엔 숨김) -->
-    <div class="wheel-area" id="coffeeWheelArea" style="display:none;">
-        <div class="wheel-pointer"></div>
-        <canvas id="coffeeCanvas"></canvas>
-    </div>
-    <button class="spin-btn coffee-btn" id="coffeeSpinBtn" onclick="coffeeRoulette.spin()" style="display:none;">☕ 돌려돌려!</button>
-    <div class="result-card visible coffee-result" id="coffeeResultCard" style="display:none;">
-        <div class="result-label" id="coffeeResultLabel">커피 타임 장소는</div>
-        <div class="result-name" id="coffeeResultName"><span class="emoji-icon">☕</span> 어디가 당첨될까요?</div>
-        <div class="result-meta" id="coffeeResultMeta">돌려돌려 버튼을 눌러 운명을 확인하세요!</div>
-    </div>
 </div>
 
 <script>
 // =============================================
-//  게임 전환 (점심 ↔ 커피)
+//  모드 전환 (미니 ↔ 일반)
+//  ※ 커피 룰렛(2층/3층/외출/1층 하드코딩)은 특정 사무실 층 구조라 다른
+//     사용자에게 의미가 없어 폐기함 — 기획서 04번 참고.
 // =============================================
 function setGlobalMode(mode) {
-    const isCoffee = (mode === 'coffee');
-    
-    // UI 타이틀 및 버튼 활성화 전환
-    document.getElementById('mainTitle').textContent = isCoffee ? '☕ 커피 룰렛' : '🍽️ 점심 룰렛';
-    document.getElementById('mainSubtitle').textContent = isCoffee ? '커피 어디서 마실지 결정 못 하겠다면?' : '오늘 뭐 먹을지 결정 못 하겠다면?';
-    
     document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.classList.toggle('active', 
+        btn.classList.toggle('active',
             (mode === 'mini' && btn.id === 'btnMini') ||
-            (mode === 'full' && btn.id === 'btnFull') ||
-            (mode === 'coffee' && btn.id === 'btnCoffee')
+            (mode === 'full' && btn.id === 'btnFull')
         );
     });
-
-    // 영역 전환
-    document.getElementById('wheelArea').style.display = isCoffee ? 'none' : 'flex';
-    document.getElementById('spinBtn').style.display = isCoffee ? 'none' : 'block';
-    document.getElementById('resultCard').style.display = isCoffee ? 'none' : 'block';
-
-    document.getElementById('coffeeWheelArea').style.display = isCoffee ? 'flex' : 'none';
-    document.getElementById('coffeeSpinBtn').style.display = isCoffee ? 'block' : 'none';
-    document.getElementById('coffeeResultCard').style.display = isCoffee ? 'block' : 'none';
-
-    if (isCoffee) {
-        coffeeRoulette.init();
-        coffeeRoulette.resetCoffeeResult();
-    } else {
-        roulette.setMode(mode);
-        roulette.resetLunchResult();
-    }
+    roulette.setMode(mode);
+    roulette.resetLunchResult();
 }
 
 // =============================================
 //  점심 룰렛
 // =============================================
 window.roulette = (function() {
-    const ALL_RESTAURANTS = [
-        { id: 1,  name: "굿푸드(구로점)",   price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/goodfood_highend/", kakao: "https://pf.kakao.com/_CuTbn" },
-        { id: 2,  name: "KJ푸드",          price: 7500, hours: "중식 11:00~14:00", instagram: null, kakao: null },
-        { id: 3,  name: "제이오제이엠푸드", price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/jojmfood/", kakao: null },
-        { id: 4,  name: "밥쥴랭",           price: 8500, hours: "중식 11:00~13:40", instagram: "https://www.instagram.com/babjulrang_guro/", kakao: null },
-        { id: 5,  name: "푸드포커스",        price: 7500, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/anadasia_yoo/", kakao: null },
-        { id: 6,  name: "갓한밥",           price: 7500, hours: "중식 11:30~14:00", instagram: "https://www.instagram.com/god1bab", kakao: null },
-        { id: 7,  name: "벽산더이룸",        price: 8000, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/byeoksan_theirum/", kakao: null },
-        { id: 8,  name: "더드림푸드",        price: 7000, hours: "미확인", instagram: null, kakao: null },
-        { id: 9,  name: "윤쉐프 코오롱",     price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/yoon_chef_/", kakao: null },
-        { id: 10, name: "얌얌 한식 뷔페",    price: 8000, hours: "중식 11:30~14:00", instagram: "https://www.instagram.com/yamyam_ask", kakao: null },
-        { id: 11, name: "더이츠푸드",        price: 7000, hours: "중식 11:00~13:40", instagram: null, kakao: null },
-        { id: 12, name: "알찬푸드",          price: 7500, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/your_table__/", kakao: null },
-        { id: 13, name: "푸드라운지",        price: 8200, hours: "중식 11:30~13:30", instagram: "https://www.instagram.com/samsungit_foodlounge", kakao: null },
-        { id: 14, name: "그린푸드 가산",     price: 8000, hours: "중식 11:00~14:00", instagram: "https://www.instagram.com/greenfood_gasan/", kakao: null }
-    ];
+    // 옛 가산디지털단지 14곳 하드코딩 리스트 대신, 실제 DB(data/restaurants.xlsx)를
+    // 즐겨찾기 → 거리순(회사/집 위치) 기준으로 재연결. 기획서 04번 참고.
+    const POOL_SIZE_MINI = 4;
+    const POOL_SIZE_FULL = 12;
 
-    const MINI_IDS = [1, 2, 3, 4];
-    const COLORS = [
-        '#3B82F6','#6366F1','#8B5CF6','#EC4899','#EF4444',
-        '#F97316','#EAB308','#22C55E','#14B8A6','#06B6D4',
-        '#0EA5E9','#84CC16','#A855F7','#F43F5E'
-    ];
-
-    let restaurants = [];
+    let restaurantsFull = [];   // xlsx에서 로드한 노출 대상 전체 식당
+    let dataLoadPromise = null;
+    let restaurants = [];       // 현재 휠에 표시 중인 후보 목록
     let isSpinning = false;
     let currentAngle = 0;
 
     const canvas = document.getElementById('rouletteCanvas');
     const ctx = canvas.getContext('2d');
+
+    function getDistanceKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function loadRestaurants() {
+        if (dataLoadPromise) return dataLoadPromise;
+        dataLoadPromise = (async () => {
+            const res = await fetch(`./data/restaurants.xlsx?v=${Date.now()}`);
+            if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
+            const arrayBuffer = await res.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+            const headerMap = {
+                'id': 'id', '이름': 'name', '지역': 'region', 'lat': 'lat', 'lng': 'lng',
+                '가격': 'price', '영업 시간': 'hours', '인스타': 'instagram', '카카오': 'kakaoChannel',
+                '노출여부': 'visibility'
+            };
+            const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
+
+            restaurantsFull = rows.slice(1)
+                .map(row => { const obj = {}; headers.forEach((key, i) => { obj[key] = row[i]; }); return obj; })
+                .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
+                .map((r, index) => ({
+                    id: parseInt(r.id) || (index + 1),
+                    name: String(r.name).trim(),
+                    lat: parseFloat(r.lat) || 0,
+                    lng: parseFloat(r.lng) || 0,
+                    price: parseInt(r.price) || 0,
+                    hours: r.hours ? String(r.hours).trim() : '',
+                    instagram: (r.instagram && String(r.instagram).trim() !== '' && String(r.instagram).trim().toLowerCase() !== 'null') ? String(r.instagram).trim() : null,
+                    kakao: (r.kakaoChannel && String(r.kakaoChannel).trim() !== '' && String(r.kakaoChannel).trim().toLowerCase() !== 'null') ? String(r.kakaoChannel).trim() : null,
+                    visibility: r.visibility ? String(r.visibility).trim() : ''
+                }))
+                // 노출여부가 '비공개'/'확인필요'인 식당은 지도와 동일하게 후보에서 제외
+                .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
+
+            return restaurantsFull;
+        })();
+        return dataLoadPromise;
+    }
+
+    // 후보 pool 구성: 즐겨찾기부터 채우고, 모자란 자리는 거리순(회사→집 위치 기준)으로
+    // 채운다. 즐겨찾기·저장 위치가 둘 다 없으면 등록 순서 그대로 앞에서부터 채움.
+    function buildPool(size) {
+        const favIds = window.parent.getFavorites ? window.parent.getFavorites() : [];
+        const favSet = new Set(favIds);
+        const favItems = restaurantsFull.filter(r => favSet.has(r.id));
+
+        const homeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
+        const companyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
+        const refLoc = companyLoc || homeLoc || null;
+
+        let rest = restaurantsFull.filter(r => !favSet.has(r.id));
+        if (refLoc) {
+            rest = rest.sort((a, b) =>
+                getDistanceKm(refLoc.lat, refLoc.lng, a.lat, a.lng) -
+                getDistanceKm(refLoc.lat, refLoc.lng, b.lat, b.lng)
+            );
+        }
+        return [...favItems, ...rest].slice(0, size);
+    }
+
+    const COLORS = [
+        '#3B82F6','#6366F1','#8B5CF6','#EC4899','#EF4444',
+        '#F97316','#EAB308','#22C55E','#14B8A6','#06B6D4',
+        '#0EA5E9','#84CC16','#A855F7','#F43F5E'
+    ];
 
     function syncCanvasResolution() {
         const area = document.getElementById('wheelArea');
@@ -426,13 +417,20 @@ window.roulette = (function() {
     }
 
     function setMode(mode) {
-        restaurants = mode === 'mini'
-            ? ALL_RESTAURANTS.filter(r => MINI_IDS.includes(r.id))
-            : [...ALL_RESTAURANTS];
-        currentAngle = 0;
-        resetLunchResult();
-        syncCanvasResolution();
-        drawWheel(currentAngle);
+        const size = mode === 'mini' ? POOL_SIZE_MINI : POOL_SIZE_FULL;
+        loadRestaurants().then(() => {
+            restaurants = buildPool(size);
+            currentAngle = 0;
+            resetLunchResult();
+            syncCanvasResolution();
+            drawWheel(currentAngle);
+        }).catch(e => {
+            console.error('룰렛용 식당 데이터 로드 실패:', e);
+            restaurants = [];
+            document.getElementById('resultLabel').style.display = 'block';
+            document.getElementById('resultName').textContent = '데이터를 불러오지 못했어요 😢';
+            document.getElementById('resultMeta').textContent = '새로고침 후 다시 시도해주세요.';
+        });
     }
 
     function drawWheel(angle) {
@@ -595,210 +593,5 @@ window.roulette = (function() {
     });
 
     return { setMode, spin, resetLunchResult };
-})();
-
-
-// =============================================
-//  커피 룰렛
-// =============================================
-window.coffeeRoulette = (function() {
-    // 가중치 기반 항목 (확률: 2층 30%, 3층 30%, 외출 30%, 1층 10%)
-    // 가중치를 시각적 호(arc) 크기로 반영
-    const coffeeItems = [
-        { name: '2층',  weight: 30, color: '#6F4E37', emoji: '☕' },
-        { name: '3층',  weight: 30, color: '#A0522D', emoji: '🏢' },
-        { name: '외출', weight: 30, color: '#8B4513', emoji: '🚶' },
-        { name: '1층',  weight: 10, color: '#D2691E', emoji: '🏠' },
-    ];
-    const TOTAL_WEIGHT = coffeeItems.reduce((s, it) => s + it.weight, 0);
-
-    // 각 항목이 시작하는 누적 각도 (라디안) 미리 계산
-    const slices = [];
-    let accum = 0;
-    for (const it of coffeeItems) {
-        const angle = (it.weight / TOTAL_WEIGHT) * 2 * Math.PI;
-        slices.push({ ...it, startAngle: accum, sweepAngle: angle });
-        accum += angle;
-    }
-
-    let isSpinning = false;
-    let currentAngle = 0;
-    let initialized = false;
-
-    const canvas = document.getElementById('coffeeCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function syncCanvasResolution() {
-        const area = document.getElementById('coffeeWheelArea');
-        if (!area) return false;
-        const size = area.getBoundingClientRect().width;
-        if (size === 0) return false;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.round(size * dpr);
-        canvas.height = Math.round(size * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        return true;
-    }
-
-    function drawWheel(angle) {
-        if (!coffeeItems.length) return;
-        const n = coffeeItems.length;
-        const area = document.getElementById('coffeeWheelArea');
-        if (!area) return;
-        const displaySize = area.getBoundingClientRect().width;
-        if (displaySize === 0) return;
-
-        const cx = displaySize / 2, cy = displaySize / 2;
-        const radius = cx - 5;
-
-        ctx.clearRect(0, 0, displaySize, displaySize);
-
-        for (const sl of slices) {
-            const s = angle + sl.startAngle;
-            const e = s + sl.sweepAngle;
-
-            // 조각 채우기
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.arc(cx, cy, radius, s, e);
-            ctx.closePath();
-            ctx.fillStyle = sl.color;
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // 텍스트
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(s + sl.sweepAngle / 2);
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 5;
-
-            const isPC = window.innerWidth > 768;
-            const baseFontSize = isPC ? 20 : 15;
-
-            // 확률 표시 (작은 글씨)
-            ctx.font = `700 ${baseFontSize * 0.65}px 'Noto Sans KR', sans-serif`;
-            ctx.globalAlpha = 0.8;
-            ctx.fillText(`${sl.weight}%`, radius * 0.72, -baseFontSize * 0.5);
-            ctx.globalAlpha = 1;
-
-            // 이름 (큰 글씨)
-            ctx.font = `900 ${baseFontSize}px 'Noto Sans KR', sans-serif`;
-            ctx.fillText(sl.name, radius * 0.72, baseFontSize * 0.45);
-
-            ctx.restore();
-        }
-
-        // 중앙 원
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.13);
-        grad.addColorStop(0, '#fff8f0');
-        grad.addColorStop(1, '#d4a574');
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.11, 0, 2 * Math.PI);
-        ctx.fillStyle = grad;
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 10;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-
-    function init() {
-        if (initialized) {
-            drawWheel(currentAngle);
-            return;
-        }
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                if (syncCanvasResolution()) {
-                    drawWheel(currentAngle);
-                    initialized = true;
-                }
-            });
-        });
-    }
-
-    function spin() {
-        if (isSpinning) return;
-        isSpinning = true;
-
-        // 커피 결과 카드 초기화 및 도는 중 효과
-        resetCoffeeResult();
-        document.getElementById('coffeeResultName').textContent = '🌀 도는 중...';
-        document.getElementById('coffeeResultMeta').textContent = '제발 외출...! (두구두구)';
-
-        document.getElementById('coffeeSpinBtn').disabled = true;
-
-        // 가중치 기반 랜덤 선택
-        const rand = Math.random() * TOTAL_WEIGHT;
-        let cumulative = 0;
-        let targetSlice = slices[slices.length - 1];
-        for (const sl of slices) {
-            cumulative += sl.weight;
-            if (rand < cumulative) { targetSlice = sl; break; }
-        }
-
-        // 포인터(상단 −π/2)가 targetSlice 중앙에 오도록 최종 각도 계산
-        const targetCenter = targetSlice.startAngle + targetSlice.sweepAngle / 2;
-        // 약간의 랜덤 오프셋 (슬라이스 40% 범위 내)
-        const randomOffset = (Math.random() * 0.8 - 0.4) * targetSlice.sweepAngle;
-        const targetAngle = -Math.PI / 2 - targetCenter - randomOffset;
-
-        const normalizedCurrent = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-        const normalizedTarget  = ((targetAngle  % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
-        let delta = normalizedTarget - normalizedCurrent;
-        if (delta < 0) delta += 2 * Math.PI;
-
-        const extraRot  = Math.floor(5 + Math.random() * 6) * 2 * Math.PI;
-        const finalAngle = currentAngle + extraRot + delta;
-        const duration  = 4200 + Math.random() * 1400;
-        const startAngle = currentAngle;
-        const startTime  = performance.now();
-
-        function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
-        function animate(now) {
-            const t = Math.min((now - startTime) / duration, 1);
-            currentAngle = startAngle + (finalAngle - startAngle) * easeOut(t);
-            drawWheel(currentAngle);
-            if (t < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                currentAngle = finalAngle;
-                isSpinning = false;
-                document.getElementById('coffeeSpinBtn').disabled = false;
-                showCoffeeResult(targetSlice);
-            }
-        }
-        requestAnimationFrame(animate);
-    }
-
-    function showCoffeeResult(sl) {
-        document.getElementById('coffeeResultName').innerHTML = `<span class="emoji-icon">${sl.emoji}</span> ${sl.name}`;
-        document.getElementById('coffeeResultMeta').innerHTML =
-            `<span class="result-prob-badge">당첨 확률 ${sl.weight}%</span> | ☕ 맛있는 커피 타임 되세요!`;
-
-        const card = document.getElementById('coffeeResultCard');
-        card.classList.add('coffee-result', 'visible');
-        setTimeout(() => { card.classList.remove('visible'); }, 400);
-    }
-
-    function resetCoffeeResult() {
-        document.getElementById('coffeeResultName').innerHTML = '<span class="emoji-icon">☕</span> 어디가 당첨될까요?';
-        document.getElementById('coffeeResultName').style.fontSize = '1.3rem';
-        document.getElementById('coffeeResultMeta').innerHTML = '돌려돌려 버튼을 눌러 운명을 확인하세요!';
-    }
-
-    window.addEventListener('resize', () => {
-        if (initialized) {
-            syncCanvasResolution();
-            drawWheel(currentAngle);
-        }
-    });
-
-    return { init, spin, resetCoffeeResult };
 })();
 </script>
