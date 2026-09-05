@@ -10,7 +10,8 @@
 ├── contact-tab.html        # 문의 탭
 │
 └── /data
-    └── restaurants.json    # 식당 데이터
+    ├── restaurants.xlsx    # 식당 데이터 (브라우저에서 SheetJS로 직접 파싱)
+    └── subway_slim.json    # 지하철 노선/역 데이터
 ```
 
 ## 🚀 사용 방법
@@ -53,24 +54,13 @@ npx http-server -p 5500
 → `contact-tab.html` 파일 수정
 
 ### 식당 데이터 관리
-→ `data/restaurants.json` 파일 수정
+→ `data/restaurants.xlsx` 파일 수정 (엑셀에서 직접 편집 후 저장하면 됨)
 
-**JSON 구조:**
-```json
-[
-  {
-    "id": 1,
-    "name": "식당 이름",
-    "price": 7500,
-    "hours": "중식 11:30~13:30",
-    "lat": 37.479932,
-    "lng": 126.895215,
-    "address": "주소",
-    "description": "설명",
-    "instagram": "https://instagram.com/..."
-  }
-]
-```
+**엑셀 컬럼 구조** (1행: 헤더, 2행부터 데이터):
+| id | 이름 | 지역 | 주소 | lat | lng | 설명 | 가격 | 영업 시간 | 인스타 | 카카오 |
+|---|---|---|---|---|---|---|---|---|---|---|
+
+`lat`/`lng`는 위도/경도를 직접 숫자로 입력 (네이버 지도 등에서 좌표를 확인해 입력). 컬럼 매핑은 [map-tab.html](map-tab.html)의 `headerMap` 참고.
 
 ### 새 탭 추가하기
 
@@ -98,8 +88,19 @@ npx http-server -p 5500
 
 ## 🔧 기술 스택
 - HTML5 / CSS3 / JavaScript (Vanilla)
-- Leaflet.js (지도 라이브러리)
-- OpenStreetMap (지도 타일)
+- 네이버 지도 API v3 (Web Dynamic Map + Geocoder)
+- SheetJS (엑셀 데이터 파싱)
+- Firebase Firestore (한줄평/인기도/문의)
+
+## 🗺️ 네이버 지도 API 키 설정
+지도는 [네이버 지도 API v3](https://navermaps.github.io/maps.js.ncp/)를 사용하며, [index.html](index.html)의 `<script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=...">` 태그에 발급받은 **Client ID**를 넣어야 지도가 표시됩니다.
+
+**발급 방법**
+1. [네이버 클라우드 플랫폼](https://www.ncloud.com) 가입 (무료)
+2. 콘솔 → Application Services → Maps → Application 등록
+3. 등록한 Application에서 **Web Dynamic Map**, **Geocoding** 서비스 활성화 (Dynamic Map 체크 안 하면 429 오류 발생)
+4. Service URL(허용 도메인)에 배포 주소 등록 — 지금은 `https://woodyaudio.github.io`, 나중에 커스텀 도메인을 사면 콘솔에서 추가만 하면 됨 (코드 변경 불필요)
+5. 발급된 Client ID를 `index.html`의 `ncpKeyId=` 뒤에 그대로 입력 (공개용 클라이언트 키라 코드에 노출돼도 안전)
 
 ## 💡 팁
 - 브라우저 캐시 때문에 변경사항이 안 보이면 `Ctrl+Shift+R` (강력 새로고침)

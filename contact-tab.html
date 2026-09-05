@@ -862,22 +862,8 @@
         if (name === 'notice') renderNoticeList();
         if (name === 'inquiry' && currentInqTab === 'list') loadInquiries();
         if (name === 'system') {
-            updateMapThemeUI();
             updateAppThemeUI();
         }
-    };
-
-    function updateMapThemeUI() {
-        const theme = parseInt(localStorage.getItem('woody_map_theme')) || 0;
-        [0, 1, 2].forEach(i => document.getElementById(`skin-btn-${i}`).classList.remove('selected'));
-        const activeBtn = document.getElementById(`skin-btn-${theme}`);
-        if (activeBtn) activeBtn.classList.add('selected');
-    }
-
-    window.setGlobalMapTheme = function(index) {
-        localStorage.setItem('woody_map_theme', index);
-        updateMapThemeUI();
-        if (window.setMapTheme) window.setMapTheme(index);
     };
 
     // ===== 위치 검색 시스템 =====
@@ -890,32 +876,38 @@
         showScreen('locsearch');
     };
 
-    window.searchLocation = async function() {
+    window.searchLocation = function() {
         const query = document.getElementById('loc-search-input').value.trim();
         if (!query) return;
-        
+
         const resEl = document.getElementById('loc-search-results');
         resEl.innerHTML = '<div style="color:var(--settings-sub); font-size:0.85em; text-align:center;">검색 중... ⏳</div>';
-        
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            
-            if (!data || data.length === 0) {
-                resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">검색 결과가 없습니다.<br>OpenStreetMap 기반이므로 한국어 주소 인식이 부족할 수 있습니다.</div>';
+
+        if (!window.naver || !naver.maps || !naver.maps.Service) {
+            resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">지도 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.</div>';
+            return;
+        }
+
+        naver.maps.Service.geocode({ query }, function(status, response) {
+            if (status !== naver.maps.Service.Status.OK) {
+                resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">검색 중 오류가 발생했습니다.</div>';
                 return;
             }
-            
-            resEl.innerHTML = data.slice(0, 5).map(item => `
-                <div class="notice-item" style="padding:12px; margin-bottom:0;" onclick="selectSearchedLocation(${item.lat}, ${item.lon})">
-                    <div class="notice-title" style="font-size:0.85em; margin-bottom:0;">${item.display_name}</div>
-                </div>
-            `).join('');
-            
-        } catch(e) {
-            console.error(e);
-            resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">검색 중 오류가 발생했습니다.</div>';
-        }
+
+            const items = response.v2.addresses;
+            if (!items || items.length === 0) {
+                resEl.innerHTML = '<div style="color:#ef4444; font-size:0.85em; text-align:center;">검색 결과가 없습니다.</div>';
+                return;
+            }
+
+            resEl.innerHTML = items.slice(0, 5).map(item => {
+                const label = item.roadAddress || item.jibunAddress;
+                return `
+                <div class="notice-item" style="padding:12px; margin-bottom:0;" onclick="selectSearchedLocation(${item.y}, ${item.x})">
+                    <div class="notice-title" style="font-size:0.85em; margin-bottom:0;">${label}</div>
+                </div>`;
+            }).join('');
+        });
     };
 
     window.selectSearchedLocation = function(lat, lng) {
@@ -1196,8 +1188,8 @@
         }
         updateAppThemeUI();
         
-        // 앱 테마와 지도 테마 동기화 (default -> 0, dark -> 2)
-        const mapThemeIndex = theme === 'dark' ? 2 : 0;
+        // 앱 테마와 지도 테마 동기화 (default -> 0, dark -> 1)
+        const mapThemeIndex = theme === 'dark' ? 1 : 0;
         localStorage.setItem('woody_map_theme', mapThemeIndex);
         if (window.setMapTheme) {
             window.setMapTheme(mapThemeIndex);

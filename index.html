@@ -6,8 +6,9 @@
     <title>Woody-Table</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- 네이버 지도 API v3: NCP 콘솔에서 발급받은 Client ID를 아래 ncpKeyId에 넣어주세요. -->
+    <!-- 발급 방법은 README.md의 "네이버 지도 API 키 설정" 항목 참고 -->
+    <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=YOUR_NCP_CLIENT_ID&submodules=geocoder"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -289,7 +290,7 @@
         /* [PC] 콘텐츠 영역 */
         #content-area {
             flex: 1;
-            height: 100%; /* Leaflet 등 height:100% 자식을 위해 반드시 필요 */
+            height: 100%; /* 네이버 지도 등 height:100% 자식을 위해 반드시 필요 */
             min-height: 0;
             position: relative;
             overflow: hidden;
