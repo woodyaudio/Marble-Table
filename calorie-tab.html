@@ -106,7 +106,8 @@
         cursor: pointer;
     }
     .rf-region-option:hover { background: rgba(255,255,255,0.08); }
-    .rf-region-option.all { font-weight: 800; border-bottom: 1px solid var(--border-light); }
+    .rf-region-option.all { font-weight: 800; }
+    .rf-region-option.current-loc { font-weight: 800; color: var(--primary, #3b82f6); border-bottom: 1px solid var(--border-light); }
     .rf-region-option.empty { color: var(--text-secondary); font-weight: 500; cursor: default; }
 
     #rf-scroll {
@@ -316,10 +317,12 @@
     function renderRegionDropdown(q) {
         const dropdown = document.getElementById('rfRegionDropdown');
         const matches = q ? allRegions.filter(r => r.includes(q)) : allRegions;
-        const rows = [`<div class="rf-region-option all" onclick="window.selectRegionOption('')">전체</div>`]
-            .concat(matches.length
-                ? matches.map(r => `<div class="rf-region-option" onclick="window.selectRegionOption('${r.replace(/'/g, "\\'")}')">${escapeHtml(r)}</div>`)
-                : [`<div class="rf-region-option empty">일치하는 지역이 없어요</div>`]);
+        const rows = [
+            `<div class="rf-region-option all" onclick="window.selectRegionOption('')">전체</div>`,
+            `<div class="rf-region-option current-loc" onclick="window.selectCurrentLocationOption()">📍 현재 위치</div>`
+        ].concat(matches.length
+            ? matches.map(r => `<div class="rf-region-option" onclick="window.selectRegionOption('${r.replace(/'/g, "\\'")}')">${escapeHtml(r)}</div>`)
+            : [`<div class="rf-region-option empty">일치하는 지역이 없어요</div>`]);
         dropdown.innerHTML = rows.join('');
         dropdown.hidden = false;
     }
@@ -338,6 +341,31 @@
         document.getElementById('rfRegionFilter').value = region;
         document.getElementById('rfRegionDropdown').hidden = true;
         if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
+    };
+
+    // 드롭다운의 "📍 현재 위치"를 직접 선택했을 때: 탭 진입 시 자동으로 하던 것과
+    // 같은 방식으로 다시 한 번 현재 위치를 가져와 가장 가까운 지역으로 채움
+    // (자동 채움 이후 사용자가 다른 지역으로 바꿔봤다가 다시 내 위치로 돌아오고
+    // 싶을 때를 위함). maximumAge:0으로 캐시된 위치 말고 매번 새로 요청.
+    window.selectCurrentLocationOption = function() {
+        userManuallySetRegion = true;
+        document.getElementById('rfRegionDropdown').hidden = true;
+        const input = document.getElementById('rfRegionFilter');
+        if (!navigator.geolocation) return;
+        const originalPlaceholder = input.placeholder;
+        input.value = '';
+        input.placeholder = '📍 위치 확인 중...';
+        withRestaurantMeta((metaList) => {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                input.placeholder = originalPlaceholder;
+                const region = findNearestRegion(metaList, pos.coords.latitude, pos.coords.longitude);
+                if (region) input.value = region;
+                if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
+            }, (err) => {
+                console.warn('현재 위치를 가져오지 못했어요:', err.message);
+                input.placeholder = originalPlaceholder;
+            }, { timeout: 5000, maximumAge: 0 });
+        });
     };
 
     // 드롭다운 바깥을 클릭하면 닫음. 탭이 다시 열릴 때마다 스크립트가 재실행되므로
@@ -363,22 +391,29 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    // 좌표(lat, lng)에서 가장 가까운 식당의 지역명을 찾음. 외부 API 호출 없이
+    // (네이버 지오코딩 등 사용 안 함) 이미 로드된 xlsx 좌표만으로 계산 —
+    // 별도 API 한도 소모 없음. 탭 진입 시 자동 선택과 드롭다운의 "📍 현재 위치"
+    // 둘 다 이 함수를 공용으로 씀.
+    function findNearestRegion(metaList, lat, lng) {
+        let nearest = null, nearestDist = Infinity;
+        metaList.forEach(r => {
+            if (!r.lat || !r.lng) return;
+            const d = getDistanceKm(lat, lng, r.lat, r.lng);
+            if (d < nearestDist) { nearestDist = d; nearest = r; }
+        });
+        return (nearest && nearest.region && nearest.region !== '미지정') ? nearest.region : null;
+    }
+
     // 탭 진입 시 현재 위치(브라우저 GPS)에서 가장 가까운 식당의 지역을 찾아
-    // 지역 검색란에 미리 채워둠. 외부 API 호출 없이(네이버 지오코딩 등 사용 안 함)
-    // 이미 로드된 xlsx 좌표만으로 계산 — 별도 API 한도 소모 없음.
+    // 지역 검색란에 미리 채워둠.
     function detectCurrentRegionAndApply(metaList) {
         if (userManuallySetRegion || !navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition((pos) => {
             if (userManuallySetRegion) return; // 응답 오는 사이 사용자가 이미 직접 입력했으면 덮어쓰지 않음
-            const { latitude, longitude } = pos.coords;
-            let nearest = null, nearestDist = Infinity;
-            metaList.forEach(r => {
-                if (!r.lat || !r.lng) return;
-                const d = getDistanceKm(latitude, longitude, r.lat, r.lng);
-                if (d < nearestDist) { nearestDist = d; nearest = r; }
-            });
-            if (nearest && nearest.region && nearest.region !== '미지정') {
-                document.getElementById('rfRegionFilter').value = nearest.region;
+            const region = findNearestRegion(metaList, pos.coords.latitude, pos.coords.longitude);
+            if (region) {
+                document.getElementById('rfRegionFilter').value = region;
                 if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
             }
         }, (err) => {
