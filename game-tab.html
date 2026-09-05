@@ -109,6 +109,77 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
+    /* --- 자동 배치 버튼 + 칸(직접 입력) 목록 --- */
+    .roulette-config {
+        width: 100%;
+        max-width: 320px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .auto-arrange-btn {
+        padding: 8px 20px;
+        border-radius: 50px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+        font-weight: 800;
+        font-size: 0.82rem;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+    }
+    .auto-arrange-btn:hover { opacity: 0.85; }
+    .auto-arrange-btn:active { transform: scale(0.97); }
+
+    .roulette-slots {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    .roulette-slot-row { position: relative; }
+    .roulette-slot-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        font-size: 0.78rem;
+        font-weight: 700;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    }
+    .roulette-slot-input::placeholder { color: var(--text-secondary); font-weight: 500; }
+    .roulette-slot-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        max-height: 180px;
+        overflow-y: auto;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        z-index: 60;
+    }
+    .roulette-slot-option {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .roulette-slot-option:hover { background: rgba(255,255,255,0.08); }
+    .roulette-slot-option.empty { color: var(--text-secondary); font-weight: 500; cursor: default; }
+    @media (max-width: 768px) {
+        .roulette-slot-input { font-size: 0.74rem; padding: 6px 8px; }
+    }
+
     /* --- Wheel Area --- */
     .wheel-area {
         position: relative;
@@ -282,6 +353,12 @@
         <button class="mode-btn" id="btnFull" onclick="setGlobalMode('full')">🌐 일반</button>
     </div>
 
+    <!-- 칸 채우기: 자동 배치(가까운 순) 또는 직접 입력 -->
+    <div class="roulette-config">
+        <button class="auto-arrange-btn" onclick="roulette.autoArrange()">🎯 자동 배치 (가까운 순)</button>
+        <div id="rouletteSlots" class="roulette-slots"></div>
+    </div>
+
     <!-- 점심 룰렛 영역 -->
     <div class="wheel-area" id="wheelArea">
         <div class="wheel-pointer"></div>
@@ -317,14 +394,19 @@ function setGlobalMode(mode) {
 //  점심 룰렛
 // =============================================
 window.roulette = (function() {
-    // 옛 가산디지털단지 14곳 하드코딩 리스트 대신, 실제 DB(data/restaurants.xlsx)를
-    // 즐겨찾기 → 거리순(회사/집 위치) 기준으로 재연결. 기획서 04번 참고.
+    // 옛 가산디지털단지 14곳 하드코딩 리스트 대신 실제 DB(data/restaurants.xlsx)를 사용.
+    // 탭에 들어가면 칸을 비워두고(자동으로 아무 식당이나 채우지 않음), "자동 배치"
+    // 버튼으로 거리순 채우기를 하거나, 칸에 가게 이름을 직접 입력해 목록에서 골라
+    // 채울 수 있음. 기획서 04번 참고.
     const POOL_SIZE_MINI = 4;
     const POOL_SIZE_FULL = 12;
+    const MAX_SUGGESTIONS = 6; // 칸에 타이핑할 때 아래에 보여줄 후보 목록 최대 개수
 
     let restaurantsFull = [];   // xlsx에서 로드한 노출 대상 전체 식당
     let dataLoadPromise = null;
-    let restaurants = [];       // 현재 휠에 표시 중인 후보 목록
+    let slots = [];              // index = 칸 번호, 값 = 매칭된 식당 객체 | null(빈 칸)
+    let restaurants = [];        // 현재 휠에 표시 중인(= 채워진 칸) 목록
+    let currentMode = 'mini';
     let isSpinning = false;
     let currentAngle = 0;
 
@@ -379,25 +461,100 @@ window.roulette = (function() {
         return dataLoadPromise;
     }
 
-    // 후보 pool 구성: 즐겨찾기부터 채우고, 모자란 자리는 거리순(회사→집 위치 기준)으로
-    // 채운다. 즐겨찾기·저장 위치가 둘 다 없으면 등록 순서 그대로 앞에서부터 채움.
-    function buildPool(size) {
-        const favIds = window.parent.getFavorites ? window.parent.getFavorites() : [];
-        const favSet = new Set(favIds);
-        const favItems = restaurantsFull.filter(r => favSet.has(r.id));
+    function slotCount() { return currentMode === 'mini' ? POOL_SIZE_MINI : POOL_SIZE_FULL; }
 
-        const homeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
-        const companyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
-        const refLoc = companyLoc || homeLoc || null;
+    function escapeHtmlLocal(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
 
-        let rest = restaurantsFull.filter(r => !favSet.has(r.id));
-        if (refLoc) {
-            rest = rest.sort((a, b) =>
-                getDistanceKm(refLoc.lat, refLoc.lng, a.lat, a.lng) -
-                getDistanceKm(refLoc.lat, refLoc.lng, b.lat, b.lng)
-            );
+    // 칸(입력창) UI 자체를 새로 그림 — 모드가 바뀌어 칸 개수가 달라질 때만 호출.
+    function renderSlotInputs() {
+        const wrap = document.getElementById('rouletteSlots');
+        if (!wrap) return;
+        let html = '';
+        for (let i = 0; i < slotCount(); i++) {
+            const val = slots[i] ? escapeHtmlLocal(slots[i].name) : '';
+            html += `
+                <div class="roulette-slot-row">
+                    <input type="text" class="roulette-slot-input" id="rouletteSlot${i}"
+                        placeholder="가게 이름 입력" autocomplete="off" value="${val}"
+                        oninput="roulette.onSlotInput(${i})" onfocus="roulette.onSlotFocus(${i})">
+                    <div class="roulette-slot-dropdown" id="rouletteSlotDropdown${i}" hidden></div>
+                </div>`;
         }
-        return [...favItems, ...rest].slice(0, size);
+        wrap.innerHTML = html;
+    }
+
+    // 칸에 타이핑 중: 매칭이 확정되기 전까지는 그 칸을 빈 칸 취급(휠에서 제외)하고,
+    // 입력값에 이름이 포함되는 후보를 드롭다운으로 보여준다.
+    function onSlotInput(i) {
+        const input = document.getElementById(`rouletteSlot${i}`);
+        if (!input) return;
+        if (slots[i]) { slots[i] = null; renderWheelFromSlots(); }
+        renderSlotDropdown(i, input.value.trim());
+    }
+
+    function onSlotFocus(i) {
+        const input = document.getElementById(`rouletteSlot${i}`);
+        if (input) renderSlotDropdown(i, input.value.trim());
+    }
+
+    function renderSlotDropdown(i, q) {
+        const dd = document.getElementById(`rouletteSlotDropdown${i}`);
+        if (!dd) return;
+        if (!q) { dd.hidden = true; dd.innerHTML = ''; return; }
+        const usedIds = new Set(slots.filter(Boolean).map(r => r.id));
+        const matches = restaurantsFull.filter(r => r.name.includes(q) && !usedIds.has(r.id)).slice(0, MAX_SUGGESTIONS);
+        dd.innerHTML = matches.length
+            ? matches.map(r => `<div class="roulette-slot-option" onclick="roulette.pickSlotOption(${i}, ${r.id})">${escapeHtmlLocal(r.name)}</div>`).join('')
+            : `<div class="roulette-slot-option empty">일치하는 가게가 없어요</div>`;
+        dd.hidden = false;
+    }
+
+    // 드롭다운에서 후보를 직접 골랐을 때: 그 칸에 확정 반영 + 휠 재계산.
+    function pickSlotOption(i, id) {
+        const r = restaurantsFull.find(x => x.id === id);
+        if (!r) return;
+        slots[i] = r;
+        const input = document.getElementById(`rouletteSlot${i}`);
+        if (input) input.value = r.name;
+        const dd = document.getElementById(`rouletteSlotDropdown${i}`);
+        if (dd) dd.hidden = true;
+        renderWheelFromSlots();
+    }
+
+    // "🎯 자동 배치": 아직 비어있는 칸에만 거리순(회사→집 위치 기준, 둘 다 없으면
+    // 등록 순서)으로 채운다. 이미 채워진 칸(직접 입력분 포함)은 그대로 두고,
+    // 이미 다른 칸에 쓰인 가게는 후보에서 제외해 중복을 피한다.
+    function autoArrange() {
+        loadRestaurants().then(() => {
+            const usedIds = new Set(slots.filter(Boolean).map(r => r.id));
+            const homeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
+            const companyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
+            const refLoc = companyLoc || homeLoc || null;
+
+            let candidates = restaurantsFull.filter(r => !usedIds.has(r.id));
+            if (refLoc) {
+                candidates = candidates.sort((a, b) =>
+                    getDistanceKm(refLoc.lat, refLoc.lng, a.lat, a.lng) -
+                    getDistanceKm(refLoc.lat, refLoc.lng, b.lat, b.lng)
+                );
+            }
+
+            let ci = 0;
+            const n = slotCount();
+            for (let i = 0; i < n; i++) {
+                if (slots[i]) continue;
+                if (ci >= candidates.length) break;
+                slots[i] = candidates[ci++];
+            }
+            renderSlotInputs();
+            renderWheelFromSlots();
+        }).catch(e => {
+            console.error('룰렛용 식당 데이터 로드 실패:', e);
+        });
     }
 
     const COLORS = [
@@ -416,17 +573,27 @@ window.roulette = (function() {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
+    // 칸(slots)이 바뀔 때마다(직접 입력 확정, 자동 배치) 호출 — 채워진 칸만 모아
+    // 휠 데이터로 반영하고 다시 그림.
+    function renderWheelFromSlots() {
+        restaurants = slots.filter(Boolean);
+        currentAngle = 0;
+        resetLunchResult();
+        syncCanvasResolution();
+        drawWheel(currentAngle);
+        const btn = document.getElementById('spinBtn');
+        if (btn) btn.disabled = restaurants.length === 0;
+    }
+
     function setMode(mode) {
-        const size = mode === 'mini' ? POOL_SIZE_MINI : POOL_SIZE_FULL;
+        currentMode = mode;
+        slots = new Array(slotCount()).fill(null);
         loadRestaurants().then(() => {
-            restaurants = buildPool(size);
-            currentAngle = 0;
-            resetLunchResult();
-            syncCanvasResolution();
-            drawWheel(currentAngle);
+            renderSlotInputs();
+            renderWheelFromSlots();
         }).catch(e => {
             console.error('룰렛용 식당 데이터 로드 실패:', e);
-            restaurants = [];
+            renderSlotInputs();
             document.getElementById('resultLabel').style.display = 'block';
             document.getElementById('resultName').textContent = '데이터를 불러오지 못했어요 😢';
             document.getElementById('resultMeta').textContent = '새로고침 후 다시 시도해주세요.';
@@ -434,16 +601,34 @@ window.roulette = (function() {
     }
 
     function drawWheel(angle) {
-        if (!restaurants.length) return;
-        const n = restaurants.length;
         const area = document.getElementById('wheelArea');
         if (!area) return;
         const displaySize = area.getBoundingClientRect().width;
         const cx = displaySize / 2, cy = displaySize / 2;
         const radius = cx - 5;
-        const slice = (2 * Math.PI) / n;
 
         ctx.clearRect(0, 0, displaySize, displaySize);
+
+        if (!restaurants.length) {
+            // 채워진 칸이 없을 때: 빈 휠 표시
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(148,163,184,0.15)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(148,163,184,0.9)';
+            ctx.textAlign = 'center';
+            ctx.font = `700 14px 'Noto Sans KR', sans-serif`;
+            ctx.fillText('칸을 채워주세요', cx, cy);
+            return;
+        }
+
+        const n = restaurants.length;
+        const slice = (2 * Math.PI) / n;
 
         for (let i = 0; i < n; i++) {
             const s = angle + i * slice;
@@ -585,6 +770,21 @@ window.roulette = (function() {
         drawWheel(currentAngle);
     });
 
+    // 칸의 후보 드롭다운 바깥을 클릭하면 모두 닫음. 탭이 다시 열릴 때마다 스크립트가
+    // 재실행되므로 이전 리스너를 지우고 새로 등록해 document에 계속 쌓이지 않게 함.
+    if (window.__rouletteOutsideClickHandler) {
+        document.removeEventListener('click', window.__rouletteOutsideClickHandler);
+    }
+    window.__rouletteOutsideClickHandler = function(e) {
+        document.querySelectorAll('.roulette-slot-dropdown').forEach(dd => {
+            if (dd.hidden) return;
+            const row = dd.closest('.roulette-slot-row');
+            if (row && row.contains(e.target)) return;
+            dd.hidden = true;
+        });
+    };
+    document.addEventListener('click', window.__rouletteOutsideClickHandler);
+
     // 최초 초기화 — DOM이 레이아웃된 후 실행
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -592,6 +792,6 @@ window.roulette = (function() {
         });
     });
 
-    return { setMode, spin, resetLunchResult };
+    return { setMode, spin, resetLunchResult, onSlotInput, onSlotFocus, pickSlotOption, autoArrange };
 })();
 </script>
