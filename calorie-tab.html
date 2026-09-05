@@ -68,6 +68,7 @@
     }
     .rf-select {
         flex: 1;
+        box-sizing: border-box;
         padding: 7px 10px;
         border-radius: 10px;
         border: 1px solid var(--border-light);
@@ -77,6 +78,7 @@
         font-weight: 700;
         font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
     }
+    .rf-select::placeholder { color: var(--text-secondary); font-weight: 600; }
 
     #rf-scroll {
         flex: 1;
@@ -155,9 +157,10 @@
                 <button class="mode-btn period-btn" id="rfPeriodWeek" onclick="setRankPeriod('week')">이번 주</button>
             </div>
             <div class="rf-filter-row">
-                <select id="rfRegionFilter" class="rf-select" onchange="renderRanking()">
-                    <option value="all">지역 전체</option>
-                </select>
+                <input type="text" id="rfRegionFilter" class="rf-select" list="rfRegionList"
+                       placeholder="🔍 지역 검색 (비우면 전체)" autocomplete="off"
+                       oninput="onRegionFilterInput()">
+                <datalist id="rfRegionList"></datalist>
             </div>
         </div>
     </div>
@@ -182,6 +185,14 @@
     let popularityCache = {};    // { id: count }
     let unsubPopularity = null;
     let unsubFeed = null;
+
+    // 지역 검색 필터: Firestore를 다시 조회하지 않고, 마지막으로 받아온
+    // counts/metaList를 캐싱해뒀다가 로컬에서만 다시 걸러 그림 (타이핑할 때마다
+    // Firestore 쿼리를 새로 날리지 않기 위함 — API 한도 낭비 방지)
+    let lastCounts = null;
+    let lastMetaList = null;
+    let regionInputDebounceTimer = null;
+    let userManuallySetRegion = false; // 사용자가 직접 입력하면 위치 기반 자동 선택을 덮어쓰지 않음
 
     async function initFirebase() {
         try {
@@ -214,11 +225,11 @@
         }
     }
 
-    // 이름/지역/노출여부만 있으면 되는 가벼운 자체 xlsx 로드.
+    // 이름/지역/좌표/노출여부만 있으면 되는 가벼운 자체 xlsx 로드.
     // (처음엔 index.html의 window.plpRestaurantsData를 재사용하려 했는데, 그건
     // PC 화면일 때만 채워지는 데이터라 모바일/초기 로딩 타이밍에 따라 영영 안 채워질
     // 수 있어서, 이 탭 스스로 한 번 읽어서 캐싱하는 방식으로 바꿈 — map-tab.html의
-    // 파싱 로직과 동일)
+    // 파싱 로직과 동일. lat/lng는 현재 위치 기반 지역 자동 선택에 사용)
     let restaurantsMetaCache = null;
     let restaurantsMetaLoading = null;
     function loadRestaurantsMeta() {
@@ -234,7 +245,7 @@
             const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
             const headerMap = {
-                'id': 'id', '이름': 'name', '지역': 'region', '노출여부': 'visibility'
+                'id': 'id', '이름': 'name', '지역': 'region', 'lat': 'lat', 'lng': 'lng', '노출여부': 'visibility'
             };
             const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
 
@@ -245,6 +256,8 @@
                     id: parseInt(r.id) || (index + 1),
                     name: String(r.name).trim(),
                     region: r.region && String(r.region).trim() !== '' ? String(r.region).trim() : '미지정',
+                    lat: parseFloat(r.lat) || 0,
+                    lng: parseFloat(r.lng) || 0,
                     visibility: r.visibility ? String(r.visibility).trim() : ''
                 }))
                 .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
@@ -263,22 +276,52 @@
     }
 
     function populateRegionFilter(list) {
-        const sel = document.getElementById('rfRegionFilter');
-        if (sel.dataset.populated) return;
+        const dl = document.getElementById('rfRegionList');
+        if (dl.dataset.populated) return;
         const regions = [...new Set(list.map(r => r.region))].filter(r => r && r !== '미지정').sort();
         regions.forEach(rg => {
             const opt = document.createElement('option');
             opt.value = rg;
-            opt.text = rg;
-            sel.appendChild(opt);
+            dl.appendChild(opt);
         });
         if (list.some(r => r.region === '미지정')) {
             const opt = document.createElement('option');
             opt.value = '미지정';
-            opt.text = '미지정';
-            sel.appendChild(opt);
+            dl.appendChild(opt);
         }
-        sel.dataset.populated = '1';
+        dl.dataset.populated = '1';
+    }
+
+    function getDistanceKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // 탭 진입 시 현재 위치(브라우저 GPS)에서 가장 가까운 식당의 지역을 찾아
+    // 지역 검색란에 미리 채워둠. 외부 API 호출 없이(네이버 지오코딩 등 사용 안 함)
+    // 이미 로드된 xlsx 좌표만으로 계산 — 별도 API 한도 소모 없음.
+    function detectCurrentRegionAndApply(metaList) {
+        if (userManuallySetRegion || !navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition((pos) => {
+            if (userManuallySetRegion) return; // 응답 오는 사이 사용자가 이미 직접 입력했으면 덮어쓰지 않음
+            const { latitude, longitude } = pos.coords;
+            let nearest = null, nearestDist = Infinity;
+            metaList.forEach(r => {
+                if (!r.lat || !r.lng) return;
+                const d = getDistanceKm(latitude, longitude, r.lat, r.lng);
+                if (d < nearestDist) { nearestDist = d; nearest = r; }
+            });
+            if (nearest && nearest.region && nearest.region !== '미지정') {
+                document.getElementById('rfRegionFilter').value = nearest.region;
+                if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
+            }
+        }, (err) => {
+            console.warn('현재 위치를 가져오지 못했어요 (랭킹 지역 자동 선택 생략):', err.message);
+        }, { timeout: 5000, maximumAge: 5 * 60 * 1000 });
     }
 
     function timeAgo(date) {
@@ -332,8 +375,21 @@
         renderRanking();
     };
 
+    // 지역 검색란 입력: Firestore를 다시 조회하지 않고 캐시된 결과를 로컬에서만
+    // 다시 걸러 그림. 타이핑 중 매 keystroke마다 다시 그리지 않도록 살짝 debounce.
+    window.onRegionFilterInput = function() {
+        userManuallySetRegion = true;
+        clearTimeout(regionInputDebounceTimer);
+        regionInputDebounceTimer = setTimeout(() => {
+            if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
+        }, 150);
+    };
+
     function renderRankingList(counts, metaList) {
-        const rFilter = document.getElementById('rfRegionFilter').value;
+        lastCounts = counts;
+        lastMetaList = metaList;
+        // 정확히 일치하는 지역명이 아니어도("강남" 같은 부분 검색어) 걸리도록 포함(includes) 매칭
+        const rFilter = document.getElementById('rfRegionFilter').value.trim();
         const metaById = Object.fromEntries(metaList.map(r => [r.id, r]));
 
         let rows = Object.entries(counts)
@@ -349,7 +405,7 @@
                     score: r.reviewCount * SCORE_W_REVIEW + pop * SCORE_W_POPULARITY
                 };
             })
-            .filter(r => rFilter === 'all' || r.region === rFilter)
+            .filter(r => !rFilter || r.region.includes(rFilter))
             .sort((a, b) => b.score - a.score);
 
         const view = document.getElementById('rf-ranking-view');
@@ -482,7 +538,10 @@
 
     // ===== 초기화 =====
     initFirebase().then(() => {
-        renderRanking();
+        renderRanking(); // 지역 전체 상태로 먼저 한 번 렌더
+        // 현재 위치를 얻는 대로(비동기) 가장 가까운 지역으로 필터를 자동 선택해 재렌더.
+        // 외부 API 호출 없음 — 브라우저 GPS + 이미 로드된 xlsx 좌표 계산만 사용.
+        withRestaurantMeta((metaList) => detectCurrentRegionAndApply(metaList));
     });
 })();
 </script>
