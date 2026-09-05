@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 test_query.js
+tools/.env
+tools/*.local.js
+tools/*.csv

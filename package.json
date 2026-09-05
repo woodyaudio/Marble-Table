@@ -1,8 +1,9 @@
 {
   "name": "marble-table",
   "private": true,
-  "description": "정적 웹사이트. puppeteer는 로컬 콘솔 디버깅 스크립트(test_console.js)용으로만 사용됩니다.",
+  "description": "정적 웹사이트. puppeteer는 로컬 콘솔 디버깅 스크립트(test_console.js)용, xlsx는 식당 데이터 일괄 수집 스크립트(tools/fetch-restaurants.js)에서 기존 data/restaurants.xlsx 중복 확인용으로만 사용됩니다. (npm 레지스트리의 xlsx는 알려진 취약점 때문에 SheetJS 공식 CDN 배포본을 씁니다.)",
   "devDependencies": {
-    "puppeteer": "^25.3.0"
+    "puppeteer": "^25.3.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
