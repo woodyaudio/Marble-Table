@@ -9,6 +9,9 @@
     <!-- 네이버 지도 API v3: NCP 콘솔에서 발급받은 Client ID를 아래 ncpKeyId에 넣어주세요. -->
     <!-- 발급 방법은 README.md의 "네이버 지도 API 키 설정" 항목 참고 -->
     <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=3z36hqrgla&submodules=geocoder"></script>
+    <!-- 네이버 공식 마커 클러스터링 라이브러리 (Apache 2.0, NAVER Corp) — 자체 호스팅 -->
+    <!-- 출처: https://github.com/navermaps/marker-tools.js/tree/master/marker-clustering -->
+    <script src="assets/js/MarkerClustering.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -469,7 +472,7 @@
                 <select id="plpRegionFilter" class="filter-item" onchange="plpFilterData()">
                     <option value="all">지역 전체</option>
                 </select>
-                <div id="plpSortToggle" class="filter-item" onclick="plpToggleSort()">🔥 인기순</div>
+                <div id="plpSortToggle" class="filter-item" onclick="plpToggleSort()">📍 거리순</div>
                 <div id="plpDinnerToggle" class="filter-item" onclick="plpToggleDinner()">🌙 석식</div>
                 <div id="plp-locate-btn" class="filter-item home-inline-btn" onclick="plpMoveToGPS()" title="현재 위치" style="display:flex; align-items:center; justify-content:center;">
                     <div style="width:14px; height:14px; background:var(--primary); border-radius:50%; border:2px solid var(--bg-surface); outline:1px solid var(--primary);"></div>
@@ -578,6 +581,15 @@
     (function() {
         window.plpRestaurantsData = [];
 
+        // 거리순 정렬용 (map-tab.html의 getDistanceKm과 동일 공식)
+        function plpGetDistanceKm(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
         async function plpLoadData() {
             try {
                 const res = await fetch(`./data/restaurants.xlsx?v=${Date.now()}`);
@@ -591,7 +603,8 @@
                     'id': 'id', '이름': 'name', '지역': 'region', '주소': 'address',
                     'lat': 'lat', 'lng': 'lng', '설명': 'description',
                     '가격': 'price', '영업 시간': 'hours',
-                    '인스타': 'instagram', '카카오': 'kakaoChannel'
+                    '인스타': 'instagram', '카카오': 'kakaoChannel',
+                    '노출여부': 'visibility'
                 };
                 const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
 
@@ -609,8 +622,11 @@
                         price:        parseInt(r.price) || 0,
                         hours:        r.hours ? String(r.hours).trim() : '',
                         instagram:    (r.instagram && String(r.instagram).trim() !== '' && String(r.instagram).trim().toLowerCase() !== 'null') ? String(r.instagram).trim() : null,
-                        kakaoChannel: (r.kakaoChannel && String(r.kakaoChannel).trim() !== '' && String(r.kakaoChannel).trim().toLowerCase() !== 'null') ? String(r.kakaoChannel).trim() : null
-                    }));
+                        kakaoChannel: (r.kakaoChannel && String(r.kakaoChannel).trim() !== '' && String(r.kakaoChannel).trim().toLowerCase() !== 'null') ? String(r.kakaoChannel).trim() : null,
+                        visibility:   r.visibility ? String(r.visibility).trim() : ''
+                    }))
+                    // 공공기관 구내식당 중 외부인 이용 불가/미확인 항목은 노출하지 않음 (id 부여 이후 필터해 위치기반 id 유지)
+                    .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
 
                 const regions = [...new Set(window.plpRestaurantsData.map(r => r.region))].filter(r => r && r !== '미지정').sort();
                 const regionSelect = document.getElementById('plpRegionFilter');
@@ -656,6 +672,19 @@
                     const popB = window.popularityData[b.id] || 0;
                     return popB - popA;
                 });
+            } else {
+                // 기본 정렬: 거리순. 기준점은 GPS 우선(지도 탭에서 미러링됨), 없으면 회사(점심 기준지) 저장 위치, 그것도 없으면 집 위치.
+                const savedCompanyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
+                const savedHomeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
+                const refLoc = (window.currentGPSLat != null && window.currentGPSLng != null)
+                    ? { lat: window.currentGPSLat, lng: window.currentGPSLng }
+                    : (savedCompanyLoc || savedHomeLoc || null);
+                if (refLoc) {
+                    filtered.sort((a, b) =>
+                        plpGetDistanceKm(refLoc.lat, refLoc.lng, a.lat, a.lng) -
+                        plpGetDistanceKm(refLoc.lat, refLoc.lng, b.lat, b.lng)
+                    );
+                }
             }
 
             document.getElementById('plpRestaurantCards').innerHTML = filtered.map((r, index) => {
@@ -714,10 +743,12 @@
                 b.style.background = 'var(--text-primary)';
                 b.style.color = 'var(--bg-app)';
                 b.style.borderColor = 'var(--text-primary)';
+                b.innerText = '🔥 인기순';
             } else {
                 b.style.background = 'var(--bg-surface)';
                 b.style.color = 'var(--text-primary)';
                 b.style.borderColor = 'var(--border-light)';
+                b.innerText = '📍 거리순';
             }
             plpFilterData();
         };

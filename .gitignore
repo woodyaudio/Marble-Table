@@ -4,3 +4,5 @@ test_query.js
 tools/.env
 tools/*.local.js
 tools/*.csv
+tools/*.json
+tools/*.log
