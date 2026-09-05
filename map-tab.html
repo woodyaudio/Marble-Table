@@ -324,6 +324,8 @@
 
     let map, selectedMarkerId = null, markerMap = {};
     let markerClustering = null;
+    let lastFilteredData = []; // filterData()가 마지막으로 계산한 필터 결과 (지도 이동 시 마커 재계산용)
+    const LIST_RENDER_LIMIT = 200; // 목록 카드는 상위 N개만 그려서 초기 렌더링 부담을 줄임
     let homeMarker = null, companyMarker = null, gpsMarker = null;
 
     // 좌표 생성 축약 헬퍼
@@ -442,6 +444,11 @@
                 closeDetail();
             }
         });
+
+        // ✅ 지도를 움직이거나(팬/줌) 다 멈추면(idle), 그 시점에 화면 안에 들어온
+        // 식당만 마커로 다시 그림 (데이터가 수천 건이어도 항상 화면에 보이는
+        // 만큼만 마커 객체를 만들어서 초기 로딩/렌더링 부담을 줄이기 위함)
+        naver.maps.Event.addListener(map, 'idle', renderMarkersInViewport);
 
         try {
             await initFirebase();
@@ -640,7 +647,14 @@
             }
         }
 
-        document.getElementById('restaurantCards').innerHTML = filtered.map((r, index) => {
+        lastFilteredData = filtered;
+
+        // 목록 카드는 상위 N개만 렌더링 (데이터가 많아져도 화면에 한 번에 그리는
+        // DOM 개수를 제한해서 초기 로딩이 느려지지 않게 함). 정렬(거리순/인기순)이
+        // 이미 위에서 끝난 상태라 "상위 N개"는 항상 사용자에게 가장 관련 있는 항목.
+        const listItems = filtered.slice(0, LIST_RENDER_LIMIT);
+
+        document.getElementById('restaurantCards').innerHTML = listItems.map((r, index) => {
             const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
             const popCount = window.popularityData[r.id] || 0;
             
@@ -672,15 +686,35 @@
                     ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
                 </div>
             </div>`;
-        }).join('');
+        }).join('') + (filtered.length > LIST_RENDER_LIMIT
+            ? `<div style="padding:14px; text-align:center; font-size:0.8em; color:var(--text-secondary);">그 외 ${(filtered.length - LIST_RENDER_LIMIT).toLocaleString()}곳 더 있어요 — 검색이나 지역 필터로 좁혀보세요</div>`
+            : '');
 
-        // ✅ 마커 다시 그리기 (선택 상태 유지)
+        // ✅ 마커는 지금 화면(지도 범위) 안에 들어온 것만 그림 — filterData 자체에서도
+        // 한 번 그려주고, 이후 지도를 움직일 때는 아래 renderMarkersInViewport가
+        // idle 이벤트로 알아서 다시 계산함(별도 호출).
+        renderMarkersInViewport();
+    }
+
+    // ✅ 현재 지도 화면(뷰포트) 안에 들어온 식당만 마커로 그리기
+    // lastFilteredData(검색/필터/정렬이 끝난 전체 결과)를 기준으로, 화면 범위에
+    // 걸치는 것만 골라 마커를 새로 만든다. 데이터가 수천 건이어도 실제로 마커
+    // 객체를 만드는 건 화면에 보이는 만큼뿐이라 성능 부담이 데이터 총량과
+    // 무관하게 일정하게 유지됨. 지도를 움직이거나 확대/축소해서 멈출 때(idle)
+    // 마다 호출됨.
+    function renderMarkersInViewport() {
+        if (!map || !map.getBounds) return;
+
         // 개별 마커는 map을 직접 지정하지 않음 — 클러스터링 라이브러리가 줌 레벨에 따라
         // 낱개로 보여줄지, 클러스터 원으로 묶어 보여줄지 알아서 지도에 붙이고 뗀다.
         Object.values(markerMap).forEach(m => m.setMap(null));
         if (markerClustering) { markerClustering.setMap(null); markerClustering = null; }
         markerMap = {};
-        filtered.forEach(r => {
+
+        const bounds = map.getBounds();
+        const visible = lastFilteredData.filter(r => bounds.hasLatLng(LL(r.lat, r.lng)));
+
+        visible.forEach(r => {
             const isSelected = r.id === selectedMarkerId;
             const marker = new naver.maps.Marker({
                 position: LL(r.lat, r.lng),
