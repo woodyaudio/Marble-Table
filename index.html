@@ -577,20 +577,17 @@
     });
     window.addEventListener('load', () => loadTab('map'));
 
-    // ===== PC 영구 패널: 식당 데이터 로딩 및 필터 =====
-    (function() {
-        window.plpRestaurantsData = [];
-
-        // 거리순 정렬용 (map-tab.html의 getDistanceKm과 동일 공식)
-        function plpGetDistanceKm(lat1, lng1, lat2, lng2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        async function plpLoadData() {
+    // ===== 식당 데이터(엑셀) 공용 로더 =====
+    // map-tab.html/calorie-tab.html/game-tab.html은 탭을 열 때마다 <script>가
+    // 강제로 새로 실행되기 때문에, 각 탭이 각자 fetch+XLSX 파싱을 따로 하면
+    // 탭을 오갈 때마다 매번 2~3MB 엑셀을 새로 받고 새로 파싱하게 됨(XLSX.read만
+    // 실측 150~260ms). window(= 탭을 옮겨도 안 사라지는 최상위 전역)에 파싱
+    // 결과를 딱 한 번만 캐싱해두고 모든 탭이 이 함수를 같이 쓰게 해서, 세션
+    // 동안은 첫 탭 진입 때 한 번만 받고 파싱하면 되도록 함.
+    window.__restaurantsDataPromise = null;
+    window.getRestaurantsData = function() {
+        if (window.__restaurantsDataPromise) return window.__restaurantsDataPromise;
+        window.__restaurantsDataPromise = (async () => {
             try {
                 const res = await fetch(`./data/restaurants.xlsx?v=${Date.now()}`);
                 if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
@@ -608,7 +605,7 @@
                 };
                 const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
 
-                window.plpRestaurantsData = rows.slice(1)
+                return rows.slice(1)
                     .map(row => { const obj = {}; headers.forEach((key, i) => { obj[key] = row[i]; }); return obj; })
                     .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
                     .map((r, index) => ({
@@ -627,6 +624,32 @@
                     }))
                     // 공공기관 구내식당 중 외부인 이용 불가/미확인 항목은 노출하지 않음 (id 부여 이후 필터해 위치기반 id 유지)
                     .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
+            } catch (e) {
+                // 실패한 프로미스를 그대로 캐싱해두면 이후 어떤 탭에서도 영영 재시도가
+                // 안 되므로, 실패 시엔 캐시를 비워 다음 호출이 새로 fetch를 시도하게 함
+                window.__restaurantsDataPromise = null;
+                throw e;
+            }
+        })();
+        return window.__restaurantsDataPromise;
+    };
+
+    // ===== PC 영구 패널: 식당 데이터 로딩 및 필터 =====
+    (function() {
+        window.plpRestaurantsData = [];
+
+        // 거리순 정렬용 (map-tab.html의 getDistanceKm과 동일 공식)
+        function plpGetDistanceKm(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        async function plpLoadData() {
+            try {
+                window.plpRestaurantsData = await window.getRestaurantsData();
 
                 const regions = [...new Set(window.plpRestaurantsData.map(r => r.region))].filter(r => r && r !== '미지정').sort();
                 const regionSelect = document.getElementById('plpRegionFilter');

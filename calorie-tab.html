@@ -255,46 +255,13 @@
         }
     }
 
-    // 이름/지역/좌표/노출여부만 있으면 되는 가벼운 자체 xlsx 로드.
-    // (처음엔 index.html의 window.plpRestaurantsData를 재사용하려 했는데, 그건
-    // PC 화면일 때만 채워지는 데이터라 모바일/초기 로딩 타이밍에 따라 영영 안 채워질
-    // 수 있어서, 이 탭 스스로 한 번 읽어서 캐싱하는 방식으로 바꿈 — map-tab.html의
-    // 파싱 로직과 동일. lat/lng는 현재 위치 기반 지역 자동 선택에 사용)
-    let restaurantsMetaCache = null;
-    let restaurantsMetaLoading = null;
+    // index.html의 공용 캐시 로더(window.getRestaurantsData) 사용 — 탭을 오갈
+    // 때마다 엑셀을 새로 받고 새로 파싱하지 않도록(첫 로딩 이후엔 세션 내내
+    // 재사용, map-tab.html 등 다른 탭과도 같이 공유됨). 이 탭에서 쓰는 필드
+    // (id/name/region/lat/lng/visibility)는 공용 데이터에 이미 다 들어있어
+    // 별도 재가공 없이 그대로 씀.
     function loadRestaurantsMeta() {
-        if (restaurantsMetaCache) return Promise.resolve(restaurantsMetaCache);
-        if (restaurantsMetaLoading) return restaurantsMetaLoading;
-
-        restaurantsMetaLoading = (async () => {
-            const res = await fetch(`./data/restaurants.xlsx?v=${Date.now()}`);
-            if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
-            const arrayBuffer = await res.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
-            const headerMap = {
-                'id': 'id', '이름': 'name', '지역': 'region', 'lat': 'lat', 'lng': 'lng', '노출여부': 'visibility'
-            };
-            const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
-
-            restaurantsMetaCache = rows.slice(1)
-                .map(row => { const obj = {}; headers.forEach((key, i) => { obj[key] = row[i]; }); return obj; })
-                .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
-                .map((r, index) => ({
-                    id: parseInt(r.id) || (index + 1),
-                    name: String(r.name).trim(),
-                    region: r.region && String(r.region).trim() !== '' ? String(r.region).trim() : '미지정',
-                    lat: parseFloat(r.lat) || 0,
-                    lng: parseFloat(r.lng) || 0,
-                    visibility: r.visibility ? String(r.visibility).trim() : ''
-                }))
-                .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
-
-            return restaurantsMetaCache;
-        })();
-        return restaurantsMetaLoading;
+        return window.getRestaurantsData();
     }
 
     function withRestaurantMeta(cb) {

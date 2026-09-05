@@ -422,42 +422,15 @@ window.roulette = (function() {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    // index.html의 공용 캐시 로더(window.getRestaurantsData) 사용 — 탭을 오갈
+    // 때마다 엑셀을 새로 받고 새로 파싱하지 않도록(첫 로딩 이후엔 세션 내내
+    // 재사용, map-tab.html/calorie-tab.html과도 같이 공유됨).
     function loadRestaurants() {
         if (dataLoadPromise) return dataLoadPromise;
-        dataLoadPromise = (async () => {
-            const res = await fetch(`./data/restaurants.xlsx?v=${Date.now()}`);
-            if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
-            const arrayBuffer = await res.arrayBuffer();
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
-            const headerMap = {
-                'id': 'id', '이름': 'name', '지역': 'region', 'lat': 'lat', 'lng': 'lng',
-                '가격': 'price', '영업 시간': 'hours', '인스타': 'instagram', '카카오': 'kakaoChannel',
-                '노출여부': 'visibility'
-            };
-            const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
-
-            restaurantsFull = rows.slice(1)
-                .map(row => { const obj = {}; headers.forEach((key, i) => { obj[key] = row[i]; }); return obj; })
-                .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
-                .map((r, index) => ({
-                    id: parseInt(r.id) || (index + 1),
-                    name: String(r.name).trim(),
-                    lat: parseFloat(r.lat) || 0,
-                    lng: parseFloat(r.lng) || 0,
-                    price: parseInt(r.price) || 0,
-                    hours: r.hours ? String(r.hours).trim() : '',
-                    instagram: (r.instagram && String(r.instagram).trim() !== '' && String(r.instagram).trim().toLowerCase() !== 'null') ? String(r.instagram).trim() : null,
-                    kakao: (r.kakaoChannel && String(r.kakaoChannel).trim() !== '' && String(r.kakaoChannel).trim().toLowerCase() !== 'null') ? String(r.kakaoChannel).trim() : null,
-                    visibility: r.visibility ? String(r.visibility).trim() : ''
-                }))
-                // 노출여부가 '비공개'/'확인필요'인 식당은 지도와 동일하게 후보에서 제외
-                .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
-
+        dataLoadPromise = window.getRestaurantsData().then(list => {
+            restaurantsFull = list;
             return restaurantsFull;
-        })();
+        });
         return dataLoadPromise;
     }
 
@@ -757,9 +730,9 @@ window.roulette = (function() {
             a.innerHTML = '📸 인스타그램';
             linksEl.appendChild(a);
         }
-        if (r.kakao) {
+        if (r.kakaoChannel) {
             const a = document.createElement('a');
-            a.href = r.kakao; a.target = '_blank'; a.rel = 'noopener';
+            a.href = r.kakaoChannel; a.target = '_blank'; a.rel = 'noopener';
             a.className = 'result-link-btn kakao';
             a.innerHTML = '💬 카카오채널';
             linksEl.appendChild(a);
