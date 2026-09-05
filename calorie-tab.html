@@ -61,6 +61,7 @@
     .period-btn { padding: 7px 0; font-size: 0.78rem; }
 
     .rf-filter-row {
+        position: relative; /* 아래 드롭다운(rf-region-dropdown)의 기준점 */
         display: flex;
         gap: 6px;
         width: 100%;
@@ -79,6 +80,34 @@
         font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
     }
     .rf-select::placeholder { color: var(--text-secondary); font-weight: 600; }
+
+    /* 지역 검색 드롭다운 — 이미 값이 채워져 있어도(현재 위치로 자동 선택된 경우
+       포함) 입력란을 탭/클릭하면 지우지 않고 바로 아래에 전체 목록이 세로로
+       나타나도록 직접 구현(네이티브 <input list> datalist는 iOS Safari 등에서
+       지원이 일관되지 않고, 값이 있을 때 목록이 안 뜨는 것처럼 보여 버그로
+       오인되기 쉬움) */
+    .rf-region-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        max-height: 240px;
+        overflow-y: auto;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        z-index: 50;
+    }
+    .rf-region-option {
+        padding: 9px 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .rf-region-option:hover { background: rgba(255,255,255,0.08); }
+    .rf-region-option.all { font-weight: 800; border-bottom: 1px solid var(--border-light); }
+    .rf-region-option.empty { color: var(--text-secondary); font-weight: 500; cursor: default; }
 
     #rf-scroll {
         flex: 1;
@@ -157,10 +186,10 @@
                 <button class="mode-btn period-btn" id="rfPeriodWeek" onclick="setRankPeriod('week')">이번 주</button>
             </div>
             <div class="rf-filter-row">
-                <input type="text" id="rfRegionFilter" class="rf-select" list="rfRegionList"
+                <input type="text" id="rfRegionFilter" class="rf-select"
                        placeholder="🔍 지역 검색 (비우면 전체)" autocomplete="off"
-                       oninput="onRegionFilterInput()">
-                <datalist id="rfRegionList"></datalist>
+                       oninput="onRegionFilterInput()" onfocus="onRegionFilterFocus()">
+                <div id="rfRegionDropdown" class="rf-region-dropdown" hidden></div>
             </div>
         </div>
     </div>
@@ -275,22 +304,55 @@
         });
     }
 
+    let allRegions = []; // 지역 검색 드롭다운에 쓸 전체 지역 목록(한 번만 계산해 캐싱)
     function populateRegionFilter(list) {
-        const dl = document.getElementById('rfRegionList');
-        if (dl.dataset.populated) return;
-        const regions = [...new Set(list.map(r => r.region))].filter(r => r && r !== '미지정').sort();
-        regions.forEach(rg => {
-            const opt = document.createElement('option');
-            opt.value = rg;
-            dl.appendChild(opt);
-        });
-        if (list.some(r => r.region === '미지정')) {
-            const opt = document.createElement('option');
-            opt.value = '미지정';
-            dl.appendChild(opt);
-        }
-        dl.dataset.populated = '1';
+        if (allRegions.length) return;
+        allRegions = [...new Set(list.map(r => r.region))].filter(r => r && r !== '미지정').sort();
+        if (list.some(r => r.region === '미지정')) allRegions.push('미지정');
     }
+
+    // 입력값(q)에 포함되는 지역만 걸러 드롭다운에 그림. q가 비어있으면 전체 목록.
+    // "전체"(필터 해제) 항목은 항상 맨 위에 고정으로 넣음.
+    function renderRegionDropdown(q) {
+        const dropdown = document.getElementById('rfRegionDropdown');
+        const matches = q ? allRegions.filter(r => r.includes(q)) : allRegions;
+        const rows = [`<div class="rf-region-option all" onclick="window.selectRegionOption('')">전체</div>`]
+            .concat(matches.length
+                ? matches.map(r => `<div class="rf-region-option" onclick="window.selectRegionOption('${r.replace(/'/g, "\\'")}')">${escapeHtml(r)}</div>`)
+                : [`<div class="rf-region-option empty">일치하는 지역이 없어요</div>`]);
+        dropdown.innerHTML = rows.join('');
+        dropdown.hidden = false;
+    }
+
+    // 입력란에 이미 값(예: 현재 위치로 자동 채워진 지역)이 있어도 그 값은 그대로
+    // 둔 채, 클릭/포커스하면 바로 아래에 전체 목록을 세로로 보여줌 — 값을 지워야만
+    // 다른 지역이 보이는 문제(버그처럼 보인다는 피드백)를 해결하기 위함.
+    window.onRegionFilterFocus = function() {
+        renderRegionDropdown(document.getElementById('rfRegionFilter').value.trim());
+    };
+
+    // 드롭다운에서 지역을 직접 선택했을 때: 입력값 반영 + 드롭다운 닫기 +
+    // debounce 없이 바로 재렌더(명시적으로 고른 액션이므로).
+    window.selectRegionOption = function(region) {
+        userManuallySetRegion = true;
+        document.getElementById('rfRegionFilter').value = region;
+        document.getElementById('rfRegionDropdown').hidden = true;
+        if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
+    };
+
+    // 드롭다운 바깥을 클릭하면 닫음. 탭이 다시 열릴 때마다 스크립트가 재실행되므로
+    // 이전 리스너를 지우고 새로 등록해 document에 리스너가 계속 쌓이지 않게 함.
+    if (window.__rfOutsideClickHandler) {
+        document.removeEventListener('click', window.__rfOutsideClickHandler);
+    }
+    window.__rfOutsideClickHandler = function(e) {
+        const dropdown = document.getElementById('rfRegionDropdown');
+        const input = document.getElementById('rfRegionFilter');
+        if (!dropdown || !input || dropdown.hidden) return;
+        if (e.target === input || dropdown.contains(e.target)) return;
+        dropdown.hidden = true;
+    };
+    document.addEventListener('click', window.__rfOutsideClickHandler);
 
     function getDistanceKm(lat1, lng1, lat2, lng2) {
         const R = 6371;
@@ -359,6 +421,7 @@
         document.getElementById('rf-ranking-filters').style.display = mode === 'ranking' ? 'flex' : 'none';
         document.getElementById('rf-ranking-view').style.display = mode === 'ranking' ? '' : 'none';
         document.getElementById('rf-feed-view').style.display = mode === 'feed' ? '' : 'none';
+        document.getElementById('rfRegionDropdown').hidden = true;
 
         if (mode === 'ranking') {
             stopFeedListener();
@@ -379,6 +442,7 @@
     // 다시 걸러 그림. 타이핑 중 매 keystroke마다 다시 그리지 않도록 살짝 debounce.
     window.onRegionFilterInput = function() {
         userManuallySetRegion = true;
+        renderRegionDropdown(document.getElementById('rfRegionFilter').value.trim());
         clearTimeout(regionInputDebounceTimer);
         regionInputDebounceTimer = setTimeout(() => {
             if (lastCounts && lastMetaList) renderRankingList(lastCounts, lastMetaList);
