@@ -1677,6 +1677,18 @@
         return Array.from(list.querySelectorAll('.edit-day-chip.checked')).map(el => el.dataset.day);
     }
 
+    // 대부분의 구내식당·한식뷔페가 평일에만 여는 경우가 많아, 매번 5번씩
+    // 체크하는 수고를 덜어주려고 월~금을 기본으로 체크해둠(토/일은 비움).
+    // 아닌 경우엔 직접 눌러서 조정하면 됨.
+    const DEFAULT_EDIT_DAYS = ['월', '화', '수', '목', '금'];
+    function applyDefaultEditDays() {
+        const list = document.getElementById('editDaysList');
+        if (!list) return;
+        list.querySelectorAll('.edit-day-chip').forEach(el => {
+            el.classList.toggle('checked', DEFAULT_EDIT_DAYS.includes(el.dataset.day));
+        });
+    }
+
     // 폐업 제보 체크박스를 켜야만 참고 메모 입력칸을 쓸 수 있게 함(체크 안
     // 하면 비활성화 + 비움 — 실수로 메모만 채운 채 제출하는 걸 방지).
     window.onEditClosedToggle = function() {
@@ -1698,12 +1710,7 @@
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        const daysList = document.getElementById('editDaysList');
-        if (daysList) {
-            daysList.querySelectorAll('.edit-day-chip').forEach(el => {
-                el.classList.remove('checked');
-            });
-        }
+        applyDefaultEditDays();
         const check = document.getElementById('editClosedCheck');
         if (check) check.checked = false;
         const note = document.getElementById('editClosedNote');
@@ -1765,9 +1772,7 @@
             ['editPrice', 'editHours', 'editMenuUrl', 'editClosedNote'].forEach(id => {
                 document.getElementById(id).value = '';
             });
-            document.getElementById('editDaysList').querySelectorAll('.edit-day-chip').forEach(el => {
-                el.classList.remove('checked');
-            });
+            applyDefaultEditDays();
             document.getElementById('editClosedCheck').checked = false;
             document.getElementById('editClosedNote').disabled = true;
             msgEl.innerHTML = '<div class="review-cooldown-msg success">제출 완료! 확인 후 반영돼요. 감사합니다 🙏</div>';
