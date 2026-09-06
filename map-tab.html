@@ -150,6 +150,31 @@
     /* 한줄평 입력행: 닉네임을 윗줄 전체 너비로, 내용+등록 버튼은 아랫줄에 배치
        (닉네임+내용+버튼이 한 줄에 다 들어가면 좁아서 서로 겹쳐 보이던 문제 수정) */
     .review-input-stacked { flex-direction: column; align-items: stretch; }
+
+    /* 정보 수정 제안: 평소엔 접혀 있다가 펼치면 가격/영업시간/URL/폐업 제보를
+       한 화면에서 다 채우고 한 번에 제출하는 방식 */
+    .edit-suggest-header { cursor: pointer; user-select: none; justify-content: space-between; }
+    .edit-suggest-toggle-btn { font-size: 0.78em; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 3px; }
+    .edit-suggest-chevron { display: inline-block; transition: transform 0.2s ease; }
+    .edit-suggest-chevron.open { transform: rotate(180deg); }
+    .edit-suggest-body { margin-top: 12px; }
+    .edit-field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .edit-field-row label { flex: 0 0 76px; font-size: 0.82em; font-weight: 700; color: var(--text-secondary); }
+    .edit-field-row label.checkbox-label { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .edit-field-row input[type="text"] {
+        flex: 1; min-width: 0; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border-light);
+        background: var(--bg-app); color: var(--text-primary); font-size: 0.85em;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif; outline: none; box-sizing: border-box; transition: all 0.15s;
+    }
+    .edit-field-row input[type="text"]:disabled { opacity: 0.5; }
+    .edit-field-row input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    body.dark-theme .edit-field-row input[type="text"]:focus { box-shadow: 0 0 0 3px rgba(75, 147, 255, 0.2); }
+    .edit-suggest-submit-btn {
+        width: 100%; margin-top: 4px; padding: 10px; border-radius: 10px; border: none;
+        background: var(--primary); color: #fff; font-weight: 800; font-size: 0.88em; cursor: pointer;
+        font-family: 'Pretendard', 'Noto Sans KR', sans-serif; transition: opacity 0.15s;
+    }
+    .edit-suggest-submit-btn:hover { opacity: 0.88; }
     .review-input-stacked input#reviewNickname { flex: none; width: 100%; }
     .review-input-bottom { display: flex; gap: 6px; width: 100%; box-sizing: border-box; }
     .review-input-bottom input { flex: 1; min-width: 0; }
@@ -345,19 +370,32 @@
             </div>
             <!-- SNS 버튼 영역 -->
             <div id="snsArea" class="plp-popup-sns" style="margin-top:20px;"></div>
-            <!-- 정보 수정 제안 섹션: 바로 반영되지 않고 pendingEdits에 쌓여 운영자가 검토 후 반영 -->
+            <!-- 정보 수정 제안 섹션: 평소엔 접혀 있다가 펼치면 항목을 한 번에 채워
+                 제출. 바로 반영되지 않고 pendingEdits에 쌓여 운영자가 검토 후 반영 -->
             <div class="review-section">
-                <div class="review-section-title">✏️ 정보 수정 제안</div>
-                <div style="font-size:0.78em; color: var(--text-secondary); margin: -4px 0 10px;">영업시간·가격·식단표가 실제와 다른가요? 폐업한 곳이라면 폐업 제보도 가능해요.</div>
-                <div class="review-input-row">
-                    <select id="editField" onchange="onEditFieldChange()">
-                        <option value="hours">영업시간</option>
-                        <option value="price">가격</option>
-                        <option value="menuUrl">식단표 URL</option>
-                        <option value="closed">폐업 제보</option>
-                    </select>
-                    <input type="text" id="editValue" placeholder="수정할 내용 입력" maxlength="150" style="flex: 1; min-width: 0;">
-                    <button onclick="submitEditSuggestion()">제출</button>
+                <div class="review-section-title edit-suggest-header" onclick="toggleEditSuggest()">
+                    <span>✏️ 정보 수정 제안</span>
+                    <span class="edit-suggest-toggle-btn"><span id="editSuggestLabel">펼치기</span><span id="editSuggestChevron" class="edit-suggest-chevron">▾</span></span>
+                </div>
+                <div id="editSuggestBody" class="edit-suggest-body" hidden>
+                    <div style="font-size:0.78em; color: var(--text-secondary); margin: -2px 0 10px;">바뀐 항목만 적고 한 번에 제출해주세요. 폐업한 곳이면 폐업 제보만 체크해도 돼요.</div>
+                    <div class="edit-field-row">
+                        <label>가격</label>
+                        <input type="text" id="editPrice" placeholder="예: 8000원" maxlength="50">
+                    </div>
+                    <div class="edit-field-row">
+                        <label>영업시간</label>
+                        <input type="text" id="editHours" placeholder="예: 11:30~14:00" maxlength="80">
+                    </div>
+                    <div class="edit-field-row">
+                        <label>식단표 URL</label>
+                        <input type="text" id="editMenuUrl" placeholder="사진/URL 붙여넣기" maxlength="150">
+                    </div>
+                    <div class="edit-field-row">
+                        <label class="checkbox-label"><input type="checkbox" id="editClosedCheck" onchange="onEditClosedToggle()"> 폐업 제보</label>
+                        <input type="text" id="editClosedNote" placeholder="(선택) 참고 내용" maxlength="150" disabled>
+                    </div>
+                    <button class="edit-suggest-submit-btn" onclick="submitEditSuggestion()">제출</button>
                 </div>
                 <div id="editCooldownMsg"></div>
             </div>
@@ -997,8 +1035,7 @@
         document.getElementById('reviewInput').value = '';
         prefillReviewNickname();
         document.getElementById('reviewCooldownMsg').innerHTML = '';
-        document.getElementById('editValue').value = '';
-        document.getElementById('editCooldownMsg').innerHTML = '';
+        resetEditSuggestForm();
         document.getElementById('detail-panel').classList.add('open');
     }
 
@@ -1570,37 +1607,78 @@
     // 쌓아두기만 함 — 운영자가 나중에 export-pending-edits.js로 모아 확인 후
     // 반영(tools/clear-pending-edits.js로 정리). 한줄평과 같은 쿨다운 길이를
     // 쓰되, 별도 키로 관리해 한줄평 작성과 서로 방해하지 않게 함.
+    //
+    // 평소엔 접혀 있다가 펼치면 가격/영업시간/URL/폐업 제보를 한 화면에서
+    // 다 채우고 제출 버튼 한 번으로 보내는 방식(항목마다 드롭다운을 새로
+    // 고르던 예전 방식 대신). 채워진 항목만 골라 각각 pendingEdits 문서로
+    // 저장 — export-pending-edits.js의 "식당×필드" 그룹핑 로직은 그대로
+    // 재사용 가능(문서 하나=필드 하나 구조는 안 바뀜).
     const EDIT_COOLDOWN_KEY = 'woody_edit_cooldown';
 
-    // "폐업 제보"는 고칠 값이 따로 없는 항목이라 다른 필드와 달리 입력칸을
-    // 선택 사항으로 바꿔줌 — 드롭다운을 바꿀 때마다 안내 문구/placeholder를
-    // 맞게 갱신.
-    window.onEditFieldChange = function() {
-        const fieldSel = document.getElementById('editField');
-        const valueInput = document.getElementById('editValue');
-        if (!fieldSel || !valueInput) return;
-        if (fieldSel.value === 'closed') {
-            valueInput.placeholder = '(선택) 참고할 내용이 있으면 적어주세요';
-        } else {
-            valueInput.placeholder = '수정할 내용 입력';
-        }
+    window.toggleEditSuggest = function() {
+        const body = document.getElementById('editSuggestBody');
+        const label = document.getElementById('editSuggestLabel');
+        const chevron = document.getElementById('editSuggestChevron');
+        if (!body) return;
+        const willOpen = body.hidden;
+        body.hidden = !willOpen;
+        if (label) label.textContent = willOpen ? '접기' : '펼치기';
+        if (chevron) chevron.classList.toggle('open', willOpen);
     };
+
+    // 폐업 제보 체크박스를 켜야만 참고 메모 입력칸을 쓸 수 있게 함(체크 안
+    // 하면 비활성화 + 비움 — 실수로 메모만 채운 채 제출하는 걸 방지).
+    window.onEditClosedToggle = function() {
+        const check = document.getElementById('editClosedCheck');
+        const note = document.getElementById('editClosedNote');
+        if (!check || !note) return;
+        note.disabled = !check.checked;
+        if (!check.checked) note.value = '';
+    };
+
+    function resetEditSuggestForm() {
+        const body = document.getElementById('editSuggestBody');
+        const label = document.getElementById('editSuggestLabel');
+        const chevron = document.getElementById('editSuggestChevron');
+        if (body) body.hidden = true;
+        if (label) label.textContent = '펼치기';
+        if (chevron) chevron.classList.remove('open');
+        ['editPrice', 'editHours', 'editMenuUrl', 'editClosedNote'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const check = document.getElementById('editClosedCheck');
+        if (check) check.checked = false;
+        const note = document.getElementById('editClosedNote');
+        if (note) note.disabled = true;
+        document.getElementById('editCooldownMsg').innerHTML = '';
+    }
 
     window.submitEditSuggestion = async function() {
         if (currentDetailId === null || !db) return;
-        const fieldSel = document.getElementById('editField');
-        const valueInput = document.getElementById('editValue');
         const msgEl = document.getElementById('editCooldownMsg');
-        const field = fieldSel.value;
-        let value = valueInput.value.trim();
 
-        // 폐업 제보는 값 입력이 필수가 아님 — 비워두면 "폐업"으로 채워서 제출
-        if (field === 'closed') {
-            if (!value) value = '폐업';
-        } else if (!value) {
+        const priceVal = document.getElementById('editPrice').value.trim();
+        const hoursVal = document.getElementById('editHours').value.trim();
+        const menuUrlVal = document.getElementById('editMenuUrl').value.trim();
+        const closedChecked = document.getElementById('editClosedCheck').checked;
+        const closedNote = document.getElementById('editClosedNote').value.trim();
+
+        // 채워진 항목만 골라 각각 하나의 제보로 취급 — 아무것도 안 채웠으면 제출 안 함
+        const entries = [];
+        if (priceVal) entries.push({ field: 'price', value: priceVal });
+        if (hoursVal) entries.push({ field: 'hours', value: hoursVal });
+        if (menuUrlVal) entries.push({ field: 'menuUrl', value: menuUrlVal });
+        if (closedChecked) entries.push({ field: 'closed', value: closedNote || '폐업' });
+
+        if (entries.length === 0) {
+            msgEl.innerHTML = '<div class="review-cooldown-msg">수정할 내용을 하나 이상 입력해주세요.</div>';
             return;
         }
-        if (value.length > 150) { alert('수정 제안 내용은 150자 이내로 작성해 주세요.'); return; }
+        if (entries.some(e => e.value.length > 150)) {
+            alert('한 항목은 150자 이내로 작성해 주세요.');
+            return;
+        }
 
         const lastTime = parseInt(localStorage.getItem(EDIT_COOLDOWN_KEY) || '0');
         const now = Date.now();
@@ -1618,12 +1696,18 @@
         msgEl.innerHTML = '<div style="font-size:0.78em; color: var(--primary); margin-top:4px;">제출 중... ✏️</div>';
 
         try {
-            const editDoc = { field, value, submittedAt: window.fsServerTimestamp() };
-            if (nickname) editDoc.nickname = nickname;
-            await window.fsAddDoc(window.fsCollection(db, `restaurants/${currentDetailId}/pendingEdits`), editDoc);
+            for (const entry of entries) {
+                const editDoc = { field: entry.field, value: entry.value, submittedAt: window.fsServerTimestamp() };
+                if (nickname) editDoc.nickname = nickname;
+                await window.fsAddDoc(window.fsCollection(db, `restaurants/${currentDetailId}/pendingEdits`), editDoc);
+            }
 
             localStorage.setItem(EDIT_COOLDOWN_KEY, String(now));
-            valueInput.value = '';
+            ['editPrice', 'editHours', 'editMenuUrl', 'editClosedNote'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('editClosedCheck').checked = false;
+            document.getElementById('editClosedNote').disabled = true;
             msgEl.innerHTML = '<div class="review-cooldown-msg success">제출 완료! 확인 후 반영돼요. 감사합니다 🙏</div>';
             setTimeout(() => {
                 if (msgEl.innerHTML.includes('제출 완료')) msgEl.innerHTML = '';
