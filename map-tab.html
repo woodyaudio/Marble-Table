@@ -163,17 +163,18 @@
     .edit-field-row label { flex: 0 0 76px; font-size: 0.82em; font-weight: 700; color: var(--text-secondary); }
     .edit-field-row label.checkbox-label { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
     .edit-days-list { flex: 1; display: flex; gap: 4px; min-width: 0; }
-    /* ⚠️ .edit-day-chip도 <label>이라 위 ".edit-field-row label" 규칙(flex: 0 0 76px)에
-       같이 걸림 — 그 규칙보다 명시도가 높은 선택자로 덮어써야 flex:1이 실제로 적용됨
-       (그냥 .edit-day-chip만 쓰면 명시도가 낮아 무시당해 요일 칩 7개가 좁은 고정폭으로
-       찌그러져 넘치는 버그가 있었음). */
-    .edit-field-row label.edit-day-chip {
+    /* 예전엔 <label>+숨긴 체크박스 조합이었는데, 체크박스를 width/height:0으로
+       숨기는 패턴이 일부 모바일 브라우저에서 label 클릭이 체크박스로 제대로
+       전달 안 돼 탭해도 반응 없는 문제가 있었음(폼 컨트롤 없이 그냥 div를
+       직접 탭하는 방식으로 바꿔서 이 문제 자체를 없앰 — 앱의 다른 토글
+       버튼들(.mode-btn 등)과 동일한 방식). */
+    .edit-day-chip {
         flex: 1; display: flex; align-items: center; justify-content: center;
         padding: 8px 0; border-radius: 8px; border: 1px solid var(--border-light);
         background: var(--bg-app); color: var(--text-secondary);
         font-size: 0.78em; font-weight: 700; cursor: pointer; user-select: none; transition: all 0.15s;
+        -webkit-tap-highlight-color: transparent;
     }
-    .edit-day-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
     .edit-day-chip.checked { background: var(--primary); border-color: var(--primary); color: #fff; }
     .edit-field-row input[type="text"] {
         flex: 1; min-width: 0; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border-light);
@@ -404,13 +405,13 @@
                     <div class="edit-field-row">
                         <label>영업 요일</label>
                         <div class="edit-days-list" id="editDaysList">
-                            <label class="edit-day-chip"><input type="checkbox" value="월" onchange="onEditDayToggle(this)">월</label>
-                            <label class="edit-day-chip"><input type="checkbox" value="화" onchange="onEditDayToggle(this)">화</label>
-                            <label class="edit-day-chip"><input type="checkbox" value="수" onchange="onEditDayToggle(this)">수</label>
-                            <label class="edit-day-chip"><input type="checkbox" value="목" onchange="onEditDayToggle(this)">목</label>
-                            <label class="edit-day-chip"><input type="checkbox" value="금" onchange="onEditDayToggle(this)">금</label>
-                            <label class="edit-day-chip"><input type="checkbox" value="토" onchange="onEditDayToggle(this)">토</label>
-                            <label class="edit-day-chip"><input type="checkbox" value="일" onchange="onEditDayToggle(this)">일</label>
+                            <div class="edit-day-chip" data-day="월" onclick="onEditDayChipClick(this)">월</div>
+                            <div class="edit-day-chip" data-day="화" onclick="onEditDayChipClick(this)">화</div>
+                            <div class="edit-day-chip" data-day="수" onclick="onEditDayChipClick(this)">수</div>
+                            <div class="edit-day-chip" data-day="목" onclick="onEditDayChipClick(this)">목</div>
+                            <div class="edit-day-chip" data-day="금" onclick="onEditDayChipClick(this)">금</div>
+                            <div class="edit-day-chip" data-day="토" onclick="onEditDayChipClick(this)">토</div>
+                            <div class="edit-day-chip" data-day="일" onclick="onEditDayChipClick(this)">일</div>
                         </div>
                     </div>
                     <div class="edit-field-row">
@@ -1663,17 +1664,17 @@
         if (chevron) chevron.classList.toggle('open', willOpen);
     };
 
-    // 영업 요일 칩(월~일) 체크박스는 시각적으로 숨기고 감싼 label에 .checked
-    // 클래스를 토글해 색을 바꿈 — 다른 토글 버튼들과 동일한 방식.
-    window.onEditDayToggle = function(checkboxEl) {
-        if (!checkboxEl) return;
-        checkboxEl.parentElement.classList.toggle('checked', checkboxEl.checked);
+    // 영업 요일 칩(월~일) — 체크박스 없이 그냥 div를 직접 탭해서 .checked
+    // 클래스만 토글(다른 토글 버튼들과 동일한 방식).
+    window.onEditDayChipClick = function(el) {
+        if (!el) return;
+        el.classList.toggle('checked');
     };
 
     function getCheckedEditDays() {
         const list = document.getElementById('editDaysList');
         if (!list) return [];
-        return Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.value);
+        return Array.from(list.querySelectorAll('.edit-day-chip.checked')).map(el => el.dataset.day);
     }
 
     // 폐업 제보 체크박스를 켜야만 참고 메모 입력칸을 쓸 수 있게 함(체크 안
@@ -1699,9 +1700,8 @@
         });
         const daysList = document.getElementById('editDaysList');
         if (daysList) {
-            daysList.querySelectorAll('input[type="checkbox"]').forEach(el => {
-                el.checked = false;
-                el.parentElement.classList.remove('checked');
+            daysList.querySelectorAll('.edit-day-chip').forEach(el => {
+                el.classList.remove('checked');
             });
         }
         const check = document.getElementById('editClosedCheck');
@@ -1765,9 +1765,8 @@
             ['editPrice', 'editHours', 'editMenuUrl', 'editClosedNote'].forEach(id => {
                 document.getElementById(id).value = '';
             });
-            document.getElementById('editDaysList').querySelectorAll('input[type="checkbox"]').forEach(el => {
-                el.checked = false;
-                el.parentElement.classList.remove('checked');
+            document.getElementById('editDaysList').querySelectorAll('.edit-day-chip').forEach(el => {
+                el.classList.remove('checked');
             });
             document.getElementById('editClosedCheck').checked = false;
             document.getElementById('editClosedNote').disabled = true;
