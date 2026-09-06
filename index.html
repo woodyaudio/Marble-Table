@@ -106,10 +106,13 @@
             border: 1px solid var(--border-light);
             background: var(--bg-app); font-size: 0.75em; cursor: pointer;
             text-align: center; text-align-last: center; display: flex; align-items: center; justify-content: center;
+            gap: 4px;
             min-height: 36px; white-space: nowrap; font-weight: 700;
             color: var(--text-secondary); transition: all 0.15s ease;
             font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
         }
+        #persistent-left-panel .filter-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+        #persistent-left-panel #plp-locate-btn svg { width: 18px; height: 18px; }
         #persistent-left-panel .filter-item:hover { background-color: var(--bg-panel); color: var(--text-primary); border-color: var(--text-primary); }
         #persistent-left-panel .filter-item:focus { outline: none; border-color: var(--text-primary); }
         #persistent-left-panel select.filter-item {
@@ -127,7 +130,12 @@
         #persistent-left-panel #plpRegionFilter,
         #persistent-left-panel #plpSortToggle { flex: 1.2; }
         #persistent-left-panel #plpDinnerToggle { flex: 0.75; font-size: 0.7em; padding: 7px 4px; }
+        #persistent-left-panel #plpSortToggle,
+        #persistent-left-panel #plpDinnerToggle { color: var(--text-primary); }
         #persistent-left-panel .home-inline-btn { flex: 0.5; font-size: 1.1em; }
+        #persistent-left-panel #plp-home-btn svg { width: 20px; height: 20px; }
+        #persistent-left-panel #plp-home-btn { background: var(--primary); border-color: var(--primary); }
+        #persistent-left-panel #plp-home-btn:hover { background: var(--primary); border-color: var(--primary); opacity: 0.85; }
         #persistent-left-panel #plp-list-scroll { flex: 1; overflow-y: auto; padding: 4px 12px 20px; }
         #persistent-left-panel #plp-list-scroll::-webkit-scrollbar { width: 4px; }
         #persistent-left-panel #plp-list-scroll::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
@@ -488,12 +496,12 @@
                 <select id="plpRegionFilter" class="filter-item" onchange="plpFilterData()">
                     <option value="all">지역 전체</option>
                 </select>
-                <div id="plpSortToggle" class="filter-item" onclick="plpToggleSort()">📍 거리순</div>
-                <div id="plpDinnerToggle" class="filter-item" onclick="plpToggleDinner()">🌙 석식</div>
-                <div id="plp-locate-btn" class="filter-item home-inline-btn" onclick="plpMoveToGPS()" title="현재 위치" style="display:flex; align-items:center; justify-content:center;">
-                    <div style="width:14px; height:14px; background:var(--primary); border-radius:50%; border:2px solid var(--bg-surface); outline:1px solid var(--primary);"></div>
+                <div id="plpSortToggle" class="filter-item" onclick="plpToggleSort()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.3 0-6 2.7-6 6 0 4.5 6 12 6 12s6-7.5 6-12c0-3.3-2.7-6-6-6Z"/><circle cx="12" cy="9" r="2.2"/></svg>거리순</div>
+                <div id="plpDinnerToggle" class="filter-item" onclick="plpToggleDinner()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>석식</div>
+                <div id="plp-locate-btn" class="filter-item home-inline-btn" onclick="plpMoveToGPS()" title="현재 위치">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3" fill="var(--primary)" stroke="none"/><circle cx="12" cy="12" r="7.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/></svg>
                 </div>
-                <div id="plp-home-btn" class="filter-item home-inline-btn" onclick="plpGoHome()">🏠</div>
+                <div id="plp-home-btn" class="filter-item home-inline-btn" onclick="plpGoHome()"><svg viewBox="0 0 24 24"><path d="M12 3 L20 11 L4 11 Z" fill="#fff"/><rect x="5" y="10.5" width="14" height="10.5" fill="#fff"/><rect x="15" y="2.2" width="2.2" height="5.3" rx="0.3" fill="#fff"/><rect x="7.6" y="13" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/><rect x="13.6" y="13" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/><rect x="7.6" y="17" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/><rect x="13.6" y="17" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/></svg></div>
             </div>
         </div>
         <div id="plp-list-scroll"><div id="plpRestaurantCards"><div style="padding:20px; text-align:center; color:#94a3b8; font-size:0.85em;">불러오는 중...</div></div></div>
@@ -806,13 +814,16 @@
                 : '');
         };
 
+        const PLP_ICON_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.3 0-6 2.7-6 6 0 4.5 6 12 6 12s6-7.5 6-12c0-3.3-2.7-6-6-6Z"/><circle cx="12" cy="9" r="2.2"/></svg>';
+        const PLP_ICON_FLAME = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 2.6-1.6 3.8-1.6 6.6a3.6 3.6 0 0 0 7.2 0c0-.9-.4-1.7-.9-2.5.9 0 1.8 1.7 1.8 4.4a6.3 6.3 0 1 1-12.6 0c0-3.6 2.7-5.4 3.6-8.1.4.9.9 1.8 2.5 0Z"/></svg>';
+
         window.plpToggleDinner = function() {
             const b = document.getElementById('plpDinnerToggle');
             b.classList.toggle('active');
             if (b.classList.contains('active')) {
-                b.style.background = 'var(--text-primary)';
-                b.style.color = 'var(--bg-app)';
-                b.style.borderColor = 'var(--text-primary)';
+                b.style.background = 'var(--primary)';
+                b.style.color = '#fff';
+                b.style.borderColor = 'var(--primary)';
             } else {
                 b.style.background = 'var(--bg-surface)';
                 b.style.color = 'var(--text-primary)';
@@ -825,15 +836,15 @@
             const b = document.getElementById('plpSortToggle');
             b.classList.toggle('active');
             if (b.classList.contains('active')) {
-                b.style.background = 'var(--text-primary)';
-                b.style.color = 'var(--bg-app)';
-                b.style.borderColor = 'var(--text-primary)';
-                b.innerText = '🔥 인기순';
+                b.style.background = 'var(--primary)';
+                b.style.color = '#fff';
+                b.style.borderColor = 'var(--primary)';
+                b.innerHTML = PLP_ICON_FLAME + '인기순';
             } else {
                 b.style.background = 'var(--bg-surface)';
                 b.style.color = 'var(--text-primary)';
                 b.style.borderColor = 'var(--border-light)';
-                b.innerText = '📍 거리순';
+                b.innerHTML = PLP_ICON_PIN + '거리순';
             }
             plpFilterData();
         };
@@ -950,7 +961,9 @@
                     : Infinity;
                 showCompany = distCompany < distHome;
             }
-            btn.innerText = showCompany ? '🏢' : '🏠';
+            const houseIcon = '<svg viewBox="0 0 24 24"><path d="M12 3 L20 11 L4 11 Z" fill="#fff"/><rect x="5" y="10.5" width="14" height="10.5" fill="#fff"/><rect x="15" y="2.2" width="2.2" height="5.3" rx="0.3" fill="#fff"/><rect x="7.6" y="13" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/><rect x="13.6" y="13" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/><rect x="7.6" y="17" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/><rect x="13.6" y="17" width="2.8" height="2.8" rx="0.4" fill="var(--primary)"/></svg>';
+            const buildingIcon = '<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="1.5" fill="#fff"/><rect x="7.7" y="6.4" width="2.6" height="2.6" rx="0.4" fill="var(--primary)"/><rect x="13.7" y="6.4" width="2.6" height="2.6" rx="0.4" fill="var(--primary)"/><rect x="7.7" y="10" width="2.6" height="2.6" rx="0.4" fill="var(--primary)"/><rect x="13.7" y="10" width="2.6" height="2.6" rx="0.4" fill="var(--primary)"/><rect x="7.7" y="13.6" width="2.6" height="2.6" rx="0.4" fill="var(--primary)"/><rect x="13.7" y="13.6" width="2.6" height="2.6" rx="0.4" fill="var(--primary)"/><rect x="10" y="17.2" width="4" height="3.3" rx="0.6" fill="var(--primary)"/></svg>';
+            btn.innerHTML = showCompany ? buildingIcon : houseIcon;
         };
 
         const isMobile = () => window.innerWidth <= 768;

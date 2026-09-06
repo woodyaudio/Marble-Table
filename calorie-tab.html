@@ -19,13 +19,28 @@
     }
     .rf-title {
         font-family: 'Nunito', sans-serif;
-        font-size: 1.4rem;
+        font-size: 1.55rem;
         font-weight: 900;
+        color: var(--text-primary);
         letter-spacing: -0.5px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
     }
+    .rf-title-icon {
+        width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+        background: var(--primary-light, #EBF3FE); color: var(--primary, #3182F6);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .rf-title-icon svg { width: 22px; height: 22px; }
+    .mode-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+    .mode-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .rf-search-wrap { position: relative; flex: 1; }
+    .rf-search-wrap svg {
+        position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+        width: 14px; height: 14px; color: var(--text-secondary); pointer-events: none;
+    }
+    .rf-search-wrap .rf-select { width: 100%; padding-left: 30px; }
 
     /* 모드/기간 토글 (game-tab.html의 .mode-toggle 패턴 재사용) */
     .mode-toggle {
@@ -53,9 +68,9 @@
         white-space: nowrap;
     }
     .mode-btn.active {
-        background: var(--text-primary);
-        color: var(--bg-app);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(49,130,246,0.35);
     }
     .period-toggle { max-width: 220px; padding: 3px; }
     .period-btn { padding: 7px 0; font-size: 0.78rem; }
@@ -174,10 +189,10 @@
 
 <div id="rankfeed-container">
     <div class="rf-header">
-        <div class="rf-title">🏆 랭킹 · 피드</div>
+        <div class="rf-title"><span class="rf-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a2 2 0 0 0 0 4h1M17 6h3a2 2 0 0 1 0 4h-1"/></svg></span>랭킹 · 피드</div>
         <div class="mode-toggle">
-            <button class="mode-btn active" id="rfBtnRanking" onclick="setRankFeedMode('ranking')">🔥 랭킹</button>
-            <button class="mode-btn" id="rfBtnFeed" onclick="setRankFeedMode('feed')">💬 피드</button>
+            <button class="mode-btn active" id="rfBtnRanking" onclick="setRankFeedMode('ranking')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 2.6-1.6 3.8-1.6 6.6a3.6 3.6 0 0 0 7.2 0c0-.9-.4-1.7-.9-2.5.9 0 1.8 1.7 1.8 4.4a6.3 6.3 0 1 1-12.6 0c0-3.6 2.7-5.4 3.6-8.1.4.9.9 1.8 2.5 0Z"/></svg>랭킹</button>
+            <button class="mode-btn" id="rfBtnFeed" onclick="setRankFeedMode('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg>피드</button>
         </div>
 
         <!-- 랭킹 전용 필터 -->
@@ -187,9 +202,12 @@
                 <button class="mode-btn period-btn" id="rfPeriodWeek" onclick="setRankPeriod('week')">이번 주</button>
             </div>
             <div class="rf-filter-row">
-                <input type="text" id="rfRegionFilter" class="rf-select"
-                       placeholder="🔍 지역 검색" autocomplete="off"
-                       oninput="onRegionFilterInput()" onfocus="onRegionFilterFocus()">
+                <div class="rf-search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="rfRegionFilter" class="rf-select"
+                           placeholder="지역 검색" autocomplete="off"
+                           oninput="onRegionFilterInput()" onfocus="onRegionFilterFocus()">
+                </div>
                 <div id="rfRegionDropdown" class="rf-region-dropdown" hidden></div>
             </div>
         </div>
