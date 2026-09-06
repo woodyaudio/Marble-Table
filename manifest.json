@@ -1,0 +1,14 @@
+{
+  "name": "맛쩜 - 구내식당·한식뷔페 지도",
+  "short_name": "맛쩜",
+  "description": "구내식당·한식뷔페 지도",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F4F6",
+  "theme_color": "#3182F6",
+  "icons": [
+    { "src": "Image/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "Image/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

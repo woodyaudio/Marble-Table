@@ -1,10 +1,11 @@
 {
   "name": "marble-table",
   "private": true,
-  "description": "정적 웹사이트. puppeteer는 로컬 콘솔 디버깅 스크립트(test_console.js)용, xlsx는 식당 데이터 일괄 수집 스크립트(tools/fetch-restaurants.js)에서 기존 data/restaurants.xlsx 중복 확인용으로만 사용됩니다. (npm 레지스트리의 xlsx는 알려진 취약점 때문에 SheetJS 공식 CDN 배포본을 씁니다.) firebase-admin은 관리자 전용 스크립트(tools/export-pending-edits.js, tools/clear-pending-edits.js)에서 서비스 계정 키로 Firestore에 직접 접근할 때만 사용됩니다.",
+  "description": "정적 웹사이트. puppeteer는 로컬 콘솔 디버깅 스크립트(test_console.js)용, xlsx는 식당 데이터 일괄 수집 스크립트(tools/fetch-restaurants.js)에서 기존 data/restaurants.xlsx 중복 확인용으로만 사용됩니다. (npm 레지스트리의 xlsx는 알려진 취약점 때문에 SheetJS 공식 CDN 배포본을 씁니다.) firebase-admin은 관리자 전용 스크립트(tools/export-pending-edits.js, tools/clear-pending-edits.js)에서 서비스 계정 키로 Firestore에 직접 접근할 때만 사용됩니다. sharp는 favicon SVG를 홈 화면 아이콘용 PNG(Image/icons/)로 한 번 변환해두는 용도로만 썼습니다(런타임에는 안 씀).",
   "devDependencies": {
     "firebase-admin": "^12.7.0",
     "puppeteer": "^25.3.0",
+    "sharp": "^0.35.4",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
