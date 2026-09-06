@@ -972,6 +972,7 @@
         // 한줄평 로드
         loadReviews(id);
         document.getElementById('reviewInput').value = '';
+        prefillReviewNickname();
         document.getElementById('reviewCooldownMsg').innerHTML = '';
         document.getElementById('editValue').value = '';
         document.getElementById('editCooldownMsg').innerHTML = '';
@@ -1330,6 +1331,41 @@
     const COOLDOWN_MS = 60000; // 1분 쿨타임
     let currentDetailId = null;
 
+    // ----- 랜덤 닉네임 (형용사 + 명사) -----
+    // 닉네임 입력 부담을 줄이기 위한 기본값. 페이지를 새로고침할 때마다 다른
+    // 조합이 나오지만, 같은 세션 안에서 여러 식당에 리뷰를 남길 땐 같은
+    // 닉네임을 유지함(새로고침 전까진 안 바뀜). 직접 자기만의 닉네임으로
+    // 고쳐서 한 번 제출하면 그 값을 기억해뒀다가 다음 방문부터 계속 씀.
+    const NICK_ADJECTIVES = ['행복한','즐거운','신나는','든든한','다정한','명랑한','상큼한','활기찬','씩씩한','느긋한','설레는','유쾌한'];
+    const NICK_NOUNS = ['너구리','오리','다람쥐','고양이','강아지','토끼','펭귄','수달','여우','사자','하마','판다'];
+    const CUSTOM_NICK_KEY = 'woody_custom_nickname';
+    let sessionRandomNickname = null; // 새로고침 전까지 세션 내에서 고정
+    let nicknameIsRandomPlaceholder = false; // 지금 입력칸 값이 (아직 안 건드린) 랜덤값인지
+
+    function getSessionRandomNickname() {
+        if (!sessionRandomNickname) {
+            const adj = NICK_ADJECTIVES[Math.floor(Math.random() * NICK_ADJECTIVES.length)];
+            const noun = NICK_NOUNS[Math.floor(Math.random() * NICK_NOUNS.length)];
+            sessionRandomNickname = `${adj} ${noun}`;
+        }
+        return sessionRandomNickname;
+    }
+
+    // 식당 상세가 열릴 때마다 호출 — 저장된 내 닉네임이 있으면 그걸, 없으면
+    // 이번 세션의 랜덤 닉네임을 입력칸에 채워둠
+    function prefillReviewNickname() {
+        const nickInput = document.getElementById('reviewNickname');
+        if (!nickInput) return;
+        const saved = localStorage.getItem(CUSTOM_NICK_KEY);
+        if (saved) {
+            nickInput.value = saved;
+            nicknameIsRandomPlaceholder = false;
+        } else {
+            nickInput.value = getSessionRandomNickname();
+            nicknameIsRandomPlaceholder = true;
+        }
+    }
+
     window.loadReviews = function(restaurantId) {
         currentDetailId = restaurantId;
         const listEl = document.getElementById('reviewList');
@@ -1455,6 +1491,17 @@
             localStorage.setItem(COOLDOWN_KEY, String(now));
             input.value = '';
             // 닉네임은 다음 작성 편의를 위해 초기화하지 않습니다
+
+            // 랜덤으로 채워졌던 닉네임을 직접 고쳐서 제출했다면, 그걸 "내 닉네임"으로
+            // 기억해뒀다가 다음 방문부턴 랜덤 대신 계속 이 닉네임을 씀
+            if (nicknameIsRandomPlaceholder && nickname !== sessionRandomNickname) {
+                localStorage.setItem(CUSTOM_NICK_KEY, nickname);
+                nicknameIsRandomPlaceholder = false;
+            } else if (!nicknameIsRandomPlaceholder && nickname !== localStorage.getItem(CUSTOM_NICK_KEY)) {
+                // 이미 저장된 내 닉네임을 다시 고친 경우도 최신값으로 갱신
+                localStorage.setItem(CUSTOM_NICK_KEY, nickname);
+            }
+
             document.getElementById('reviewCooldownMsg').innerHTML = '';
         } catch (e) {
             console.error("Firebase addDoc error: ", e);
