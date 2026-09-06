@@ -141,12 +141,18 @@
     .review-input-row select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
     body.dark-theme .review-input-row select:focus { box-shadow: 0 0 0 3px rgba(75, 147, 255, 0.2); }
     .review-input-row button {
-        padding: 0 14px; border-radius: 10px; border: none; background: var(--text-primary); color: var(--bg-app);
+        padding: 0 14px; border-radius: 10px; border: none; background: var(--primary); color: #fff;
         font-weight: 700; font-size: 0.85em; cursor: pointer; white-space: nowrap;
         font-family: 'Pretendard', 'Noto Sans KR', sans-serif; flex-shrink: 0;
         transition: opacity 0.15s;
     }
     .review-input-row button:hover { opacity: 0.85; }
+    /* 한줄평 입력행: 닉네임을 윗줄 전체 너비로, 내용+등록 버튼은 아랫줄에 배치
+       (닉네임+내용+버튼이 한 줄에 다 들어가면 좁아서 서로 겹쳐 보이던 문제 수정) */
+    .review-input-stacked { flex-direction: column; align-items: stretch; }
+    .review-input-stacked input#reviewNickname { flex: none; width: 100%; }
+    .review-input-bottom { display: flex; gap: 6px; width: 100%; box-sizing: border-box; }
+    .review-input-bottom input { flex: 1; min-width: 0; }
     .review-cooldown-msg.success { color: var(--primary); }
 
     .review-list { display: flex; flex-direction: column; gap: 8px; }
@@ -342,12 +348,13 @@
             <!-- 정보 수정 제안 섹션: 바로 반영되지 않고 pendingEdits에 쌓여 운영자가 검토 후 반영 -->
             <div class="review-section">
                 <div class="review-section-title">✏️ 정보 수정 제안</div>
-                <div style="font-size:0.78em; color: var(--text-secondary); margin: -4px 0 10px;">영업시간·가격·식단표가 실제와 다른가요? 제보해주시면 확인 후 반영할게요.</div>
+                <div style="font-size:0.78em; color: var(--text-secondary); margin: -4px 0 10px;">영업시간·가격·식단표가 실제와 다른가요? 폐업한 곳이라면 폐업 제보도 가능해요.</div>
                 <div class="review-input-row">
-                    <select id="editField">
+                    <select id="editField" onchange="onEditFieldChange()">
                         <option value="hours">영업시간</option>
                         <option value="price">가격</option>
                         <option value="menuUrl">식단표 URL</option>
+                        <option value="closed">폐업 제보</option>
                     </select>
                     <input type="text" id="editValue" placeholder="수정할 내용 입력" maxlength="150" style="flex: 1; min-width: 0;">
                     <button onclick="submitEditSuggestion()">제출</button>
@@ -357,10 +364,12 @@
             <!-- 한줄평 섹션 -->
             <div class="review-section">
                 <div class="review-section-title">💬 한줄평</div>
-                <div class="review-input-row">
-                    <input type="text" id="reviewNickname" placeholder="닉네임" maxlength="10" style="flex: 0 0 65px; min-width: 0;">
-                    <input type="text" id="reviewInput" placeholder="한줄평..." maxlength="50" style="flex: 1; min-width: 0;">
-                    <button onclick="submitReview()">등록</button>
+                <div class="review-input-row review-input-stacked">
+                    <input type="text" id="reviewNickname" placeholder="닉네임" maxlength="10">
+                    <div class="review-input-bottom">
+                        <input type="text" id="reviewInput" placeholder="한줄평..." maxlength="50">
+                        <button onclick="submitReview()">등록</button>
+                    </div>
                 </div>
                 <div id="reviewCooldownMsg"></div>
                 <div id="reviewList" class="review-list"></div>
@@ -1337,7 +1346,11 @@
     // 닉네임을 유지함(새로고침 전까진 안 바뀜). 직접 자기만의 닉네임으로
     // 고쳐서 한 번 제출하면 그 값을 기억해뒀다가 다음 방문부터 계속 씀.
     const NICK_ADJECTIVES = ['행복한','즐거운','신나는','든든한','다정한','명랑한','상큼한','활기찬','씩씩한','느긋한','설레는','유쾌한'];
-    const NICK_NOUNS = ['너구리','오리','다람쥐','고양이','강아지','토끼','펭귄','수달','여우','사자','하마','판다'];
+    const NICK_NOUNS = [
+        '너구리','오리','다람쥐','고양이','강아지','토끼','펭귄','수달','여우','사자','하마','판다', // 동물
+        '감자','만두','붕어빵','호떡','딸기','라떼','도토리', // 음식·사물
+        '구름','바람','별빛','햇살','조약돌' // 자연
+    ];
     const CUSTOM_NICK_KEY = 'woody_custom_nickname';
     let sessionRandomNickname = null; // 새로고침 전까지 세션 내에서 고정
     let nicknameIsRandomPlaceholder = false; // 지금 입력칸 값이 (아직 안 건드린) 랜덤값인지
@@ -1516,15 +1529,34 @@
     // 쓰되, 별도 키로 관리해 한줄평 작성과 서로 방해하지 않게 함.
     const EDIT_COOLDOWN_KEY = 'woody_edit_cooldown';
 
+    // "폐업 제보"는 고칠 값이 따로 없는 항목이라 다른 필드와 달리 입력칸을
+    // 선택 사항으로 바꿔줌 — 드롭다운을 바꿀 때마다 안내 문구/placeholder를
+    // 맞게 갱신.
+    window.onEditFieldChange = function() {
+        const fieldSel = document.getElementById('editField');
+        const valueInput = document.getElementById('editValue');
+        if (!fieldSel || !valueInput) return;
+        if (fieldSel.value === 'closed') {
+            valueInput.placeholder = '(선택) 참고할 내용이 있으면 적어주세요';
+        } else {
+            valueInput.placeholder = '수정할 내용 입력';
+        }
+    };
+
     window.submitEditSuggestion = async function() {
         if (currentDetailId === null || !db) return;
         const fieldSel = document.getElementById('editField');
         const valueInput = document.getElementById('editValue');
         const msgEl = document.getElementById('editCooldownMsg');
         const field = fieldSel.value;
-        const value = valueInput.value.trim();
+        let value = valueInput.value.trim();
 
-        if (!value) return;
+        // 폐업 제보는 값 입력이 필수가 아님 — 비워두면 "폐업"으로 채워서 제출
+        if (field === 'closed') {
+            if (!value) value = '폐업';
+        } else if (!value) {
+            return;
+        }
         if (value.length > 150) { alert('수정 제안 내용은 150자 이내로 작성해 주세요.'); return; }
 
         const lastTime = parseInt(localStorage.getItem(EDIT_COOLDOWN_KEY) || '0');
