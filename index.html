@@ -300,6 +300,7 @@
         .plp-popup-sns a:hover { opacity: 0.88; }
         .plp-popup-sns .insta-btn { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
         .plp-popup-sns .kakao-btn { background: #FEE500; color: #3C1E1E; }
+        .plp-popup-sns .naver-btn { background: #03C75A; }
 
         .plp-popup-map-btn {
             width: 100%; padding: 15px; border: none; border-radius: 14px;
@@ -672,7 +673,7 @@
                     'id': 'id', '이름': 'name', '지역': 'region', '주소': 'address',
                     'lat': 'lat', 'lng': 'lng', '설명': 'description',
                     '가격': 'price', '영업 시간': 'hours',
-                    '인스타': 'instagram', '카카오': 'kakaoChannel',
+                    '인스타': 'instagram', '카카오': 'kakaoChannel', '네이버': 'naverBlog',
                     '노출여부': 'visibility'
                 };
                 const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
@@ -692,6 +693,7 @@
                         hours:        r.hours ? String(r.hours).trim() : '',
                         instagram:    (r.instagram && String(r.instagram).trim() !== '' && String(r.instagram).trim().toLowerCase() !== 'null') ? String(r.instagram).trim() : null,
                         kakaoChannel: (r.kakaoChannel && String(r.kakaoChannel).trim() !== '' && String(r.kakaoChannel).trim().toLowerCase() !== 'null') ? String(r.kakaoChannel).trim() : null,
+                        naverBlog:    (r.naverBlog && String(r.naverBlog).trim() !== '' && String(r.naverBlog).trim().toLowerCase() !== 'null') ? String(r.naverBlog).trim() : null,
                         visibility:   r.visibility ? String(r.visibility).trim() : ''
                     }))
                     // 공공기관 구내식당 중 외부인 이용 불가/미확인 항목은 노출하지 않음 (id 부여 이후 필터해 위치기반 id 유지)
@@ -930,6 +932,7 @@
             let snsHtml = '';
             if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn" onclick="if(window.increasePopularity) window.increasePopularity(${r.id})">📸 인스타그램</a>`;
             if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn" onclick="if(window.increasePopularity) window.increasePopularity(${r.id})"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/></svg> 카톡 채널</a>`;
+            if (r.naverBlog) snsHtml += `<a href="${r.naverBlog}" target="_blank" class="naver-btn" onclick="if(window.increasePopularity) window.increasePopularity(${r.id})"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 4.5C4 3.67 4.67 3 5.5 3h9.6c.36 0 .7.14.96.38l3.9 3.62c.28.26.44.63.44 1.02V19.5c0 .83-.67 1.5-1.5 1.5h-13C4.67 21 4 20.33 4 19.5v-15Z" fill="#fff"/><path d="M14.6 3.2v3.6c0 .77.63 1.4 1.4 1.4h3.7" fill="none" stroke="#03C75A" stroke-width="1.1"/><rect x="7" y="12" width="10" height="1.6" rx="0.8" fill="#03C75A"/><rect x="7" y="15.4" width="7" height="1.6" rx="0.8" fill="#03C75A"/></svg> 블로그</a>`;
             const snsEl = document.getElementById('plp-popup-sns');
             snsEl.innerHTML = snsHtml;
             snsEl.style.display = snsHtml ? 'flex' : 'none';
