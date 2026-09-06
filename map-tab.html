@@ -428,6 +428,20 @@
         });
     }
 
+    // ⚠️ 위 GPS 조회를 init()에서 매번(=다른 탭 갔다가 지도로 돌아올 때마다) 다시
+    // await하면, 이 탭 스크립트가 탭을 오갈 때마다 통째로 재실행되는 구조상
+    // 회사 위치를 안 정한 사용자는 지도 탭에 들어올 때마다 GPS 응답을 기다리는
+    // 동안(기기에 따라 권한 프롬프트가 매번 뜨거나 GPS 수신에 몇 초씩 걸릴 수
+    // 있음) 지도가 비어 보였음 — "다른 탭 갔다가 지도로 돌아오면 지도가 안
+    // 뜬다"는 제보의 원인. window에 Promise를 한 번만 캐싱해 세션 동안은 첫
+    // 시도 결과를 재사용하고, 이후 탭 재방문 때는 기다리지 않고 바로 씀.
+    function getCachedInitialGps(timeoutMs) {
+        if (!window.__mapInitialGpsPromise) {
+            window.__mapInitialGpsPromise = getCurrentPositionOnce(timeoutMs);
+        }
+        return window.__mapInitialGpsPromise;
+    }
+
     let map, selectedMarkerId = null, markerMap = {};
     let markerClustering = null;
     let lastFilteredData = []; // filterData()가 마지막으로 계산한 필터 결과 (검색/지역/정렬이 바뀔 때만 마커 재구성용)
@@ -522,7 +536,7 @@
             initialLng = savedCompanyLoc.lng;
         }
         if (initialLat == null) {
-            const gps = await getCurrentPositionOnce(6000);
+            const gps = await getCachedInitialGps(6000);
             if (gps) {
                 initialLat = gps.lat;
                 initialLng = gps.lng;
@@ -1327,6 +1341,9 @@
     window.retryLocationPermission = function() {
         getCurrentPositionOnce(8000).then((gps) => {
             if (!gps) return; // 여전히 실패 — 배너 유지
+            // 방금 새로 허용받은 위치를 캐시에도 반영 — 이후 탭을 오가도 실패했던
+            // 예전 결과(캐시) 대신 이 성공한 위치를 바로 재사용하게 함.
+            window.__mapInitialGpsPromise = Promise.resolve(gps);
             window.dismissGpsPermissionBanner();
             placeGPSMarker(gps.lat, gps.lng);
             const isMobile = window.innerWidth <= 768;
