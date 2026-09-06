@@ -54,9 +54,21 @@
     }
     .app-logo-icon { font-size: 1.3em; }
 
-    /* 다크 모드 맵 필터 (Stadia Dark 타일 자체 색상이 완벽하므로 밝기만 살짝 조절) */
+    /* 다크 모드 맵 필터 — 네이버 지도는 CARTO/Stadia처럼 무료 다크 타일이 없어
+       CSS로 색을 반전시켜 흉내냄(invert+hue-rotate 180deg는 두 번 적용하면
+       정확히 원래대로 돌아오는 성질이 있음). 문제는 이 filter가 #map의 자식
+       전부(마커 포함)에 그대로 걸린다는 것 — 그래서 우리가 만드는 마커
+       콘텐츠(.map-marker-fix)에는 똑같은 filter를 한 번 더 걸어 상쇄시켜서
+       마커만 원래 색 그대로 보이게 함.
+       ⚠️ 예전엔 이 클래스가 "brightness(110%) contrast(105%)"였는데, 이건
+       구 지도 스택(Stadia Dark 타일)이 이미 어두운 타일을 쓸 때 밝기만 살짝
+       보정하던 값 — 네이버로 옮긴 뒤에도 안 고쳐서 밝은 지도에 거의 아무
+       효과가 없었음(다크모드를 켜도 지도만 그대로 밝게 보이던 원인). */
     .dark-map-filter {
-        filter: brightness(110%) contrast(105%);
+        filter: invert(100%) hue-rotate(180deg);
+    }
+    .dark-map-filter .map-marker-fix {
+        filter: invert(100%) hue-rotate(180deg);
     }
 
     #list-header { padding: 0 16px 15px; flex-shrink: 0; }
@@ -649,7 +661,7 @@
     // 집/회사 핀 아이콘 생성 헬퍼 (홈/컴퍼니 마커 공용)
     function buildPinIcon(emoji, label) {
         return {
-            content: `<div style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">${emoji}</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${label}</div></div>`,
+            content: `<div class="map-marker-fix" style="display:flex; flex-direction:column; align-items:center;"><div style="font-size:20px; background:#fff; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:3px solid #ef4444;">${emoji}</div><div style="margin-top:4px; font-size:11px; font-weight:700; color:#dc2626; text-shadow:-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; white-space:nowrap;">${label}</div></div>`,
             size: new naver.maps.Size(100, 60),
             anchor: new naver.maps.Point(50, 30)
         };
@@ -674,7 +686,7 @@
         if (isSelected) {
             // 선택된 마커: 브랜드 블루 계열이면서도 밝고 선명하게 — 눈에 확 띄는 "선택됨" 티를 살림
             return {
-                content: `<div style="display:flex; flex-direction:column; align-items:center;">
+                content: `<div class="map-marker-fix" style="display:flex; flex-direction:column; align-items:center;">
                     <div style="width:30px;height:30px;background:#2E9BFF;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px rgba(46,155,255,0.35), 0 4px 14px rgba(46,155,255,0.6);animation:marker-focus 0.4s forwards;">
                         <div style="width:10px;height:10px;background:#fff;border-radius:50%;transform:rotate(45deg);"></div>
                     </div>
@@ -687,7 +699,7 @@
         } else {
             // 기본 마커: 파란 필드 핀 + 밥그릇 글리프, 작고 얇은 글씨
             return {
-                content: `<div style="display:flex; flex-direction:column; align-items:center;">
+                content: `<div class="map-marker-fix" style="display:flex; flex-direction:column; align-items:center;">
                     <div style="width:30px; height:30px; background:#3182F6; border:2px solid #fff; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(49,130,246,0.4);">
                         ${RESTAURANT_GLYPH}
                     </div>
@@ -704,7 +716,7 @@
     // count < 10: 작은 원 / 10~49: 중간 / 50개 이상: 큰 원, 3단계로 표시.
     function buildClusterIcon(sizePx, bgColor) {
         return {
-            content: `<div style="display:flex; align-items:center; justify-content:center; width:${sizePx}px; height:${sizePx}px; border-radius:50%; background:${bgColor}; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.25); color:#fff; font-weight:800; font-family:'Pretendard','Noto Sans KR',sans-serif;"><span class="cluster-count"></span></div>`,
+            content: `<div class="map-marker-fix" style="display:flex; align-items:center; justify-content:center; width:${sizePx}px; height:${sizePx}px; border-radius:50%; background:${bgColor}; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.25); color:#fff; font-weight:800; font-family:'Pretendard','Noto Sans KR',sans-serif;"><span class="cluster-count"></span></div>`,
             size: new naver.maps.Size(sizePx, sizePx),
             anchor: new naver.maps.Point(sizePx / 2, sizePx / 2)
         };
@@ -1184,7 +1196,7 @@
             gpsMarker = new naver.maps.Marker({
                 position: LL(lat, lng),
                 map: map,
-                icon: { content: `<div class="gps-dot"></div>`, size: new naver.maps.Size(18, 18), anchor: new naver.maps.Point(9, 9) },
+                icon: { content: `<div class="gps-dot map-marker-fix"></div>`, size: new naver.maps.Size(18, 18), anchor: new naver.maps.Point(9, 9) },
                 zIndex: 500
             });
         }
