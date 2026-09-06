@@ -2,16 +2,17 @@
     :root {
         --settings-bg: var(--bg-app, #F2F4F6);
         --settings-card: var(--bg-surface, #FFFFFF);
-        --settings-blue: var(--text-primary, #191F28);
+        --settings-blue: var(--primary, #3182F6);
         --settings-text: var(--text-primary, #191F28);
         --settings-sub: var(--text-secondary, #6B7684);
         --settings-border: var(--border-light, #E5E8EB);
         --settings-section: #6B7684;
+        --settings-on-blue: #fff; /* 파란 배경 위 글자색 — 앱 전체의 흰 글자 관례와 통일 */
     }
     body.dark-theme {
         --settings-bg: var(--bg-app, #101216);
         --settings-card: var(--bg-surface, #1C1C1E);
-        --settings-blue: var(--text-primary, #FFFFFF);
+        --settings-blue: var(--primary, #4B93FF);
         --settings-text: var(--text-primary, #FFFFFF);
         --settings-sub: var(--text-secondary, #98989E);
         --settings-border: var(--border-light, #2C2C2E);
@@ -171,7 +172,7 @@
         padding: 2px 8px;
         border-radius: 20px;
         background: var(--settings-blue);
-        color: var(--settings-bg);
+        color: var(--settings-on-blue);
     }
     .notice-date {
         font-size: 0.75em;
@@ -259,7 +260,7 @@
     }
     .inquiry-tab-btn.active {
         background: var(--settings-blue);
-        color: var(--settings-bg);
+        color: var(--settings-on-blue);
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
 
@@ -337,7 +338,7 @@
         border: none;
         border-radius: 12px;
         background: var(--settings-blue);
-        color: var(--settings-bg);
+        color: var(--settings-on-blue);
         font-size: 0.95em;
         font-weight: 800;
         cursor: pointer;
@@ -401,7 +402,7 @@
     .filter-chip.active {
         border-color: var(--settings-blue);
         background: var(--settings-blue);
-        color: var(--settings-bg);
+        color: var(--settings-on-blue);
     }
 
     .inquiry-card {
@@ -715,7 +716,8 @@
                     </div>
                     <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
                         기기에만 저장되는 정보는 브라우저 데이터를 삭제하거나 기기를 변경하면 함께 사라지며, 서비스는 이 정보에 접근할 수 없습니다.<br>
-                        서버(Firebase)에 저장된 한줄평·문의 내용은 서비스 운영 목적 달성 시까지 보관하며, 삭제를 원하시면 [설정 → 문의하기]로 요청해 주세요.
+                        서버(Firebase)에 저장된 한줄평·문의 내용은 서비스 운영 목적 달성 시까지 보관합니다.<br>
+                        맛쩜은 별도의 회원가입·로그인 절차가 없어, 본인이 작성한 한줄평·문의 내용의 열람이나 삭제는 오직 [설정 → 문의하기]를 통한 요청으로만 처리됩니다.
                     </div>
                 </div>
 
@@ -736,7 +738,8 @@
                         <span class="notice-badge">5. 광고</span>
                     </div>
                     <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
-                        서비스에 광고가 게재되는 경우, 광고 네트워크가 쿠키 등을 이용해 맞춤형 광고를 제공할 수 있습니다. 이용자는 브라우저 설정에서 쿠키 저장을 거부하거나 삭제할 수 있습니다.
+                        서비스에 광고가 게재되는 경우, 광고 네트워크가 쿠키 등을 이용해 맞춤형 광고를 제공할 수 있습니다.<br>
+                        이용자는 브라우저 설정에서 쿠키 저장을 거부·삭제할 수 있고, Google 맞춤 광고는 <a href="https://adssettings.google.com" target="_blank" rel="noopener" style="color:var(--primary);">adssettings.google.com</a>에서 개별적으로 끌 수 있습니다.
                     </div>
                 </div>
 
