@@ -1345,15 +1345,21 @@
     // 조합이 나오지만, 같은 세션 안에서 여러 식당에 리뷰를 남길 땐 같은
     // 닉네임을 유지함(새로고침 전까진 안 바뀜). 직접 자기만의 닉네임으로
     // 고쳐서 한 번 제출하면 그 값을 기억해뒀다가 다음 방문부터 계속 씀.
-    const NICK_ADJECTIVES = ['행복한','즐거운','신나는','든든한','다정한','명랑한','상큼한','활기찬','씩씩한','느긋한','설레는','유쾌한'];
+    const NICK_ADJECTIVES = [
+        '행복한','즐거운','신나는','든든한','다정한','명랑한','상큼한','활기찬','씩씩한','느긋한','설레는','유쾌한',
+        '편안한','포근한','차분한','상냥한','재빠른','촉촉한','매콤한','여유로운'
+    ];
     const NICK_NOUNS = [
         '너구리','오리','다람쥐','고양이','강아지','토끼','펭귄','수달','여우','사자','하마','판다', // 동물
-        '감자','만두','붕어빵','호떡','딸기','라떼','도토리', // 음식·사물
-        '구름','바람','별빛','햇살','조약돌' // 자연
+        '부엉이','코알라','알파카','라쿤','고슴도치', // 동물 추가
+        '감자','만두','붕어빵','호떡','딸기','라떼','도토리','젤리','쿠키','마카롱', // 음식·사물
+        '구름','바람','별빛','햇살','조약돌','눈송이','무지개','반딧불' // 자연
     ];
+    // 형용사 20개 × 명사 35개 = 700가지 조합
     const CUSTOM_NICK_KEY = 'woody_custom_nickname';
     let sessionRandomNickname = null; // 새로고침 전까지 세션 내에서 고정
     let nicknameIsRandomPlaceholder = false; // 지금 입력칸 값이 (아직 안 건드린) 랜덤값인지
+    let currentReviewNicknames = []; // 지금 열려있는 식당의 기존 리뷰 닉네임 목록 (겹침 체크용)
 
     function getSessionRandomNickname() {
         if (!sessionRandomNickname) {
@@ -1362,6 +1368,17 @@
             sessionRandomNickname = `${adj} ${noun}`;
         }
         return sessionRandomNickname;
+    }
+
+    // 지금 열려있는 식당의 리뷰 목록(currentReviewNicknames) 안에서만 겹침을 검사.
+    // 앱 전체를 대상으로 하려면 제출할 때마다 Firestore 조회가 추가로 필요해서
+    // 비용이 드는데, 실제로 헷갈리는 상황은 "한 식당 리뷰 목록에 같은 닉네임
+    // 두 개"인 경우가 대부분이라 이미 불러와져 있는 이 목록만으로 충분함.
+    function dedupeNickname(nickname) {
+        if (!currentReviewNicknames.includes(nickname)) return nickname;
+        let n = 2;
+        while (currentReviewNicknames.includes(`${nickname} ${n}`)) n++;
+        return `${nickname} ${n}`;
     }
 
     // 식당 상세가 열릴 때마다 호출 — 저장된 내 닉네임이 있으면 그걸, 없으면
@@ -1381,9 +1398,10 @@
 
     window.loadReviews = function(restaurantId) {
         currentDetailId = restaurantId;
+        currentReviewNicknames = []; // 다른 식당으로 전환되는 동안 이전 목록이 남아있지 않도록 초기화
         const listEl = document.getElementById('reviewList');
         listEl.innerHTML = '<div class="review-empty">리뷰를 불러오는 중... ⏳</div>';
-        
+
         if (unsubscribeReviews) { unsubscribeReviews(); }
         if (!db) { listEl.innerHTML = '<div class="review-empty">DB 연결 지연 중...</div>'; return; }
 
@@ -1395,18 +1413,21 @@
         
         unsubscribeReviews = window.fsOnSnapshot(q, (snapshot) => {
             if (currentDetailId !== restaurantId) return; // 뒤늦게 온 응답 무시
-            
+
+            // 닉네임 겹침 체크용으로, 지금 로드된 이 식당의 리뷰 닉네임들을 기억해둠
+            currentReviewNicknames = snapshot.docs.map(d => d.data().nickname || '익명');
+
             if (snapshot.empty) {
                 listEl.innerHTML = '<div class="review-empty">아직 한줄평이 없어요. 첫 번째 평가를 남겨 주세요! ✍️</div>';
                 return;
             }
-            
+
             let html = '';
             snapshot.forEach((doc) => {
                 const rv = doc.data();
                 const text = escapeHtml(rv.text || '');
                 const nickname = escapeHtml(rv.nickname || '익명');
-                
+
                 let dateStr = '';
                 if (rv.createdAt) {
                     const date = rv.createdAt.toDate();
@@ -1481,11 +1502,16 @@
         }
 
         document.getElementById('reviewCooldownMsg').innerHTML = '<div style="font-size: 0.78em; color: var(--main-blue); margin-top: 4px;">등록 중... ✍️</div>';
-        
+
+        // 이 식당 리뷰 목록에 같은 닉네임이 이미 있으면 "닉네임 2"처럼 번호를 붙임.
+        // 다음 방문을 위해 기억해두는 "내 닉네임"(customNickname)은 번호 붙기 전
+        // 원본(nickname)으로 저장 — 번호는 이 식당 한정 표시용이라 저장할 필요 없음.
+        const finalNickname = dedupeNickname(nickname);
+
         try {
             await window.fsAddDoc(window.fsCollection(db, `restaurants/${currentDetailId}/reviews`), {
                 text: text,
-                nickname: nickname,
+                nickname: finalNickname,
                 createdAt: window.fsServerTimestamp()
             });
 
