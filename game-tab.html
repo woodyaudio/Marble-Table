@@ -128,31 +128,37 @@
        휠 아래 한 줄에 같이 두어 세로 공간을 절약함. */
     .roulette-actions {
         width: 100%;
-        max-width: 340px;
+        max-width: 440px;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 10px;
-        flex-wrap: wrap;
         flex-shrink: 0;
+    }
+    .roulette-actions .auto-arrange-btn,
+    .roulette-actions .spin-btn {
+        flex: 1 1 0;
+        justify-content: center;
     }
     .auto-arrange-btn {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 20px;
+        padding: 12px 44px;
         border-radius: 50px;
         border: 1px solid var(--border-light);
         background: var(--bg-surface);
         color: var(--text-primary);
         font-family: 'Nunito', 'Noto Sans KR', sans-serif;
         font-weight: 800;
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         cursor: pointer;
         box-shadow: var(--shadow-sm);
         transition: all 0.2s ease;
-        flex-shrink: 0;
         white-space: nowrap;
+    }
+    @media (max-width: 768px) {
+        .auto-arrange-btn { padding: 11px 36px; font-size: 0.95rem; }
     }
     .auto-arrange-btn svg { width: 18px; height: 18px; color: var(--primary); flex-shrink: 0; }
     .auto-arrange-btn:hover { opacity: 0.85; }
