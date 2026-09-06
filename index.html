@@ -324,7 +324,13 @@
             object-fit: cover; filter: blur(12px) brightness(0.4); transform: scale(1.1);
         }
         .ad-main-img {
-            position: relative; height: 100%; width: 25%; object-fit: fill; z-index: 1;
+            /* object-fit: fill이었을 땐 원본 이미지 비율을 무시하고 억지로 늘리거나
+               찌그러뜨려서 채웠음 — 광고 이미지마다 원본 비율이 조금씩 달라서
+               (600x337, 1454x818, 1280x720 등) 사진마다 확대/축소 정도가 달라
+               보이는 원인이었음. cover로 바꿔서 비율은 유지한 채 넘치는 부분만
+               잘라내 채우도록 함(.ad-blur-bg와 동일한 방식).
+            */
+            position: relative; height: 100%; width: 25%; object-fit: cover; z-index: 1;
         }
         #pc-ad-banner .ad-placeholder {
             width: 728px; max-width: 100%; height: 90px;
@@ -1030,7 +1036,7 @@
         // 있는지 매번 요청해보고 없으면(404) 처음으로 되돌아가는 방식이라, 마지막
         // 장 다음엔 항상 한 번씩 실패하는 요청이 나가고 콘솔에 에러가 쌓였음.
         // 개수를 알고 있으니 애초에 그 요청 자체를 안 하도록 함.
-        const AD_COUNT = 3;
+        const AD_COUNT = 6;
         let adIndex = 1;
         const mobileBg = document.querySelector('#mobile-ad-banner .ad-blur-bg');
         const mobileMain = document.querySelector('#mobile-ad-banner .ad-main-img');
