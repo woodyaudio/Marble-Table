@@ -66,10 +66,13 @@
         border: 1px solid var(--border-light);
         background: var(--bg-surface); font-size: 0.75em; cursor: pointer;
         text-align: center; text-align-last: center; display: flex; align-items: center; justify-content: center;
+        gap: 4px;
         min-height: 34px; white-space: nowrap; font-weight: 700;
         color: var(--text-secondary); transition: all 0.15s;
         font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
     }
+    .filter-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+    #locate-btn svg { width: 18px; height: 18px; }
     .filter-item:hover { background-color: var(--bg-panel); color: var(--text-primary); border-color: var(--text-primary); }
     .filter-item:focus { outline: none; border-color: var(--text-primary); }
     select.filter-item {
@@ -86,7 +89,9 @@
     }
     #regionFilter, #sortToggle { flex: 1.2; }
     #dinnerToggle { flex: 0.75; font-size: 0.7em; padding: 7px 4px; }
+    #sortToggle, #dinnerToggle { color: var(--text-primary); }
     .home-inline-btn { flex: 0.5; font-size: 1.1em; }
+    #home-btn svg { width: 20px; height: 20px; }
 
     #list-scroll { flex: 1; overflow-y: auto; padding: 0 16px 20px; }
 
@@ -198,6 +203,38 @@
     }
     #location-picker-ui.active { display: block; animation: popup-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes popup-in { from { opacity: 0; transform: translate(-50%, -80%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+
+    /* GPS 위치 권한 안내 배너 — 현재 위치를 못 가져와서 기본 시야로 시작했을 때 */
+    .gps-permission-banner {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 900;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: min(400px, calc(100% - 32px));
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow-lg);
+    }
+    .gps-permission-banner[hidden] { display: none; }
+    .gps-permission-icon { font-size: 1.3em; flex-shrink: 0; }
+    .gps-permission-text { flex: 1; font-size: 0.8em; font-weight: 600; color: var(--text-primary); line-height: 1.5; }
+    .gps-permission-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .gps-permission-retry {
+        padding: 6px 12px; border: none; border-radius: 10px;
+        background: var(--primary); color: #fff; font-weight: 800; font-size: 0.76em;
+        cursor: pointer; white-space: nowrap;
+    }
+    .gps-permission-close {
+        padding: 4px 8px; border: none; border-radius: 8px;
+        background: transparent; color: var(--text-secondary); font-size: 0.76em; font-weight: 700;
+        cursor: pointer;
+    }
     #picker-crosshair {
         display: none;
         position: absolute;
@@ -255,12 +292,12 @@
                 <select id="regionFilter" class="filter-item" onchange="filterData()">
                     <option value="all">지역 전체</option>
                 </select>
-                <div id="sortToggle" class="filter-item" onclick="toggleSort()">📍 거리순</div>
-                <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()">🌙 석식</div>
-                <div id="locate-btn" class="filter-item home-inline-btn" onclick="moveToGPS()" title="현재 위치" style="display:flex; align-items:center; justify-content:center;">
-                    <div style="width:14px; height:14px; background:var(--primary); border-radius:50%; border:2px solid var(--bg-surface); outline:1px solid var(--primary);"></div>
+                <div id="sortToggle" class="filter-item" onclick="toggleSort()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.3 0-6 2.7-6 6 0 4.5 6 12 6 12s6-7.5 6-12c0-3.3-2.7-6-6-6Z"/><circle cx="12" cy="9" r="2.2"/></svg>거리순</div>
+                <div id="dinnerToggle" class="filter-item" onclick="toggleDinner()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>석식</div>
+                <div id="locate-btn" class="filter-item home-inline-btn" onclick="moveToGPS()" title="현재 위치">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3" fill="var(--primary)" stroke="none"/><circle cx="12" cy="12" r="7.5"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/></svg>
                 </div>
-                <div id="home-btn" class="filter-item home-inline-btn" onclick="goHome()">🏠</div>
+                <div id="home-btn" class="filter-item home-inline-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></div>
             </div>
         </div>
         <div id="list-scroll"><div id="restaurantCards"></div></div>
@@ -296,6 +333,14 @@
 
     <div id="map-area">
         <div id="map"></div>
+        <div id="gps-permission-banner" class="gps-permission-banner" hidden>
+            <span class="gps-permission-icon">📍</span>
+            <div class="gps-permission-text">현재 위치를 확인할 수 없어요.<br>브라우저 설정에서 위치 정보 접근을 허용해주세요.</div>
+            <div class="gps-permission-actions">
+                <button class="gps-permission-retry" onclick="retryLocationPermission()">다시 시도</button>
+                <button class="gps-permission-close" onclick="dismissGpsPermissionBanner()">닫기</button>
+            </div>
+        </div>
         <div id="picker-crosshair">📍</div>
         <div id="location-picker-ui">
             <div style="font-weight:800; font-size:1.1em; margin-bottom:8px; color:var(--primary);" id="picker-title">새 위치 지정</div>
@@ -312,15 +357,30 @@
 (function() {
     let restaurantsData = [];
     
-    // 기본값
-    const defaultCompanyLoc = { lat: 37.479932, lng: 126.895215 };
-    
+    // 저장된 집/회사 위치가 둘 다 없을 때(처음 쓰거나 방금 삭제한 경우)의 최후
+    // 수단 기본 시야 — 특정 업무지구 좌표를 쓰면 "이전에 등록했던 회사 위치인가?"
+    // 하는 혼란을 주므로, 일부러 서울시청 좌표 + 넓은 줌으로 "그냥 기본값일
+    // 뿐"이라는 게 한눈에 보이게 함. 실제로는 아래 init()에서 이 값보다 실시간
+    // GPS를 먼저 시도하고, GPS까지 실패했을 때만 이 값을 씀.
+    const FALLBACK_VIEW = { lat: 37.5665, lng: 126.9780, zoom: 11 };
+
     // 로컬 스토리지에서 위치 불러오기
     let savedHomeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
     let savedCompanyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
-    
-    // 초기 지도의 중심점 (회사 위치가 없으면 기본 좌표 사용)
-    let centerLoc = savedCompanyLoc || defaultCompanyLoc;
+
+    // GPS 위치를 한 번만 가져오는 Promise 버전 — 초기 화면 중심을 정할 때 씀
+    // (watchPosition 기반 getAccurateLocation과 별개로, 앱 시작 시 "일단 한 번
+    // 받아보고 안 되면 안내"용 가벼운 버전).
+    function getCurrentPositionOnce(timeoutMs) {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) { resolve(null); return; }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => resolve(null),
+                { timeout: timeoutMs, maximumAge: 0 }
+            );
+        });
+    }
 
     let map, selectedMarkerId = null, markerMap = {};
     let markerClustering = null;
@@ -387,19 +447,50 @@
         if (typeof naver === 'undefined' || !naver.maps) { setTimeout(init, 100); return; }
         const isMobile = window.innerWidth <= 768;
 
-        // 초기 중심 좌표 결정 (피커 모드면 검색 좌표 또는 회사 위치, 아니면 기본 위치)
-        let initialLat = centerLoc.lat;
-        let initialLng = centerLoc.lng;
+        // 초기 중심 좌표 결정 우선순위:
+        //  1) 피커 모드에서 주소 검색으로 좌표를 골랐다면 그 좌표
+        //  2) 피커 모드면 지금 수정하려는 대상(집/회사)에 이미 저장돼 있던 위치
+        //  3) 일반 모드면 저장된 회사 위치(집은 예전부터 초기 중심엔 안 쓰고
+        //     홈버튼/거리순 정렬 등 다른 곳에서만 기준점으로 사용 — 기존 동작 유지)
+        //  4) 그래도 없으면(처음 쓰거나 집/회사를 방금 지운 경우) 실시간 GPS로
+        //     시작 — 예전엔 이 경우 특정 업무지구(가산디지털단지) 좌표를 하드
+        //     코딩 기본값으로 썼는데, 집/회사를 지워도 계속 그 위치가 나와서
+        //     "이전에 등록했던 회사인가?" 하는 혼란을 줬음(실제로는 그냥 그
+        //     하드코딩 기본값이었을 뿐, 삭제한 값이 되살아난 게 아니었음).
+        //     GPS도 못 받으면(권한 거부/미지원) 넓은 기본 시야로 시작하고 위치
+        //     권한을 허용해달라는 안내 배너를 띄움.
+        let initialLat, initialLng, initialZoom = 17;
+
         if (pickerMode && searchedLocStr) {
             try {
                 const parsed = JSON.parse(searchedLocStr);
                 if (parsed.lat && parsed.lng) { initialLat = parsed.lat; initialLng = parsed.lng; }
             } catch(e) {}
         }
+        if (initialLat == null && pickerMode) {
+            const editingLoc = pickerMode === 'home' ? savedHomeLoc : savedCompanyLoc;
+            if (editingLoc) { initialLat = editingLoc.lat; initialLng = editingLoc.lng; }
+        }
+        if (initialLat == null && !pickerMode && savedCompanyLoc) {
+            initialLat = savedCompanyLoc.lat;
+            initialLng = savedCompanyLoc.lng;
+        }
+        if (initialLat == null) {
+            const gps = await getCurrentPositionOnce(6000);
+            if (gps) {
+                initialLat = gps.lat;
+                initialLng = gps.lng;
+            } else {
+                initialLat = FALLBACK_VIEW.lat;
+                initialLng = FALLBACK_VIEW.lng;
+                initialZoom = FALLBACK_VIEW.zoom;
+                if (!pickerMode) showGpsPermissionBanner();
+            }
+        }
 
         map = new naver.maps.Map('map', {
             center: LL(isMobile ? initialLat - 0.0006 : initialLat, initialLng),
-            zoom: 17,
+            zoom: initialZoom,
             zoomControl: false
         });
 
@@ -870,13 +961,16 @@
         closeDetail(); 
     }
 
+    const FILTER_ICON_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.3 0-6 2.7-6 6 0 4.5 6 12 6 12s6-7.5 6-12c0-3.3-2.7-6-6-6Z"/><circle cx="12" cy="9" r="2.2"/></svg>';
+    const FILTER_ICON_FLAME = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 2.6-1.6 3.8-1.6 6.6a3.6 3.6 0 0 0 7.2 0c0-.9-.4-1.7-.9-2.5.9 0 1.8 1.7 1.8 4.4a6.3 6.3 0 1 1-12.6 0c0-3.6 2.7-5.4 3.6-8.1.4.9.9 1.8 2.5 0Z"/></svg>';
+
     window.toggleDinner = function() {
         const b = document.getElementById('dinnerToggle');
         b.classList.toggle('active');
         if (b.classList.contains('active')) {
-            b.style.background = 'var(--text-primary)';
-            b.style.color = 'var(--bg-app)';
-            b.style.borderColor = 'var(--text-primary)';
+            b.style.background = 'var(--primary)';
+            b.style.color = '#fff';
+            b.style.borderColor = 'var(--primary)';
         } else {
             b.style.background = '';
             b.style.color = '';
@@ -889,15 +983,15 @@
         const b = document.getElementById('sortToggle');
         b.classList.toggle('active');
         if (b.classList.contains('active')) {
-            b.style.background = 'var(--text-primary)';
-            b.style.color = 'var(--bg-app)';
-            b.style.borderColor = 'var(--text-primary)';
-            b.innerText = '🔥 인기순';
+            b.style.background = 'var(--primary)';
+            b.style.color = '#fff';
+            b.style.borderColor = 'var(--primary)';
+            b.innerHTML = FILTER_ICON_FLAME + '인기순';
         } else {
             b.style.background = '';
             b.style.color = '';
             b.style.borderColor = '';
-            b.innerText = '📍 거리순';
+            b.innerHTML = FILTER_ICON_PIN + '거리순';
         }
         filterData();
     }
@@ -948,7 +1042,6 @@
             }
         } else if (pickerMode === 'company') {
             savedCompanyLoc = {lat: c.lat, lng: c.lng};
-            centerLoc = savedCompanyLoc;
             if (companyMarker) {
                 companyMarker.setPosition(LL(c.lat, c.lng));
             } else {
@@ -1048,7 +1141,9 @@
         const btn = document.getElementById('home-btn');
         if (!btn) return;
         const dest = getSmartHomeDest();
-        btn.innerText = dest.type === 'home' ? '🏠' : '🏢';
+        const houseIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg>';
+        const buildingIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="1"/><line x1="9" y1="7" x2="11" y2="7"/><line x1="13" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="11" y2="11"/><line x1="13" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="11" y2="15"/><line x1="13" y1="15" x2="15" y2="15"/></svg>';
+        btn.innerHTML = dest.type === 'home' ? houseIcon : buildingIcon;
     }
     function placeGPSMarker(lat, lng) {
         currentGPSLat = lat;
@@ -1166,6 +1261,29 @@
             },
             12000 // 수동 클릭 시에는 12초까지 대기하며 최고 정확도 찾기
         );
+    };
+
+    // ========== GPS 위치 권한 안내 배너 ==========
+    // init()에서 저장된 집/회사 위치도 없고 GPS도 못 받았을 때 보여줌.
+    function showGpsPermissionBanner() {
+        const el = document.getElementById('gps-permission-banner');
+        if (el) el.hidden = false;
+    }
+    window.dismissGpsPermissionBanner = function() {
+        const el = document.getElementById('gps-permission-banner');
+        if (el) el.hidden = true;
+    };
+    // 배너의 "다시 시도" — 권한을 허용한 뒤 다시 눌러보라는 용도. 성공하면
+    // 배너를 닫고 그 위치로 지도를 옮김(moveToGPS와 동일한 이동 로직).
+    window.retryLocationPermission = function() {
+        getCurrentPositionOnce(8000).then((gps) => {
+            if (!gps) return; // 여전히 실패 — 배너 유지
+            window.dismissGpsPermissionBanner();
+            placeGPSMarker(gps.lat, gps.lng);
+            const isMobile = window.innerWidth <= 768;
+            map.setCenter(LL(isMobile ? gps.lat - 0.0006 : gps.lat, gps.lng));
+            map.setZoom(17);
+        });
     };
 
     // ========== 한줄평 시스템 (파이어베이스 연동) ==========
