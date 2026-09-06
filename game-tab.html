@@ -122,14 +122,18 @@
     .mode-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
     .mode-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-    /* --- 자동 배치 버튼 + 칸(직접 입력) 목록 --- */
-    .roulette-config {
+    /* --- 자동 배치(왼쪽) + 돌려돌려(오른쪽) 한 줄 배치 ---
+       예전엔 자동 배치 버튼이 휠 위에 따로 있어서 그만큼 전체 높이가 늘어나
+       모바일에서 맨 아래(돌려돌려 버튼)가 광고 배너에 가려지는 문제가 있었음.
+       휠 아래 한 줄에 같이 두어 세로 공간을 절약함. */
+    .roulette-actions {
         width: 100%;
-        max-width: 320px;
+        max-width: 340px;
         display: flex;
-        flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 10px;
+        flex-wrap: wrap;
         flex-shrink: 0;
     }
     .auto-arrange-btn {
@@ -147,6 +151,8 @@
         cursor: pointer;
         box-shadow: var(--shadow-sm);
         transition: all 0.2s ease;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .auto-arrange-btn svg { width: 15px; height: 15px; color: var(--primary); flex-shrink: 0; }
     .auto-arrange-btn:hover { opacity: 0.85; }
@@ -380,11 +386,6 @@
         <button class="mode-btn" id="btnFull" onclick="setGlobalMode('full')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>일반</button>
     </div>
 
-    <!-- 자동 배치(가까운 순) — 조각 직접 입력은 아래 휠을 탭해서 -->
-    <div class="roulette-config">
-        <button class="auto-arrange-btn" id="autoArrangeBtn" onclick="roulette.autoArrange()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg><span id="autoArrangeBtnLabel">자동 배치</span></button>
-    </div>
-
     <!-- 점심 룰렛 영역: 조각을 탭하면 그 자리에 입력창이 뜸(칸을 별도로 안 씀) -->
     <div class="wheel-area" id="wheelArea">
         <div class="wheel-pointer"></div>
@@ -395,7 +396,12 @@
             <div id="rouletteSlotEditorDropdown" class="roulette-slot-editor-dropdown"></div>
         </div>
     </div>
-    <button class="spin-btn" id="spinBtn" onclick="roulette.spin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>돌려돌려!</button>
+    <!-- 자동 배치(왼쪽)와 돌려돌려(오른쪽)를 한 줄에 — 예전엔 자동 배치가 휠
+         위에 따로 있어서 그만큼 아래로 밀려 모바일 광고 배너에 가려졌음 -->
+    <div class="roulette-actions">
+        <button class="auto-arrange-btn" id="autoArrangeBtn" onclick="roulette.autoArrange()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg><span id="autoArrangeBtnLabel">자동 배치</span></button>
+        <button class="spin-btn" id="spinBtn" onclick="roulette.spin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>돌려돌려!</button>
+    </div>
     <div class="result-card visible" id="resultCard">
         <div class="result-label" id="resultLabel">오늘의 점심은</div>
         <div class="result-name" id="resultName"><span class="emoji-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9a2.8 2.8 0 1 1 4.3 2.4c-.8.5-1.5 1-1.5 2.1"/><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"/></svg></span>무엇이 나올까요?</div>
