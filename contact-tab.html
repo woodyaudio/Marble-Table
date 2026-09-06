@@ -8,6 +8,7 @@
         --settings-border: var(--border-light, #E5E8EB);
         --settings-section: #6B7684;
         --settings-on-blue: #fff; /* 파란 배경 위 글자색 — 앱 전체의 흰 글자 관례와 통일 */
+        --settings-icon-bg: var(--primary-light, #EBF3FE);
     }
     body.dark-theme {
         --settings-bg: var(--bg-app, #101216);
@@ -17,6 +18,7 @@
         --settings-sub: var(--text-secondary, #98989E);
         --settings-border: var(--border-light, #2C2C2E);
         --settings-section: #98989E;
+        --settings-icon-bg: var(--primary-light, rgba(75,147,255,0.15));
     }
 
     #settings-container {
@@ -71,12 +73,21 @@
     /* ===== 메인 설정 화면 ===== */
     #screen-main { display: block; }
     .settings-large-title {
-        font-size: 1.9em;
+        font-size: 1.55rem;
         font-weight: 900;
-        color: var(--settings-text);
+        color: var(--primary-deep, var(--settings-blue));
         padding: 24px 20px 8px;
         letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
+    .settings-title-icon {
+        width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+        background: var(--settings-icon-bg); color: var(--settings-blue);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .settings-title-icon svg { width: 27px; height: 27px; }
 
     /* ===== 섹션 그룹 ===== */
     .settings-section {
@@ -116,10 +127,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1em;
         margin-right: 12px;
         flex-shrink: 0;
+        background: var(--settings-icon-bg);
+        color: var(--settings-blue);
     }
+    .settings-row-icon svg { width: 16px; height: 16px; }
     .settings-row-text {
         flex: 1;
         font-size: 0.95em;
@@ -130,6 +143,30 @@
         color: var(--settings-border);
         font-size: 0.9em;
         font-weight: 700;
+    }
+    .settings-row-sub {
+        font-size: 0.78em;
+        font-weight: 500;
+        color: var(--settings-sub);
+        margin-top: 2px;
+    }
+    .settings-row-delete {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--settings-sub);
+        margin-right: 4px;
+        flex-shrink: 0;
+        transition: background 0.15s, color 0.15s;
+    }
+    .settings-row-delete svg { width: 16px; height: 16px; }
+    .settings-row-delete[hidden] { display: none; }
+    .settings-row-delete:active { background: rgba(239,68,68,0.15); color: #ef4444; }
+    @media (hover: hover) {
+        .settings-row-delete:hover { background: rgba(239,68,68,0.12); color: #ef4444; }
     }
 
     /* ===== 서브 화면 공통 ===== */
@@ -472,18 +509,18 @@
 
     <!-- ===== 메인 설정 화면 ===== -->
     <div id="screen-main">
-        <div class="settings-large-title">⚙️ 설정</div>
+        <div class="settings-large-title"><span class="settings-title-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.4" fill="currentColor"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(45 12 12)"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(90 12 12)"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(135 12 12)"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(180 12 12)"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(225 12 12)"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(270 12 12)"/><rect x="10.5" y="3.9" width="3" height="5.3" rx="1.1" fill="currentColor" transform="rotate(315 12 12)"/><circle cx="12" cy="12" r="2.1" style="fill:var(--settings-icon-bg)"/></svg></span>설정</div>
 
         <div class="settings-section">
             <div class="settings-section-label">앱 안내</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('about')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">🍚</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.9" fill="currentColor" stroke="none"/></svg></div>
                     <div class="settings-row-text">서비스 소개</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="showScreen('howto')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">📖</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5C4.7 20 4 19.3 4 18.5V5.5Z"/><path d="M20 5.5C20 4.7 19.3 4 18.5 4H12v16h6.5c0.8 0 1.5-0.7 1.5-1.5V5.5Z"/></svg></div>
                     <div class="settings-row-text">사용 방법</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -494,12 +531,12 @@
             <div class="settings-section-label">서비스</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('notice')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">📢</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 0 0 1 1h2l4 4V5l-4 4H4a1 1 0 0 0-1 1Z"/><path d="M15.5 8.5a4 4 0 0 1 0 7"/><path d="M18.5 5.5a8 8 0 0 1 0 13"/></svg></div>
                     <div class="settings-row-text">공지사항</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="showScreen('inquiry')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">💬</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg></div>
                     <div class="settings-row-text">문의하기</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -510,12 +547,12 @@
             <div class="settings-section-label">시스템</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('system')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">🌍</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></svg></div>
                     <div class="settings-row-text">시스템 및 테마</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="showScreen('favorite-places')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">📍</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.3 0-6 2.7-6 6 0 4.5 6 12 6 12s6-7.5 6-12c0-3.3-2.7-6-6-6Z"/><circle cx="12" cy="9" r="2.2" fill="currentColor" stroke="none"/></svg></div>
                     <div class="settings-row-text">자주 가는 장소 설정</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -526,7 +563,7 @@
             <div class="settings-section-label">정책</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="showScreen('privacy')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">🔒</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3Z"/></svg></div>
                     <div class="settings-row-text">개인정보처리방침</div>
                     <div class="settings-row-chevron">›</div>
                 </div>
@@ -791,13 +828,19 @@
             <div class="form-label" style="margin-left:8px;">장소 등록</div>
             <div class="settings-group" style="margin: 0 0 16px 0;">
                 <div class="settings-row" onclick="openLocationSearch('home')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">🏠</div>
-                    <div class="settings-row-text">집 위치 지정</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9"/></svg></div>
+                    <div class="settings-row-text">집 위치 지정<div class="settings-row-sub" id="homeLocSub"></div></div>
+                    <div class="settings-row-delete" id="homeLocDeleteBtn" onclick="event.stopPropagation(); deleteSavedLocation('home')" title="집 위치 삭제" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </div>
                     <div class="settings-row-chevron">›</div>
                 </div>
                 <div class="settings-row" onclick="openLocationSearch('company')">
-                    <div class="settings-row-icon" style="background: var(--settings-bg);">🏢</div>
-                    <div class="settings-row-text">회사 위치 지정</div>
+                    <div class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="1"/><line x1="9" y1="7" x2="11" y2="7"/><line x1="13" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="11" y2="11"/><line x1="13" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="11" y2="15"/><line x1="13" y1="15" x2="15" y2="15"/></svg></div>
+                    <div class="settings-row-text">회사 위치 지정<div class="settings-row-sub" id="companyLocSub"></div></div>
+                    <div class="settings-row-delete" id="companyLocDeleteBtn" onclick="event.stopPropagation(); deleteSavedLocation('company')" title="회사 위치 삭제" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </div>
                     <div class="settings-row-chevron">›</div>
                 </div>
             </div>
@@ -1043,6 +1086,7 @@
         if (name === 'system') {
             updateAppThemeUI();
         }
+        if (name === 'favorite-places') updateFavoritePlacesUI();
     };
 
     // ===== 위치 검색 시스템 =====
@@ -1053,6 +1097,34 @@
         document.getElementById('loc-search-input').value = '';
         document.getElementById('loc-search-results').innerHTML = '';
         showScreen('locsearch');
+    };
+
+    // "자주 가는 장소 설정" 화면의 집/회사 행에 등록 여부를 표시하고, 등록돼
+    // 있을 때만 삭제 버튼을 보여줌.
+    function updateFavoritePlacesUI() {
+        const homeSub = document.getElementById('homeLocSub');
+        const homeDel = document.getElementById('homeLocDeleteBtn');
+        const hasHome = !!localStorage.getItem('woody_home_loc');
+        if (homeSub) homeSub.textContent = hasHome ? '등록됨 · 탭하면 다시 지정' : '미등록';
+        if (homeDel) homeDel.hidden = !hasHome;
+
+        const companySub = document.getElementById('companyLocSub');
+        const companyDel = document.getElementById('companyLocDeleteBtn');
+        const hasCompany = !!localStorage.getItem('woody_company_loc');
+        if (companySub) companySub.textContent = hasCompany ? '등록됨 · 탭하면 다시 지정' : '미등록';
+        if (companyDel) companyDel.hidden = !hasCompany;
+    }
+
+    // 저장된 집/회사 위치 삭제. 지도 탭의 마커/거리순 정렬은 localStorage를 매번
+    // 새로 읽으므로 다음 진입 때 자동으로 반영되고, 왼쪽 고정 패널(index.html)의
+    // 집/회사 아이콘과 거리순 정렬은 즉시 갱신해줌.
+    window.deleteSavedLocation = function(mode) {
+        const label = mode === 'home' ? '집' : '회사';
+        if (!confirm(`저장된 ${label} 위치를 삭제할까요?`)) return;
+        localStorage.removeItem(mode === 'home' ? 'woody_home_loc' : 'woody_company_loc');
+        updateFavoritePlacesUI();
+        if (typeof window.updatePlpHomeBtn === 'function') window.updatePlpHomeBtn();
+        if (typeof window.plpFilterData === 'function') window.plpFilterData();
     };
 
     window.searchLocation = function() {
