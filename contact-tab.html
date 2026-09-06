@@ -476,6 +476,11 @@
         <div class="settings-section">
             <div class="settings-section-label">앱 안내</div>
             <div class="settings-group">
+                <div class="settings-row" onclick="showScreen('about')">
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">🍚</div>
+                    <div class="settings-row-text">서비스 소개</div>
+                    <div class="settings-row-chevron">›</div>
+                </div>
                 <div class="settings-row" onclick="showScreen('howto')">
                     <div class="settings-row-icon" style="background: var(--settings-bg);">📖</div>
                     <div class="settings-row-text">사용 방법</div>
@@ -515,6 +520,17 @@
                 </div>
             </div>
         </div>
+
+        <div class="settings-section">
+            <div class="settings-section-label">정책</div>
+            <div class="settings-group">
+                <div class="settings-row" onclick="showScreen('privacy')">
+                    <div class="settings-row-icon" style="background: var(--settings-bg);">🔒</div>
+                    <div class="settings-row-text">개인정보처리방침</div>
+                    <div class="settings-row-chevron">›</div>
+                </div>
+            </div>
+        </div>
     </div>
 
         <!-- ===== 사용방법 화면 ===== -->
@@ -546,17 +562,17 @@
                     </div>
                 </div>
 
-                <!-- AI 렌즈 -->
+                <!-- 랭킹·피드 -->
                 <div class="notice-item" style="cursor:default;">
                     <div class="notice-meta">
-                        <span class="notice-badge">✨ AI 렌즈</span>
+                        <span class="notice-badge">🏆 랭킹·피드</span>
                     </div>
-                    <div class="notice-title" style="margin-bottom:8px;">AI 영양 분석</div>
+                    <div class="notice-title" style="margin-bottom:8px;">인기 랭킹과 한줄평 피드</div>
                     <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
-                        음식 사진을 분석해 칼로리와 영양 성분을 알려드려요.<br>
-                        • <b>Google Gemini API Key</b> 설정이 필요합니다.<br>
-                        • 카메라 촬영 또는 갤러리 업로드로 분석이 가능해요.<br>
-                        • 탄수화물, 단백질, 지방 등 상세 정보를 확인해보세요.
+                        다른 이용자들의 한줄평과 인기 맛집을 한눈에 확인하세요.<br>
+                        • <b>🔥 랭킹</b>: 지역·기간별로 한줄평이 많이 쌓인 맛집 순위를 보여줘요.<br>
+                        • <b>💬 피드</b>: 전체 맛집의 최신 한줄평을 시간순으로 모아봐요.<br>
+                        • 지역 검색이나 현재 위치로 랭킹 범위를 좁힐 수 있어요.
                     </div>
                 </div>
 
@@ -568,9 +584,9 @@
                     <div class="notice-title" style="margin-bottom:8px;">점심 룰렛</div>
                     <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
                         오늘 점심 메뉴가 고민된다면 룰렛을 활용해보세요!<br>
-                        • <b>⚡ 미니</b>: 주요 식당 4곳 중 빠르게 선택해요.<br>
-                        • <b>🌟 일반</b>: 전체 식당을 대상으로 운명을 결정해요.<br>
-                        • <b>☕ 커피</b>: 커피 내기 장소를 가중치 기반으로 뽑아드려요.
+                        • <b>⚡ 미니</b>: 4칸, <b>🌐 일반</b>: 12칸 중 골라 돌려요.<br>
+                        • <b>🎯 자동 배치</b>: 가까운 맛집으로 빈 칸을 자동으로 채워줘요.<br>
+                        • 휠 조각을 직접 탭하면 원하는 맛집 이름을 검색해 넣을 수 있어요.
                     </div>
                 </div>
 
@@ -585,6 +601,151 @@
                         • <b>📍 장소 설정</b>: 집과 회사 위치를 지도로 직접 고정하세요.<br>
                         • <b>🌍 시스템</b>: 앱 전체 테마를 취향껏 바꿔요.<br>
                         • <b>공지사항/문의</b>: 최신 소식을 확인하고 건의사항을 남겨주세요.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 서비스 소개 화면 ===== -->
+    <div id="screen-about" class="sub-screen">
+        <div class="settings-header">
+            <div class="settings-header-inner">
+                <button class="back-btn" onclick="showScreen('main')">
+                    ‹ 설정
+                </button>
+                <div class="settings-title">서비스 소개</div>
+                <div class="header-spacer"></div>
+            </div>
+        </div>
+        <div class="sub-content">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">🍚 맛쩜이란?</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        회사 주변 구내식당·한식뷔페 정보를 한곳에 모아, 매일 점심 메뉴 고민을 덜어드리는 서비스예요.<br>
+                        위치, 가격, 영업시간 같은 기본 정보는 물론 실제 이용자들의 한줄평과 인기 랭킹도 함께 확인할 수 있어요.
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">🙋 이런 분께 추천해요</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        • 매일 점심 메뉴를 고민하는 직장인<br>
+                        • 회사 근처에 어떤 구내식당이 있는지 잘 모르는 분<br>
+                        • 점심 룰렛으로 재미있게 오늘의 메뉴를 정하고 싶은 분
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">📊 데이터 출처</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        식당 기본 정보(이름·위치·가격·영업시간)는 공공데이터포털(data.go.kr)의 상가(상권)정보를 기반으로 합니다.<br>
+                        한줄평과 인기 랭킹은 실제 맛쩜 이용자들이 직접 남긴 정보예요.
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">💬 문의</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        서비스 이용 중 궁금한 점이나 제안하고 싶은 내용이 있다면 [설정 → 문의하기]로 편하게 남겨주세요.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 개인정보처리방침 화면 ===== -->
+    <div id="screen-privacy" class="sub-screen">
+        <div class="settings-header">
+            <div class="settings-header-inner">
+                <button class="back-btn" onclick="showScreen('main')">
+                    ‹ 설정
+                </button>
+                <div class="settings-title">개인정보처리방침</div>
+                <div class="header-spacer"></div>
+            </div>
+        </div>
+        <div class="sub-content">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+
+                <div class="notice-item" style="cursor:default;">
+                    <div style="font-size:0.8em; color:var(--settings-text-secondary, var(--settings-text)); line-height:1.6;">
+                        맛쩜(이하 "서비스")은 이용자의 개인정보를 소중히 다룹니다. 아래 내용은 서비스가 수집하는 정보와 그 이용 방법을 안내합니다. (최종 수정일: 2026-09-06)
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">1. 수집하는 정보</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        • <b>위치 정보</b>: 브라우저에서 위치 권한을 허용하면 실시간 GPS 좌표를 거리순 정렬 등에 사용합니다. 이 좌표는 서버에 저장되지 않고 이용 중에만 사용돼요.<br>
+                        • <b>직접 입력하는 정보</b>: 한줄평 작성 시 닉네임·내용, 문의하기 작성 시 닉네임·내용을 입력받아 서버(Google Firebase)에 저장합니다.<br>
+                        • <b>기기에만 저장되는 정보</b>: 즐겨찾기한 식당 목록, 집/회사로 지정한 위치 좌표, 화면 테마 설정, 도배 방지를 위한 마지막 작성 시각은 이용자 기기의 브라우저 저장소(localStorage)에만 저장되며 서버로 전송되지 않습니다.
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">2. 이용 목적</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        • 위치 기반 거리순 정렬 및 검색 제공<br>
+                        • 한줄평·인기 랭킹 등 커뮤니티 콘텐츠 제공<br>
+                        • 문의 접수 및 답변<br>
+                        • 동일 이용자의 반복 작성(도배) 방지
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">3. 보관 및 파기</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        기기에만 저장되는 정보는 브라우저 데이터를 삭제하거나 기기를 변경하면 함께 사라지며, 서비스는 이 정보에 접근할 수 없습니다.<br>
+                        서버(Firebase)에 저장된 한줄평·문의 내용은 서비스 운영 목적 달성 시까지 보관하며, 삭제를 원하시면 [설정 → 문의하기]로 요청해 주세요.
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">4. 제3자 제공 및 위탁</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        이용자의 개인정보를 외부에 판매하거나 제공하지 않습니다.<br>
+                        서비스 운영을 위해 아래 외부 서비스를 이용하며, 각 서비스는 자체 개인정보처리방침을 따릅니다.<br>
+                        • Naver Cloud Platform (지도 표시)<br>
+                        • Google Firebase (한줄평·문의 데이터 저장)
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">5. 광고</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        서비스에 광고가 게재되는 경우, 광고 네트워크가 쿠키 등을 이용해 맞춤형 광고를 제공할 수 있습니다. 이용자는 브라우저 설정에서 쿠키 저장을 거부하거나 삭제할 수 있습니다.
+                    </div>
+                </div>
+
+                <div class="notice-item" style="cursor:default;">
+                    <div class="notice-meta">
+                        <span class="notice-badge">📮 문의처</span>
+                    </div>
+                    <div style="font-size:0.85em; color:var(--settings-text); line-height:1.7; word-break:keep-all;">
+                        개인정보 관련 문의는 [설정 → 문의하기]를 이용해 주세요.
                     </div>
                 </div>
 
@@ -858,7 +1019,7 @@
         }
     ];
 
-    const SCREENS = ['main', 'notice', 'notice-detail', 'inquiry', 'howto', 'system', 'favorite-places', 'locsearch'];
+    const SCREENS = ['main', 'notice', 'notice-detail', 'inquiry', 'howto', 'system', 'favorite-places', 'locsearch', 'about', 'privacy'];
 
     window.showScreen = function(name) {
         SCREENS.forEach(s => {
