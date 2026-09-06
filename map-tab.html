@@ -121,6 +121,7 @@
     .insta-btn:hover, .kakao-btn:hover { opacity: 0.85; }
     .insta-btn { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
     .kakao-btn { background: #FEE500; color: #3C1E1E; }
+    .naver-btn { background: #03C75A; }
 
     /* 한줄평 섹션 */
     .review-section { margin-top: 20px; border-top: 1px solid var(--border-light); padding-top: 16px; }
@@ -161,6 +162,19 @@
     .edit-field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .edit-field-row label { flex: 0 0 76px; font-size: 0.82em; font-weight: 700; color: var(--text-secondary); }
     .edit-field-row label.checkbox-label { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .edit-days-list { flex: 1; display: flex; gap: 4px; min-width: 0; }
+    /* ⚠️ .edit-day-chip도 <label>이라 위 ".edit-field-row label" 규칙(flex: 0 0 76px)에
+       같이 걸림 — 그 규칙보다 명시도가 높은 선택자로 덮어써야 flex:1이 실제로 적용됨
+       (그냥 .edit-day-chip만 쓰면 명시도가 낮아 무시당해 요일 칩 7개가 좁은 고정폭으로
+       찌그러져 넘치는 버그가 있었음). */
+    .edit-field-row label.edit-day-chip {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        padding: 8px 0; border-radius: 8px; border: 1px solid var(--border-light);
+        background: var(--bg-app); color: var(--text-secondary);
+        font-size: 0.78em; font-weight: 700; cursor: pointer; user-select: none; transition: all 0.15s;
+    }
+    .edit-day-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .edit-day-chip.checked { background: var(--primary); border-color: var(--primary); color: #fff; }
     .edit-field-row input[type="text"] {
         flex: 1; min-width: 0; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--border-light);
         background: var(--bg-app); color: var(--text-primary); font-size: 0.85em;
@@ -378,7 +392,7 @@
                     <span class="edit-suggest-toggle-btn"><span id="editSuggestLabel">펼치기</span><span id="editSuggestChevron" class="edit-suggest-chevron">▾</span></span>
                 </div>
                 <div id="editSuggestBody" class="edit-suggest-body" hidden>
-                    <div style="font-size:0.78em; color: var(--text-secondary); margin: -2px 0 10px;">바뀐 항목만 적고 한 번에 제출해주세요. 폐업한 곳이면 폐업 제보만 체크해도 돼요.</div>
+                    <div style="font-size:0.78em; color: var(--text-secondary); margin: -2px 0 10px;">바뀐 항목만 적고 한 번에 제출해주세요. 영업 요일은 실제 여는 요일만 체크, 폐업한 곳이면 폐업 제보만 체크해도 돼요.</div>
                     <div class="edit-field-row">
                         <label>가격</label>
                         <input type="text" id="editPrice" placeholder="예: 8000원" maxlength="50">
@@ -386,6 +400,18 @@
                     <div class="edit-field-row">
                         <label>영업시간</label>
                         <input type="text" id="editHours" placeholder="예: 11:30~14:00" maxlength="80">
+                    </div>
+                    <div class="edit-field-row">
+                        <label>영업 요일</label>
+                        <div class="edit-days-list" id="editDaysList">
+                            <label class="edit-day-chip"><input type="checkbox" value="월" onchange="onEditDayToggle(this)">월</label>
+                            <label class="edit-day-chip"><input type="checkbox" value="화" onchange="onEditDayToggle(this)">화</label>
+                            <label class="edit-day-chip"><input type="checkbox" value="수" onchange="onEditDayToggle(this)">수</label>
+                            <label class="edit-day-chip"><input type="checkbox" value="목" onchange="onEditDayToggle(this)">목</label>
+                            <label class="edit-day-chip"><input type="checkbox" value="금" onchange="onEditDayToggle(this)">금</label>
+                            <label class="edit-day-chip"><input type="checkbox" value="토" onchange="onEditDayToggle(this)">토</label>
+                            <label class="edit-day-chip"><input type="checkbox" value="일" onchange="onEditDayToggle(this)">일</label>
+                        </div>
                     </div>
                     <div class="edit-field-row">
                         <label>식단표 URL</label>
@@ -1034,6 +1060,7 @@
         let snsHtml = '';
         if (r.instagram) snsHtml += `<a href="${r.instagram}" target="_blank" class="insta-btn">📸 인스타그램<\/a>`;
         if (r.kakaoChannel) snsHtml += `<a href="${r.kakaoChannel}" target="_blank" class="kakao-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3c-6.627 0-12 4.254-12 9.5 0 3.321 2.161 6.248 5.5 7.91l-1.13 4.144c-.066.241.02.5.213.655a.575.575 0 0 0 .341.111c.119 0 .237-.036.338-.107l4.908-3.414c.6.066 1.21.101 1.83.101 6.627 0 12-4.254 12-9.5S18.627 3 12 3z"/><\/svg> 카톡 채널<\/a>`;
+        if (r.naverBlog) snsHtml += `<a href="${r.naverBlog}" target="_blank" class="naver-btn"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 4.5C4 3.67 4.67 3 5.5 3h9.6c.36 0 .7.14.96.38l3.9 3.62c.28.26.44.63.44 1.02V19.5c0 .83-.67 1.5-1.5 1.5h-13C4.67 21 4 20.33 4 19.5v-15Z" fill="#fff"/><path d="M14.6 3.2v3.6c0 .77.63 1.4 1.4 1.4h3.7" fill="none" stroke="#03C75A" stroke-width="1.1"/><rect x="7" y="12" width="10" height="1.6" rx="0.8" fill="#03C75A"/><rect x="7" y="15.4" width="7" height="1.6" rx="0.8" fill="#03C75A"/><\/svg> 블로그<\/a>`;
         document.getElementById('snsArea').innerHTML = snsHtml;
 
         // 한줄평 로드
@@ -1636,6 +1663,19 @@
         if (chevron) chevron.classList.toggle('open', willOpen);
     };
 
+    // 영업 요일 칩(월~일) 체크박스는 시각적으로 숨기고 감싼 label에 .checked
+    // 클래스를 토글해 색을 바꿈 — 다른 토글 버튼들과 동일한 방식.
+    window.onEditDayToggle = function(checkboxEl) {
+        if (!checkboxEl) return;
+        checkboxEl.parentElement.classList.toggle('checked', checkboxEl.checked);
+    };
+
+    function getCheckedEditDays() {
+        const list = document.getElementById('editDaysList');
+        if (!list) return [];
+        return Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.value);
+    }
+
     // 폐업 제보 체크박스를 켜야만 참고 메모 입력칸을 쓸 수 있게 함(체크 안
     // 하면 비활성화 + 비움 — 실수로 메모만 채운 채 제출하는 걸 방지).
     window.onEditClosedToggle = function() {
@@ -1657,6 +1697,13 @@
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
+        const daysList = document.getElementById('editDaysList');
+        if (daysList) {
+            daysList.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                el.checked = false;
+                el.parentElement.classList.remove('checked');
+            });
+        }
         const check = document.getElementById('editClosedCheck');
         if (check) check.checked = false;
         const note = document.getElementById('editClosedNote');
@@ -1670,6 +1717,7 @@
 
         const priceVal = document.getElementById('editPrice').value.trim();
         const hoursVal = document.getElementById('editHours').value.trim();
+        const daysVal = getCheckedEditDays(); // 월~일 순서대로 이미 DOM 순서 그대로 옴
         const menuUrlVal = document.getElementById('editMenuUrl').value.trim();
         const closedChecked = document.getElementById('editClosedCheck').checked;
         const closedNote = document.getElementById('editClosedNote').value.trim();
@@ -1678,6 +1726,7 @@
         const entries = [];
         if (priceVal) entries.push({ field: 'price', value: priceVal });
         if (hoursVal) entries.push({ field: 'hours', value: hoursVal });
+        if (daysVal.length > 0) entries.push({ field: 'days', value: daysVal.join(',') });
         if (menuUrlVal) entries.push({ field: 'menuUrl', value: menuUrlVal });
         if (closedChecked) entries.push({ field: 'closed', value: closedNote || '폐업' });
 
@@ -1715,6 +1764,10 @@
             localStorage.setItem(EDIT_COOLDOWN_KEY, String(now));
             ['editPrice', 'editHours', 'editMenuUrl', 'editClosedNote'].forEach(id => {
                 document.getElementById(id).value = '';
+            });
+            document.getElementById('editDaysList').querySelectorAll('input[type="checkbox"]').forEach(el => {
+                el.checked = false;
+                el.parentElement.classList.remove('checked');
             });
             document.getElementById('editClosedCheck').checked = false;
             document.getElementById('editClosedNote').disabled = true;
