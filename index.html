@@ -687,7 +687,17 @@
             }
         }
 
+        const PLP_LIST_RENDER_LIMIT = 200; // map-tab.html의 LIST_RENDER_LIMIT와 동일 취지
+
         window.plpFilterData = function() {
+            // 모바일에서는 #persistent-left-panel 자체가 display:none이라 이 함수가
+            // 만드는 목록을 아무도 못 보는데도, 탭을 바꿀 때마다(loadTab에서 무조건
+            // 호출) 5천 건 넘는 전체 데이터를 필터+정렬+DOM 렌더링하고 있었음 — 탭
+            // 전환/상세팝업 열고닫기마다 100ms 이상씩 버벅이던 원인 중 하나.
+            // 패널이 실제로 안 보이면(오프스크린 아님, display:none) 계산 자체를 건너뜀.
+            const panel = document.getElementById('persistent-left-panel');
+            if (panel && panel.offsetParent === null) return;
+
             const q = document.getElementById('plpSearchInput').value.toLowerCase();
             const rFilter = document.getElementById('plpRegionFilter').value;
             const dinnerToggle = document.getElementById('plpDinnerToggle');
@@ -724,10 +734,14 @@
                 }
             }
 
-            document.getElementById('plpRestaurantCards').innerHTML = filtered.map((r, index) => {
+            // 카드는 상위 N개만 그려서(정렬은 이미 위에서 전체 기준으로 끝난 상태)
+            // 필터링 결과가 많아도 매번 DOM 렌더링 부담이 늘어나지 않게 함.
+            const listItems = filtered.slice(0, PLP_LIST_RENDER_LIMIT);
+
+            document.getElementById('plpRestaurantCards').innerHTML = listItems.map((r, index) => {
                 const isDinner = r.hours.includes('석식') || /17:|18:|19:/.test(r.hours);
                 const popCount = (window.popularityData && window.popularityData[r.id]) || 0;
-                
+
                 const favs = window.getFavorites();
                 const isFav = favs.includes(r.id);
                 const favIcon = isFav ? '<span style="display:inline-block; width:22px; text-align:center; color:#FBBF24;">⭐</span>' : '<span style="display:inline-block; width:22px; text-align:center; opacity:0.35; filter: grayscale(1);">⭐</span>';
@@ -755,7 +769,9 @@
                         ${isDinner ? '<span class="dinner-badge">🌙 석식 가능</span>' : ''}
                     </div>
                 </div>`;
-            }).join('');
+            }).join('') + (filtered.length > PLP_LIST_RENDER_LIMIT
+                ? `<div style="padding:14px; text-align:center; font-size:0.8em; color:var(--text-secondary);">그 외 ${(filtered.length - PLP_LIST_RENDER_LIMIT).toLocaleString()}곳 더 있어요 — 검색이나 지역 필터로 좁혀보세요</div>`
+                : '');
         };
 
         window.plpToggleDinner = function() {
