@@ -22,6 +22,7 @@
             /* Light Theme (Toss) */
             --primary: #3182F6;
             --primary-light: #EBF3FE;
+            --primary-deep: #1B64DA; /* 중제목용 — 로고보단 작고 본문보단 강조된 톤 */
             --bg-app: #F2F4F6;
             --bg-surface: #FFFFFF;
             --bg-panel: #F7F8FA;
@@ -37,6 +38,7 @@
         body.dark-theme {
             --primary: #4B93FF;
             --primary-light: rgba(75, 147, 255, 0.15);
+            --primary-deep: #7FB3FF; /* 다크모드에선 더 밝혀야 배경 위에서 도드라짐 */
             --bg-app: #101216;
             --bg-surface: #1C1C1E;
             --bg-panel: #25252B;
@@ -598,6 +600,35 @@
     // 실측 150~260ms). window(= 탭을 옮겨도 안 사라지는 최상위 전역)에 파싱
     // 결과를 딱 한 번만 캐싱해두고 모든 탭이 이 함수를 같이 쓰게 해서, 세션
     // 동안은 첫 탭 진입 때 한 번만 받고 파싱하면 되도록 함.
+    // 같은 건물(도로명주소 좌표는 보통 건물 대표점 1개)에 식당이 여러 곳 입점해
+    // 있으면 좌표가 완전히 똑같아서 지도 마커가 정확히 같은 픽셀에 겹쳐 그려짐.
+    // 이러면 맨 위에 그려진(=클릭 리스너가 나중에 등록된) 마커만 클릭되고 그
+    // 아래 깔린 마커는 시각적으로만 보일 뿐 절대 선택이 안 되는 문제가 생김
+    // (예: "현한신아이티식당"/"백세식단연구소"가 동일 좌표에 겹쳐 있던 사례).
+    // 좌표가 정확히 같은 그룹을 찾아 아주 작은 반경(약 6~12m)의 원 위에 고르게
+    // 흩어놓아 전부 독립적으로 클릭 가능하게 함 — 주소 텍스트는 그대로 두고
+    // 지도 표시용 좌표만 살짝 조정하는 것이라 실제 위치 정확도에는 영향 없음.
+    function spreadOverlappingCoords(list) {
+        const groups = new Map();
+        list.forEach(r => {
+            if (!r.lat || !r.lng) return;
+            const key = r.lat.toFixed(6) + '_' + r.lng.toFixed(6);
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(r);
+        });
+        groups.forEach(group => {
+            if (group.length < 2) return;
+            const n = group.length;
+            const radiusM = 6 + Math.min(n, 6);
+            group.forEach((r, i) => {
+                const angle = (2 * Math.PI * i) / n;
+                r.lat += (radiusM * Math.cos(angle)) / 111320;
+                r.lng += (radiusM * Math.sin(angle)) / (111320 * Math.cos(r.lat * Math.PI / 180));
+            });
+        });
+        return list;
+    }
+
     window.__restaurantsDataPromise = null;
     window.getRestaurantsData = function() {
         if (window.__restaurantsDataPromise) return window.__restaurantsDataPromise;
@@ -619,7 +650,7 @@
                 };
                 const headers = rows[0].map(h => headerMap[String(h).trim()] || String(h).trim());
 
-                return rows.slice(1)
+                const parsed = rows.slice(1)
                     .map(row => { const obj = {}; headers.forEach((key, i) => { obj[key] = row[i]; }); return obj; })
                     .filter(r => r.name && String(r.name).trim() !== '' && String(r.name).trim() !== 'Dev_Test')
                     .map((r, index) => ({
@@ -638,6 +669,7 @@
                     }))
                     // 공공기관 구내식당 중 외부인 이용 불가/미확인 항목은 노출하지 않음 (id 부여 이후 필터해 위치기반 id 유지)
                     .filter(r => !(r.visibility.startsWith('비공개') || r.visibility.startsWith('확인필요')));
+                return spreadOverlappingCoords(parsed);
             } catch (e) {
                 // 실패한 프로미스를 그대로 캐싱해두면 이후 어떤 탭에서도 영영 재시도가
                 // 안 되므로, 실패 시엔 캐시를 비워 다음 호출이 새로 fetch를 시도하게 함
