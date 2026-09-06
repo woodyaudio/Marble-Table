@@ -17,7 +17,7 @@
     <style>
         :root {
             /* Layout Variables */
-            --tab-width: 72px; --m-tab-height: 60px; --ad-banner-h: 90px; --panel-w: 360px;
+            --tab-width: 72px; --m-tab-height: 60px; --ad-banner-h: 120px; --panel-w: 360px;
 
             /* Light Theme (Toss) */
             --primary: #3182F6;
@@ -311,9 +311,9 @@
             overflow: hidden;
         }
 
-        /* [PC] 하단 광고 배너 (728x90) */
+        /* [PC] 하단 광고 배너 */
         #pc-ad-banner {
-            width: 100%; height: 90px;
+            width: 100%; height: var(--ad-banner-h);
             background: var(--bg-surface);
             border-top: 1px solid var(--border-light);
             position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
@@ -325,15 +325,18 @@
         }
         .ad-main-img {
             /* object-fit: fill이었을 땐 원본 이미지 비율을 무시하고 억지로 늘리거나
-               찌그러뜨려서 채웠음 — 광고 이미지마다 원본 비율이 조금씩 달라서
-               (600x337, 1454x818, 1280x720 등) 사진마다 확대/축소 정도가 달라
-               보이는 원인이었음. cover로 바꿔서 비율은 유지한 채 넘치는 부분만
-               잘라내 채우도록 함(.ad-blur-bg와 동일한 방식).
+               찌그러뜨려서 채웠고, cover로 바꾼 뒤에는 비율은 유지됐지만 이 박스
+               자체가 배너 폭의 25%(PC)/40%(모바일) × 높이 90px라는 고정된 틀이라
+               사진 비율이 이 틀과 안 맞으면 여전히 잘려나갔음(600x337, 1454x818,
+               1280x720 등 광고 이미지마다 원본 비율이 제각각이라 항상 뭔가는 잘림).
+               contain으로 바꿔서 사진을 통째로 다 보여주고, 남는 여백은 뒤에 이미
+               깔려있는 .ad-blur-bg(블러 배경, 배너 전체를 채움)가 자연스럽게 메꿔줌
+               — 앞으로 어떤 비율의 광고 이미지가 들어와도 안 잘리게 됨.
             */
-            position: relative; height: 100%; width: 25%; object-fit: cover; z-index: 1;
+            position: relative; height: 100%; width: 35%; object-fit: contain; z-index: 1;
         }
         #pc-ad-banner .ad-placeholder {
-            width: 728px; max-width: 100%; height: 90px;
+            width: 728px; max-width: 100%; height: var(--ad-banner-h);
             background: var(--bg-app); border-radius: 4px;
             display: flex; align-items: center; justify-content: center;
             font-size: 12px; color: var(--text-secondary);
@@ -352,6 +355,8 @@
 
         /* [모바일] UI 대응 */
         @media (max-width: 768px) {
+            /* 모바일은 화면이 좁아 배너가 세로 공간을 많이 차지하므로 PC(120px)보다 낮게 */
+            :root { --ad-banner-h: 84px; }
             #app { flex-direction: column; } /* 모바일: 세로 배치 */
 
             #right-column {
@@ -372,9 +377,9 @@
                 display: flex; align-items: center; justify-content: center; font-size: 11px; color: #94a3b8;
             }
             
-            /* 모바일에서 광고 메인 이미지는 40% 차지하도록 오버라이드 */
+            /* 모바일에서 광고 메인 이미지는 55% 차지하도록 오버라이드 */
             .ad-main-img {
-                width: 40%;
+                width: 55%;
             }
 
             /* 하단 네비게이션 탭 (토스 스타일 플랫 바) */
