@@ -22,7 +22,7 @@
             /* Light Theme (Toss) */
             --primary: #3182F6;
             --primary-light: #EBF3FE;
-            --primary-deep: #1B64DA; /* 중제목용 — 로고보단 작고 본문보단 강조된 톤 */
+            --primary-deep: #1552B8; /* 중제목용 — 로고보단 작고 본문보단 강조된 톤 */
             --bg-app: #F2F4F6;
             --bg-surface: #FFFFFF;
             --bg-panel: #F7F8FA;
@@ -927,9 +927,36 @@
             }
         };
 
+        // 왼쪽 고정 패널(PC 메인 메뉴)의 집/회사 버튼: map-tab.html의 홈 버튼과 같은
+        // 방식(getSmartHomeDest/updateHomeBtn)으로 실시간 GPS(window.currentGPSLat/Lng,
+        // 지도 탭에서 GPS를 잡을 때마다 미러링됨) 기준 집/회사 중 더 가까운 쪽 아이콘을
+        // 보여줌. 지도 탭 안의 home-btn엔 이 전환 로직이 이미 있었는데, 이 왼쪽 패널
+        // 버튼은 애초에 정적 🏠로만 박혀 있어서 회사 근처에 있어도 계속 집 아이콘만
+        // 나오던 게 원인이었음 — map-tab.html의 placeGPSMarker()에서 GPS를 갱신할
+        // 때마다 이 함수도 같이 호출하도록 연결(아래 window.updatePlpHomeBtn 참고).
+        window.updatePlpHomeBtn = function() {
+            const btn = document.getElementById('plp-home-btn');
+            if (!btn) return;
+            const savedHomeLoc = localStorage.getItem('woody_home_loc') ? JSON.parse(localStorage.getItem('woody_home_loc')) : null;
+            const savedCompanyLoc = localStorage.getItem('woody_company_loc') ? JSON.parse(localStorage.getItem('woody_company_loc')) : null;
+
+            let showCompany = false;
+            if (window.currentGPSLat != null && window.currentGPSLng != null) {
+                const distHome = savedHomeLoc
+                    ? plpGetDistanceKm(window.currentGPSLat, window.currentGPSLng, savedHomeLoc.lat, savedHomeLoc.lng)
+                    : Infinity;
+                const distCompany = savedCompanyLoc
+                    ? plpGetDistanceKm(window.currentGPSLat, window.currentGPSLng, savedCompanyLoc.lat, savedCompanyLoc.lng)
+                    : Infinity;
+                showCompany = distCompany < distHome;
+            }
+            btn.innerText = showCompany ? '🏢' : '🏠';
+        };
+
         const isMobile = () => window.innerWidth <= 768;
         if (!isMobile()) {
             plpLoadData();
+            window.updatePlpHomeBtn();
         }
     })();
 
